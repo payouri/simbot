@@ -36,18 +36,16 @@ export class RegistryError extends Error {
   }
 }
 
-function retryAfterMs(res: Response): number | undefined {
+export function retryAfterMs(res: Response): number | undefined {
   const seconds = Number(res.headers.get("retry-after"));
   return Number.isFinite(seconds) && seconds > 0
     ? Math.min(seconds * 1000, MAX_RETRY_AFTER_MS)
     : undefined;
 }
 
-export type Manifest = { layers: { digest: string; size: number }[] };
-
-export function createRegistryClient({ fetch, sleep = Bun.sleep }: RegistryDeps) {
-  /** Network errors, 5xx and 429 get 3 tries with backoff. Anything else fails at once. */
-  async function withRetry<T>(what: string, run: () => Promise<T>): Promise<T> {
+/** Network errors, 5xx and 429 get 3 tries with backoff. Anything else fails at once. */
+export function createRetry(sleep: (ms: number) => Promise<void>) {
+  return async function withRetry<T>(what: string, run: () => Promise<T>): Promise<T> {
     for (let attempt = 1; ; attempt++) {
       try {
         return await run();
@@ -61,7 +59,13 @@ export function createRegistryClient({ fetch, sleep = Bun.sleep }: RegistryDeps)
         await sleep(wait ?? BACKOFF_MS * 2 ** (attempt - 1));
       }
     }
-  }
+  };
+}
+
+export type Manifest = { layers: { digest: string; size: number }[] };
+
+export function createRegistryClient({ fetch, sleep = Bun.sleep }: RegistryDeps) {
+  const withRetry = createRetry(sleep);
 
   async function request(url: string, init?: RequestInit): Promise<Response> {
     const res = await fetch(url, init);

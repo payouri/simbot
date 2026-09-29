@@ -3,6 +3,7 @@
 export { AddonStringError, type ProfileHeader, parseProfileHeader } from "./addon-string";
 export { buildPaths, launchCommand } from "./build";
 export { type Json2BuildInfo, Json2FormatError, readBuildInfo } from "./json2";
+export * from "./meta";
 export { probeBuild } from "./probe";
 export {
   buildInput,

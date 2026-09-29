@@ -1,6 +1,7 @@
 import type { SimcInstallState, SimcStatusResponse } from "@simbot/shared";
 import type { Db } from "../db";
 import { installBuild, readInstalledBuild } from "./install";
+import { ensureBuildMeta } from "./meta";
 import { createRegistryClient, type RegistryDeps } from "./registry";
 
 const CURRENT_KEY = "simc.current_tag";
@@ -42,23 +43,34 @@ export function createSimcManager(deps: SimcManagerDeps) {
     },
 
     /**
-     * With no Current SimC Build, installs the latest nightly and makes it current. Never
-     * throws: a failure is logged and reported by `status()`, and the app carries on without one.
+     * With no Current SimC Build, installs the latest nightly and makes it current. Either way
+     * the Current SimC Build then gets its item-meta and item-icons if it lacks them. Never
+     * throws: a failure is logged and reported by `status()`, and the app carries on without it.
      */
     async boot(): Promise<void> {
       const tag = currentTag();
-      if (tag && (await readInstalledBuild(dataDir, tag))) return;
-      install = { state: "installing", error: null };
+      let current = tag ? await readInstalledBuild(dataDir, tag) : null;
+      if (!current) {
+        install = { state: "installing", error: null };
+        try {
+          const [latest] = await registry.listNightlyTags();
+          if (!latest) throw new Error("no SimC nightly tags found on Docker Hub");
+          current = await installBuild({ dataDir, tag: latest, registry });
+          setCurrentTag(current.tag);
+          install = { state: "idle", error: null };
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          log(`simc: could not install a SimC Build, continuing without one: ${message}`);
+          install = { state: "failed", error: message };
+          return;
+        }
+      }
+      // Missing item data must not undo an install: sims still run, and the next boot retries.
       try {
-        const [latest] = await registry.listNightlyTags();
-        if (!latest) throw new Error("no SimC nightly tags found on Docker Hub");
-        const build = await installBuild({ dataDir, tag: latest, registry });
-        setCurrentTag(build.tag);
-        install = { state: "idle", error: null };
+        await ensureBuildMeta({ dataDir, build: current, fetch: deps.fetch, sleep: deps.sleep });
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        log(`simc: could not install a SimC Build, continuing without one: ${message}`);
-        install = { state: "failed", error: message };
+        log(`simc: could not build item-meta and item-icons for ${current.tag}: ${message}`);
       }
     },
   };

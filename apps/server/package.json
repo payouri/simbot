@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "bun --watch src/main.ts",
     "start": "bun src/main.ts",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p .",
+    "build-meta": "bun src/simc/build-meta-cli.ts",
+    "verify-meta": "bun src/simc/verify-meta-cli.ts"
   },
   "dependencies": {
     "@simbot/shared": "workspace:*",

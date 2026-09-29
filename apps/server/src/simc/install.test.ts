@@ -8,15 +8,19 @@ import {
   readlinkSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { simcStatusResponseSchema } from "@simbot/shared";
+import { itemIconsSchema, itemMetaSchema } from "@simbot/simc";
 import { createApp } from "../app";
 import manifestFixture from "./fixtures/manifest.json";
 import tagsFixture from "./fixtures/tags.json";
 import { buildLayer } from "./tar-fixture";
 
+const metaFixtures = join(import.meta.dir, "../../../../packages/simc/src/meta/fixtures");
+const fixture = (name: string) => readFileSync(join(metaFixtures, name), "utf8");
 const json2 = readFileSync(join(import.meta.dir, "fixtures", "json2.json"), "utf8");
 const LATEST_NIGHTLY = tagsFixture.results.find((r) => r.name !== "latest")?.name ?? "";
 
@@ -90,6 +94,15 @@ function fakeRegistry(override: Handler = () => undefined, report: string = json
     if (url.startsWith("https://hub.docker.com/v2/repositories/simulationcraftorg/simc/tags")) {
       return Response.json(tagsFixture);
     }
+    if (url.startsWith(`https://raw.githubusercontent.com/simulationcraft/simc/d08a1c3/`)) {
+      return new Response(fixture(`${url.slice(url.lastIndexOf("/") + 1)}`));
+    }
+    const db2 = /^https:\/\/wago\.tools\/db2\/(\w+)\/csv\?build=(.+)$/.exec(url);
+    if (db2) {
+      return new Response(fixture(`${db2[1]}.csv`), {
+        headers: { "content-disposition": `attachment; filename="${db2[1]}.${db2[2]}.csv"` },
+      });
+    }
     if (url.includes("/manifests/")) return Response.json(image.manifest);
     const blob = image.blobs.get(url.slice(url.lastIndexOf("/") + 1));
     if (url.includes("/blobs/") && blob) return new Response(blob);
@@ -162,7 +175,13 @@ describe("boot with an empty data dir", () => {
     await boot(registry).boot();
     const hosts = registry.calls.map((u) => new URL(u).host);
     expect(new Set(hosts)).toEqual(
-      new Set(["hub.docker.com", "auth.docker.io", "registry-1.docker.io"]),
+      new Set([
+        "hub.docker.com",
+        "auth.docker.io",
+        "registry-1.docker.io",
+        "raw.githubusercontent.com",
+        "wago.tools",
+      ]),
     );
     expect(registry.calls[0]).toContain("/tags?ordering=last_updated");
     expect(registry.calls.filter((u) => u.includes("/manifests/"))).toEqual([
@@ -303,6 +322,119 @@ describe("transient failures", () => {
     expect(body.install.error).toContain("SimC output format changed");
     expect(existsSync(join(dataDir, "simc", LATEST_NIGHTLY))).toBe(false);
     expect(readdirSafe(join(dataDir, "simc", ".partial"))).toEqual([]);
+  });
+});
+
+describe("item-meta and item-icons", () => {
+  const metaDirFor = () => join(dataDir, "meta", LATEST_NIGHTLY);
+  const readMeta = (file: string) => JSON.parse(readFileSync(join(metaDirFor(), file), "utf8"));
+  const metaCalls = (calls: string[]) =>
+    calls.filter((u) => /raw\.githubusercontent|wago\.tools/.test(u));
+
+  test("installing a build also builds both files under meta/<tag>/", async () => {
+    const registry = fakeRegistry();
+    await boot(registry).boot();
+    expect(readdirSafe(metaDirFor()).sort()).toEqual(["item-icons.json", "item-meta.json"]);
+    const meta = itemMetaSchema.parse(readMeta("item-meta.json"));
+    expect(meta).toMatchObject({ tag: LATEST_NIGHTLY, gitRevision: "d08a1c3" });
+    expect(meta.items[270175]?.name).toBe("Voracious Heart of Ula'tek");
+    const icons = itemIconsSchema.parse(readMeta("item-icons.json"));
+    expect(icons.items[270175]).toBe("inv_121_trinket_raid_ulatek_heart");
+    expect(readdirSafe(join(dataDir, "meta", ".partial"))).toEqual([]);
+  });
+
+  test("reads SimC's tables at the build's commit and DB2 pinned to its game build", async () => {
+    const registry = fakeRegistry();
+    await boot(registry).boot();
+    const calls = metaCalls(registry.calls);
+    for (const table of ["item_data", "item_effect", "item_bonus"]) {
+      expect(calls).toContain(
+        `https://raw.githubusercontent.com/simulationcraft/simc/d08a1c3/engine/dbc/generated/${table}.inc`,
+      );
+    }
+    const wago = calls.filter((u) => u.includes("wago.tools"));
+    expect(wago).toHaveLength(6);
+    for (const url of wago) expect(url).toEndWith("/csv?build=12.1.0.69933");
+  });
+
+  test("a current build that lacks them gets them on the next boot, and only them", async () => {
+    const failing = fakeRegistry((url) =>
+      url.includes("wago.tools") ? new Response("", { status: 400 }) : undefined,
+    );
+    await boot(failing).boot();
+    // The install itself is unharmed.
+    expect((await status()).body.current?.tag).toBe(LATEST_NIGHTLY);
+    expect((await status()).body.install.state).toBe("idle");
+    expect(logs.join("\n")).toContain("could not build item-meta and item-icons");
+    expect(existsSync(metaDirFor())).toBe(false);
+    expect(readdirSafe(join(dataDir, "meta", ".partial"))).toEqual([]);
+
+    app?.close();
+    const again = fakeRegistry();
+    await boot(again).boot();
+    expect(again.calls.every((u) => /raw\.githubusercontent|wago\.tools/.test(u))).toBe(true);
+    expect(existsSync(join(metaDirFor(), "item-meta.json"))).toBe(true);
+  });
+
+  test("nothing is fetched when both files are already there", async () => {
+    await boot(fakeRegistry()).boot();
+    app?.close();
+    const again = fakeRegistry();
+    await boot(again).boot();
+    expect(again.calls).toEqual([]);
+  });
+
+  test("a truncated file is rebuilt", async () => {
+    await boot(fakeRegistry()).boot();
+    writeFileSync(join(metaDirFor(), "item-meta.json"), '{"schemaVersion":1');
+    app?.close();
+    const again = fakeRegistry();
+    await boot(again).boot();
+    expect(metaCalls(again.calls).length).toBeGreaterThan(0);
+    expect(itemMetaSchema.safeParse(readMeta("item-meta.json")).success).toBe(true);
+  });
+
+  test("transient failures on the network sources are retried", async () => {
+    const registry = fakeRegistry((url, n) => {
+      if (url.includes("item_data.inc") && n === 1) return new Response("", { status: 503 });
+      if (url.includes("/ItemSparse/") && n === 1) return new Response("", { status: 429 });
+    });
+    await boot(registry).boot();
+    expect(existsSync(join(metaDirFor(), "item-icons.json"))).toBe(true);
+    expect(sleeps).toEqual([500, 500]);
+  });
+
+  test("data pinned to another build than asked for is refused", async () => {
+    const registry = fakeRegistry((url) =>
+      url.includes("/ItemLimitCategory/")
+        ? new Response(fixture("ItemLimitCategory.csv"), {
+            headers: {
+              "content-disposition": 'attachment; filename="ItemLimitCategory.12.1.5.70077.csv"',
+            },
+          })
+        : undefined,
+    );
+    await boot(registry).boot();
+    expect(logs.join("\n")).toContain("another build");
+    expect(existsSync(metaDirFor())).toBe(false);
+  });
+
+  test("a game data version the source doesn't have (400) fails once, without retries", async () => {
+    const registry = fakeRegistry((url) =>
+      url.includes("/Item/") ? new Response("", { status: 400 }) : undefined,
+    );
+    await boot(registry).boot();
+    expect(metaCalls(registry.calls).filter((u) => u.includes("/Item/"))).toHaveLength(1);
+    expect(existsSync(metaDirFor())).toBe(false);
+  });
+
+  test("changed SimC table layouts fail the build instead of writing bad data", async () => {
+    const registry = fakeRegistry((url) =>
+      url.includes("item_bonus.inc") ? new Response("// nothing here\n") : undefined,
+    );
+    await boot(registry).boot();
+    expect(logs.join("\n")).toContain("SimC generated data format changed");
+    expect(existsSync(metaDirFor())).toBe(false);
   });
 });
 
