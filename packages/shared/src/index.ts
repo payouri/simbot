@@ -1,3 +1,4 @@
+export * from "./events";
 export * from "./health";
 export * from "./json2";
 export * from "./sim";

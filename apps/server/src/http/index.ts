@@ -1,6 +1,8 @@
 import { existsSync, statSync } from "node:fs";
 import { join, normalize, sep } from "node:path";
 import {
+  type AppEvent,
+  appEventSchema,
   healthResponseSchema,
   type SimcStatusResponse,
   simcStatusResponseSchema,
@@ -15,7 +17,11 @@ export type HttpDeps = {
   db: Db;
   clientDir: string;
   bus: EventBus;
-  simcStatus: () => Promise<SimcStatusResponse>;
+  simc: {
+    status: () => Promise<SimcStatusResponse>;
+    /** Forces a SimC Update check and resolves with the result. */
+    check: () => Promise<SimcStatusResponse>;
+  };
 };
 
 function serveClient(clientDir: string, pathname: string): Response {
@@ -36,8 +42,49 @@ function serveClient(clientDir: string, pathname: string): Response {
   return new Response("Client not built. Run `bun run build`.", { status: 404 });
 }
 
+/** The global SSE stream: every client-facing EventBus event, framed as `event: <type>` + JSON `data`. */
+function eventStream(events: EventBus, signal: AbortSignal): Response {
+  const encoder = new TextEncoder();
+  let unsubscribe = () => {};
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      const send = (chunk: string) => {
+        try {
+          controller.enqueue(encoder.encode(chunk));
+        } catch {
+          unsubscribe();
+        }
+      };
+      send(": connected\n\n");
+      unsubscribe = events.on((event) => {
+        // Only events in the shared client contract go out; server-internal ones stay in-process.
+        const parsed = appEventSchema.safeParse(event);
+        if (!parsed.success) return;
+        const valid: AppEvent = parsed.data;
+        send(`event: ${valid.type}\ndata: ${JSON.stringify(valid)}\n\n`);
+      });
+      signal.addEventListener("abort", () => {
+        unsubscribe();
+        try {
+          controller.close();
+        } catch {
+          // Already closed.
+        }
+      });
+    },
+    cancel: () => unsubscribe(),
+  });
+  return new Response(stream, {
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+      connection: "keep-alive",
+    },
+  });
+}
+
 /** Builds the request handler: `/api/*` REST routes, everything else is the built client. */
-export function createHttpHandler({ db, bus, clientDir, simcStatus }: HttpDeps) {
+export function createHttpHandler({ db, bus, clientDir, simc }: HttpDeps) {
   return async (req: Request): Promise<Response> => {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/health") {
@@ -47,7 +94,15 @@ export function createHttpHandler({ db, bus, clientDir, simcStatus }: HttpDeps) 
     }
     if (pathname === "/api/simc") {
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
-      return json(simcStatusResponseSchema.parse(await simcStatus()));
+      return json(simcStatusResponseSchema.parse(await simc.status()));
+    }
+    if (pathname === "/api/simc/check") {
+      if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+      return json(simcStatusResponseSchema.parse(await simc.check()));
+    }
+    if (pathname === "/api/events") {
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return eventStream(bus, req.signal);
     }
     if (pathname === "/api/imports") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);

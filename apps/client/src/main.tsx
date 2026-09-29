@@ -6,6 +6,7 @@ import "./index.css";
 import { TopGearPrototypeRoute } from "./prototype/top-gear/route";
 import { QuickSimPage } from "./quick-sim/QuickSimPage";
 import { SimPage } from "./quick-sim/SimPage";
+import { AppShell } from "./shell/AppShell";
 import { SimcPage } from "./simc/SimcPage";
 
 const queryClient = new QueryClient();
@@ -15,7 +16,7 @@ const router = createBrowserRouter([
   { path: "/quick-sim", element: <QuickSimPage /> },
   { path: "/sims/:id", element: <SimPage /> },
   { path: "/prototype/top-gear", element: <TopGearPrototypeRoute /> },
-  { path: "/simc", element: <SimcPage /> },
+  { element: <AppShell />, children: [{ path: "/simc", element: <SimcPage /> }] },
 ]);
 
 const root = document.getElementById("root");

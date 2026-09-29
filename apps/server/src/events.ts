@@ -1,10 +1,12 @@
-import type { SimStatus } from "@simbot/shared";
+import type { AppEvent as ClientEvent, SimStatus } from "@simbot/shared";
 
 export type AppEvent =
   /** The Queue gained a Job; the runner wakes up. */
   | { type: "queue.changed" }
   /** A Sim moved to a new status. */
-  | { type: "sim.status"; simId: number; status: SimStatus };
+  | { type: "sim.status"; simId: number; status: SimStatus }
+  /** Events the global `GET /api/events` SSE stream carries, per the shared schema. */
+  | ClientEvent;
 
 /**
  * In-process event emitter. `http` and `runner` meet only through the DB and this bus, so

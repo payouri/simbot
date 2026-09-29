@@ -15,6 +15,9 @@ export type AppDeps = {
   log?: (message: string) => void;
   /** argv that launches a SimC Build directory. Tests pass the fake `simc`. */
   launch?: Launch;
+  /** Tag of the Seed SimC Build shipped in the app, if any. */
+  seedTag?: () => string | null;
+  now?: () => Date;
 };
 
 /** The server seam: everything the process does, minus binding a port and the boot fetch. */
@@ -27,6 +30,9 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     fetch: deps.fetch ?? fetch,
     sleep: deps.sleep,
     log: deps.log,
+    events: bus,
+    seedTag: deps.seedTag,
+    now: deps.now,
   });
   const runner = startRunner({
     db,
@@ -40,19 +46,21 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     db,
     bus,
     clientDir: config.clientDir,
-    simcStatus: () => simc.status(),
+    simc: { status: () => simc.status(), check: () => simc.check() },
   });
   return {
     db,
     fetch: (req: Request) => handle(req),
-    /** Resolves once the Queue is empty and no Sim is running. */
-    idle: () => runner.idle(),
     /**
      * Boot work that needs the network: with no Current SimC Build, installs the latest
      * nightly. Resolves when done and never rejects; `main` starts it without awaiting
      * so the server answers while the download runs.
      */
     boot: () => simc.boot(),
+    /** Resolves once the Queue is empty, no Sim is running and no SimC Update check is in flight. */
+    idle: async () => {
+      await Promise.all([runner.idle(), simc.idle()]);
+    },
     close() {
       runner.stop();
       db.close();

@@ -166,6 +166,7 @@ describe("boot with an empty data dir", () => {
         gameDataVersion: "12.1.0.69933",
       },
       install: { state: "idle", error: null },
+      update: null,
     });
     expect(LATEST_NIGHTLY).toBe("1210-2026-09-29-d08a1c3");
   });
