@@ -19,4 +19,11 @@ A sim of the character exactly as described by the Addon String; one result.
 A sim that evaluates many gear combinations drawn from the Addon String's items and ranks them.
 
 **SimC Update**:
-A new commit on SimC's active branch that is newer than the SimC the app runs. Detected and surfaced, applied only when the user chooses.
+A new commit on SimC's active branch that is newer than the SimC the app runs. Detected and surfaced, applied only when the user chooses; applying it installs the newest available **SimC Build**, which may lag the commit by up to a day.
+
+**SimC Build**:
+One installable, self-contained copy of SimC, identified by its nightly tag (version, date, commit). The app may hold several; exactly one is the **Current SimC Build** that sims run on.
+_Avoid_: SimC version (ambiguous with SimC's own version number), image
+
+**Seed SimC Build**:
+The SimC Build shipped inside the app itself, used only when no other SimC Build is available (e.g. first start offline).
