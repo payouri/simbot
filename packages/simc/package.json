@@ -9,6 +9,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@simbot/shared": "workspace:*",
     "zod": "^4.0.0"
   }
 }

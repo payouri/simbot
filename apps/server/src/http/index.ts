@@ -6,14 +6,17 @@ import {
   simcStatusResponseSchema,
 } from "@simbot/shared";
 import type { Db } from "../db";
+import type { EventBus } from "../events";
+import { postImport } from "./imports";
+import { getResults, getSimById, postQueueSim, postSim } from "./sims";
+import { apiError, json } from "./util";
 
 export type HttpDeps = {
   db: Db;
   clientDir: string;
+  bus: EventBus;
   simcStatus: () => Promise<SimcStatusResponse>;
 };
-
-const json = (body: unknown, status = 200) => Response.json(body, { status });
 
 function serveClient(clientDir: string, pathname: string): Response {
   let rel = "";
@@ -34,7 +37,7 @@ function serveClient(clientDir: string, pathname: string): Response {
 }
 
 /** Builds the request handler: `/api/*` REST routes, everything else is the built client. */
-export function createHttpHandler({ db, clientDir, simcStatus }: HttpDeps) {
+export function createHttpHandler({ db, bus, clientDir, simcStatus }: HttpDeps) {
   return async (req: Request): Promise<Response> => {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/health") {
@@ -46,8 +49,27 @@ export function createHttpHandler({ db, clientDir, simcStatus }: HttpDeps) {
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
       return json(simcStatusResponseSchema.parse(await simcStatus()));
     }
+    if (pathname === "/api/imports") {
+      if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+      return postImport(db, req);
+    }
+    if (pathname === "/api/sims") {
+      if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+      return postSim(db, req);
+    }
+    const simRoute = pathname.match(/^\/api\/sims\/([^/]+)(?:\/(queue|results))?$/);
+    if (simRoute) {
+      const [, id = "", action] = simRoute;
+      if (action === "queue") {
+        return req.method === "POST"
+          ? postQueueSim(db, bus, id)
+          : json({ error: "method_not_allowed" }, 405);
+      }
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return action === "results" ? getResults(db, id) : getSimById(db, id);
+    }
     if (pathname === "/api" || pathname.startsWith("/api/")) {
-      return json({ error: "not_found" }, 404);
+      return apiError(404, "not_found");
     }
     if (req.method !== "GET" && req.method !== "HEAD") {
       return json({ error: "method_not_allowed" }, 405);

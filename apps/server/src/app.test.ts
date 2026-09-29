@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { healthResponseSchema } from "@simbot/shared";
 import { createApp } from "./app";
+import { migrations } from "./db/migrations";
 
 let root: string;
 let app: ReturnType<typeof createApp>;
@@ -75,6 +76,8 @@ describe("boot", () => {
     const dataDir = join(root, "data");
     app.close();
     app = createApp({ dataDir, clientDir: join(root, "client") });
-    expect(app.db.query("SELECT count(*) AS n FROM schema_migrations").get()).toEqual({ n: 1 });
+    expect(app.db.query("SELECT count(*) AS n FROM schema_migrations").get()).toEqual({
+      n: migrations.length,
+    });
   });
 });

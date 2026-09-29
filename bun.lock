@@ -38,6 +38,7 @@
       "dependencies": {
         "@simbot/shared": "workspace:*",
         "@simbot/simc": "workspace:*",
+        "zod": "^4.0.0",
       },
     },
     "packages/shared": {
@@ -49,6 +50,7 @@
     "packages/simc": {
       "name": "@simbot/simc",
       "dependencies": {
+        "@simbot/shared": "workspace:*",
         "zod": "^4.0.0",
       },
     },

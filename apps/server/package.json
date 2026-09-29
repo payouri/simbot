@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@simbot/shared": "workspace:*",
-    "@simbot/simc": "workspace:*"
+    "@simbot/simc": "workspace:*",
+    "zod": "^4.0.0"
   }
 }

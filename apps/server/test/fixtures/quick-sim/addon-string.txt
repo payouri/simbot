@@ -1,0 +1,45 @@
+# Rootbeer - Frost - 2026-09-29 22:41 - EU/Draenor
+# SimC Addon 12.1.0-01
+# Requires SimulationCraft 1210-01+
+
+# Always ensure you are using the latest SimulationCraft version before simming.
+
+deathknight="Rootbeer"
+level=90
+race=pandaren
+region=eu
+server=draenor
+role=attack
+professions=blacksmithing=100/mining=100
+talents=CsPAAAAAAAAAAAAAAAAAAAAAAMDwMjZMDY2mZmZmZZmZkZMmZYGGPgZGMzMzMDAAAAAAAAAjZbgBsAWGmQGLYmxMzAzAYYmBYmBD
+spec=frost
+
+# Saved Loadout: Raid
+# talents=CsPAAAAAAAAAAAAAAAAAAAAAAMDwMjZMDY2mZmZmZZmZkZMmZYGGPgZGMzMzMDAAAAAAAAAjZbgBsAWGmQGLYmxMzAzAYYmBYmBD
+
+head=relentless_riders_crown,id=249970,bonus_id=40/6935/12676/12806/13335/13338/13575,gem_id=240983
+neck=rotmires_sporeheart,id=268291,bonus_id=13786,gem_id=240908
+shoulders=shoulderplates_of_frozen_blood,id=50234,bonus_id=12806/13577
+back=adherents_silken_shroud,id=239656,bonus_id=8791/8960/12066/12214/12384/13622/13667/9627
+chest=relentless_riders_cuirass,id=249973,bonus_id=13786,enchant_id=7987
+wrists=spellbreakers_bracers,id=237834,bonus_id=8791/8960/12066/12384/13622/12497,gem_id=240908
+hands=relentless_riders_bonegrasps,id=249971,bonus_id=40/12675/12806/13335/13337/13574
+waist=girdle_of_devouring_rot,id=268289,bonus_id=13786,gem_id=240908
+legs=relentless_riders_legguards,id=249969,bonus_id=40/12676/12806/13335/13339/13575,enchant_id=8159
+feet=greaves_of_the_unformed,id=249381,bonus_id=13355/13468/13469
+finger1=platinum_star_band,id=193708,bonus_id=6935/13355/13468/13469,gem_id=240908,enchant=eyes_of_the_eagle_2
+finger2=sindorei_band_of_hope,id=249919,bonus_id=6935/13355/13468/13469,gem_id=240908,enchant=eyes_of_the_eagle_2
+trinket1=gaze_of_the_alnseer,id=249343,bonus_id=13654
+trinket2=light_company_guidon,id=249344,bonus_id=13654
+main_hand=bellamys_final_judgement,id=249277,bonus_id=13654,enchant_id=3368
+
+### Gear from Bags
+#
+# Spare Ring
+# finger1=,id=193708,bonus_id=6935/13355/13468/13469
+
+### Additional Character Info
+#
+# upgrade_currencies=c:3008:0/c:3028:100
+#
+# Checksum: 5fa2c1e0

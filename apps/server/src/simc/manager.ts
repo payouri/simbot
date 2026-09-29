@@ -28,10 +28,17 @@ export function createSimcManager(deps: SimcManagerDeps) {
       [CURRENT_KEY, tag],
     );
 
+  const current = async () => {
+    const tag = currentTag();
+    return tag ? await readInstalledBuild(dataDir, tag) : null;
+  };
+
   return {
+    /** The Current SimC Build, or null when none is installed. */
+    current,
+
     async status(): Promise<SimcStatusResponse> {
-      const tag = currentTag();
-      return { current: tag ? await readInstalledBuild(dataDir, tag) : null, install };
+      return { current: await current(), install };
     },
 
     /**

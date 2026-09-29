@@ -1,0 +1,1 @@
+Error: Setup failure: Sim setup: Option 'fight_style' with value 'NoSuchStyle': Invalid fight style 'NoSuchStyle'.

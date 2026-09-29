@@ -14,7 +14,8 @@
     "lint": "biome check .",
     "test": "bun test",
     "check": "biome check . && bun run typecheck && bun test",
-    "prototype:top-gear": "bun --cwd apps/client dev"
+    "prototype:top-gear": "bun --cwd apps/client dev",
+    "test:simc": "SIMBOT_TEST_SIMC=1 bun test apps/server/test/quick-sim.simc.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.0",

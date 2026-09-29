@@ -37,6 +37,7 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 - `packages/simc`: pure SimC library, no DB or HTTP code.
 - `bun run dev` starts the server and the Vite client. `SIMBOT_DATA_DIR` sets the data dir (default `./data`).
 - `apps/server/src/simc`: SimC Build fetch (Docker Hub registry HTTP API through an injected `fetch`), layer extraction into `<data>/simc/<tag>/` and the Current SimC Build. `createApp(config, { fetch })` does not touch the network; `main.ts` calls `app.boot()`, which installs the latest nightly when there is no Current SimC Build.
+- `apps/server/test`: seam-1 tests drive `createApp` over REST with a fake `simc` (`fake-simc/fake-simc.ts`) that replays the recorded runs in `fixtures/<flow>/<scenario>/` (`stdout.txt`, `stderr.txt`, `json2.json.gz`, `exit`). `bun run test:simc` runs the same flow against a real SimC Build in `SIMBOT_DATA_DIR`; it is not part of the gate.
 - Import boundaries (`http` and `runner` never import each other, `simc` has no DB or HTTP, `shared` only zod) are Biome `noRestrictedImports` overrides in `biome.json`, covered by `tests/boundaries.test.ts`.
 
 ## Verification gate
