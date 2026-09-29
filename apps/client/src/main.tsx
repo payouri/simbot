@@ -3,7 +3,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import "./index.css";
+import { LiveConnection } from "./live/live";
 import { TopGearPrototypeRoute } from "./prototype/top-gear/route";
+import { QueuePage } from "./queue/QueuePage";
 import { QuickSimPage } from "./quick-sim/QuickSimPage";
 import { SimPage } from "./quick-sim/SimPage";
 import { AppShell } from "./shell/AppShell";
@@ -16,7 +18,13 @@ const router = createBrowserRouter([
   { path: "/quick-sim", element: <QuickSimPage /> },
   { path: "/sims/:id", element: <SimPage /> },
   { path: "/prototype/top-gear", element: <TopGearPrototypeRoute /> },
-  { element: <AppShell />, children: [{ path: "/simc", element: <SimcPage /> }] },
+  {
+    element: <AppShell />,
+    children: [
+      { path: "/simc", element: <SimcPage /> },
+      { path: "/queue", element: <QueuePage /> },
+    ],
+  },
 ]);
 
 const root = document.getElementById("root");
@@ -25,6 +33,7 @@ if (!root) throw new Error("#root missing from index.html");
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <LiveConnection />
       <RouterProvider router={router} />
     </QueryClientProvider>
   </StrictMode>,

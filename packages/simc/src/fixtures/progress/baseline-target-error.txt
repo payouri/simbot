@@ -1,0 +1,9 @@
+SimulationCraft 1210-01 for World of Warcraft 12.1.0.69933 Live
+
+Simulating... ( iterations=1000000, threads=16, target_error=0.200, max_time=300, fight_style=Patchwerk )
+
+Baseline	1	1	100	3451	149.285	261243.629	1.402	21.870
+Baseline	1	1	400	3726	149.285	261243.629	0.338	5.109
+Baseline	1	1	3726	3726	148.900	261250.100	0.198	25.020
+Merging data from thread-1 ...
+Analyzing actor data ...

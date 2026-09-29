@@ -1,19 +1,25 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
-import type { SimcBuild, SimError } from "@simbot/shared";
+import type { SimcBuild, SimError, SimLogLevel, SimProgress } from "@simbot/shared";
 import {
   buildInput,
   classifyExit,
+  createLineSplitter,
+  createProgressParser,
   Json2FormatError,
   launchCommand,
+  type ParsedLine,
+  PRECISION_TARGET_ERROR,
   readQuickSimResult,
   stageArgs,
+  toSimProgress,
 } from "@simbot/simc";
 import type { Db } from "../db";
 import { getImportText } from "../db/imports";
 import { abandonJob, failSim, getSim, setJobPid, startSim, succeedSim } from "../db/sims";
 import type { EventBus } from "../events";
+import { createThrottle } from "./throttle";
 
 export type Launch = (buildDir: string, args: readonly string[]) => string[];
 
@@ -26,27 +32,27 @@ export type RunSimDeps = {
   /** argv for a SimC Build directory; tests swap in the fake `simc`. */
   launch?: Launch;
   log?: (message: string) => void;
+  /** Dev flag: also emit SimC's non-progress stdout as `sim.log` at `debug`. */
+  debugLogs?: boolean;
+  /** Minimum gap between `sim.progress` events. Defaults to 250 ms (about 4 per second). */
+  progressIntervalMs?: number;
 };
 
 const STDERR_KEEP = 8_000;
+const PROGRESS_INTERVAL_MS = 250;
+const LOG_LINE_MAX = 2_000;
+const STAGE = 1;
 
-/** Reads a stream to the end, keeping only its last `keep` (> 0) characters. */
-async function tail(stream: ReadableStream<Uint8Array>, keep: number): Promise<string> {
+/** Feeds a stream's decoded text to `onText` until it ends. */
+async function readText(stream: ReadableStream<Uint8Array>, onText: (text: string) => void) {
   const decoder = new TextDecoder();
-  let text = "";
-  for await (const chunk of stream) {
-    text += decoder.decode(chunk, { stream: true });
-    if (text.length > keep * 2) text = text.slice(-keep);
-  }
-  return (text + decoder.decode()).slice(-keep);
+  for await (const chunk of stream) onText(decoder.decode(chunk, { stream: true }));
+  onText(decoder.decode());
 }
 
-/** Reads a stream to the end and drops it: SimC blocks if its stdout pipe is never drained. */
-async function drainStream(stream: ReadableStream<Uint8Array>): Promise<void> {
-  for await (const _ of stream) {
-    // Progress parsing arrives with the live-progress slice.
-  }
-}
+/** SimC prefixes what it raises on stderr with its level. */
+const stderrLevel = (line: string): SimLogLevel =>
+  /^error/i.test(line) ? "error" : /^warning/i.test(line) ? "warn" : "info";
 
 const readOrNull = (path: string) => readFile(path, "utf8").catch(() => null);
 
@@ -59,10 +65,20 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
   const { db, dataDir, bus, launch = launchCommand, log = console.error } = deps;
   const sim = getSim(db, job.simId);
   const tmp = join(dataDir, "tmp", String(job.id));
+  const progress = createThrottle<SimProgress>(
+    deps.progressIntervalMs ?? PROGRESS_INTERVAL_MS,
+    (p) => bus.emit({ type: "sim.progress", ...p }),
+  );
 
+  /** A Sim reached a terminal state: tell clients, and that the Queue shrank. */
+  const finished = (status: "succeeded" | "failed") => {
+    bus.emit({ type: "sim.status", simId: job.simId, status });
+    bus.emit({ type: "sim.finished", simId: job.simId, status });
+    bus.emit({ type: "queue.changed" });
+  };
   const fail = (error: SimError) => {
     failSim(db, job.id, job.simId, error);
-    bus.emit({ type: "sim.status", simId: job.simId, status: "failed" });
+    finished("failed");
   };
 
   if (sim?.status !== "queued") {
@@ -79,6 +95,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       return;
     }
     bus.emit({ type: "sim.status", simId: sim.id, status: "running" });
+    bus.emit({ type: "queue.changed" });
     if (!build) {
       return fail({ kind: "no_simc_build", message: "No SimC Build is installed." });
     }
@@ -110,12 +127,40 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       });
     }
     setJobPid(db, job.id, proc.pid);
+    bus.emit({ type: "sim.stage_started", simId: sim.id, stage: STAGE });
 
-    const [, stderr, exitCode] = await Promise.all([
-      drainStream(proc.stdout),
-      tail(proc.stderr, STDERR_KEEP),
+    const emitLog = (level: SimLogLevel, message: string) =>
+      bus.emit({ type: "sim.log", simId: sim.id, level, message: message.slice(0, LOG_LINE_MAX) });
+    const targetErrorPct = PRECISION_TARGET_ERROR[sim.settings.precision];
+    const onLines = (lines: ParsedLine[]) => {
+      for (const line of lines) {
+        if (line.kind === "text") {
+          if (deps.debugLogs) emitLog("debug", line.text);
+        } else {
+          progress.push(toSimProgress(line, { simId: sim.id, stage: STAGE, targetErrorPct }));
+        }
+      }
+    };
+    // Both pipes are always drained: SimC blocks once a pipe fills.
+    const stdoutParser = createProgressParser();
+    const stderrLines = createLineSplitter();
+    let stderr = "";
+    const onStderrLines = (lines: string[]) => {
+      for (const line of lines) if (line.trim() !== "") emitLog(stderrLevel(line), line.trim());
+    };
+    const [, , exitCode] = await Promise.all([
+      readText(proc.stdout, (text) => onLines(stdoutParser.push(text))),
+      readText(proc.stderr, (text) => {
+        stderr += text;
+        if (stderr.length > STDERR_KEEP * 2) stderr = stderr.slice(-STDERR_KEEP);
+        onStderrLines(stderrLines.push(text));
+      }),
       proc.exited,
     ]);
+    onLines(stdoutParser.flush());
+    onStderrLines(stderrLines.flush());
+    progress.flush();
+    stderr = stderr.slice(-STDERR_KEEP);
     if (exitCode !== 0) return fail(classifyExit(proc.signalCode ? null : exitCode, stderr));
 
     const json2Text = await readOrNull(json2Path);
@@ -125,8 +170,9 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       await mkdir(simDir, { recursive: true });
       await writeFile(join(simDir, "stage-1.json.gz"), gzipSync(json2Text ?? ""));
       await rename(inputPath, join(simDir, "stage-1.simc"));
-      succeedSim(db, job.id, sim.id, 1, dps);
-      bus.emit({ type: "sim.status", simId: sim.id, status: "succeeded" });
+      succeedSim(db, job.id, sim.id, STAGE, dps);
+      bus.emit({ type: "sim.stage_finished", simId: sim.id, stage: STAGE });
+      finished("succeeded");
     } catch (err) {
       if (err instanceof Json2FormatError) {
         return fail({ kind: "output_format_changed", message: err.message });
@@ -145,6 +191,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       });
     }
   } finally {
+    progress.cancel();
     await rm(tmp, { recursive: true, force: true }).catch(() => {});
   }
 }

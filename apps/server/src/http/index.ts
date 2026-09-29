@@ -4,11 +4,15 @@ import {
   type AppEvent,
   appEventSchema,
   healthResponseSchema,
+  queueResponseSchema,
   type SimcStatusResponse,
+  type SnapshotEvent,
   simcStatusResponseSchema,
 } from "@simbot/shared";
 import type { Db } from "../db";
+import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
+import type { LiveTracker } from "../live";
 import { postImport } from "./imports";
 import { getResults, getSimById, postQueueSim, postSim } from "./sims";
 import { apiError, json } from "./util";
@@ -17,6 +21,7 @@ export type HttpDeps = {
   db: Db;
   clientDir: string;
   bus: EventBus;
+  live: LiveTracker;
   simc: {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */
@@ -42,8 +47,15 @@ function serveClient(clientDir: string, pathname: string): Response {
   return new Response("Client not built. Run `bun run build`.", { status: 404 });
 }
 
-/** The global SSE stream: every client-facing EventBus event, framed as `event: <type>` + JSON `data`. */
-function eventStream(events: EventBus, signal: AbortSignal): Response {
+/**
+ * The global SSE stream: a `snapshot` on connect, then every client-facing EventBus event,
+ * framed as `event: <type>` + JSON `data`.
+ */
+function eventStream(
+  events: EventBus,
+  snapshot: () => SnapshotEvent,
+  signal: AbortSignal,
+): Response {
   const encoder = new TextEncoder();
   let unsubscribe = () => {};
   const stream = new ReadableStream<Uint8Array>({
@@ -55,14 +67,17 @@ function eventStream(events: EventBus, signal: AbortSignal): Response {
           unsubscribe();
         }
       };
-      send(": connected\n\n");
-      unsubscribe = events.on((event) => {
+      const sendEvent = (event: unknown) => {
         // Only events in the shared client contract go out; server-internal ones stay in-process.
         const parsed = appEventSchema.safeParse(event);
         if (!parsed.success) return;
         const valid: AppEvent = parsed.data;
         send(`event: ${valid.type}\ndata: ${JSON.stringify(valid)}\n\n`);
-      });
+      };
+      send(": connected\n\n");
+      // Synchronous from snapshot to subscribe, so no event falls between them.
+      sendEvent(snapshot());
+      unsubscribe = events.on(sendEvent);
       signal.addEventListener("abort", () => {
         unsubscribe();
         try {
@@ -84,7 +99,23 @@ function eventStream(events: EventBus, signal: AbortSignal): Response {
 }
 
 /** Builds the request handler: `/api/*` REST routes, everything else is the built client. */
-export function createHttpHandler({ db, bus, clientDir, simc }: HttpDeps) {
+export function createHttpHandler({ db, bus, live, clientDir, simc }: HttpDeps) {
+  const snapshot = (): SnapshotEvent => {
+    const queue = getQueue(db);
+    const running = queue.find((e) => e.status === "running");
+    const state = running ? live.get(running.simId) : null;
+    return {
+      type: "snapshot",
+      queue,
+      running: running
+        ? {
+            simId: running.simId,
+            stage: state?.stage ?? null,
+            progress: state?.progress ?? null,
+          }
+        : null,
+    };
+  };
   return async (req: Request): Promise<Response> => {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/health") {
@@ -102,7 +133,11 @@ export function createHttpHandler({ db, bus, clientDir, simc }: HttpDeps) {
     }
     if (pathname === "/api/events") {
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
-      return eventStream(bus, req.signal);
+      return eventStream(bus, snapshot, req.signal);
+    }
+    if (pathname === "/api/queue") {
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return json(queueResponseSchema.parse({ entries: getQueue(db) }));
     }
     if (pathname === "/api/imports") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);

@@ -2,6 +2,7 @@ import type { Config } from "./config";
 import { openDb } from "./db";
 import { createEventBus } from "./events";
 import { createHttpHandler } from "./http";
+import { createLiveTracker } from "./live";
 import { startRunner } from "./runner";
 import type { Launch } from "./runner/run-sim";
 import { createSimcManager } from "./simc/manager";
@@ -18,12 +19,17 @@ export type AppDeps = {
   /** Tag of the Seed SimC Build shipped in the app, if any. */
   seedTag?: () => string | null;
   now?: () => Date;
+  /** Dev flag: SimC's non-progress stdout also goes out as `sim.log` at `debug`. */
+  debugLogs?: boolean;
+  /** Minimum gap between `sim.progress` events (default 250 ms). Tests shrink it. */
+  progressIntervalMs?: number;
 };
 
 /** The server seam: everything the process does, minus binding a port and the boot fetch. */
 export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: AppDeps = {}) {
   const db = openDb(config.dataDir);
   const bus = createEventBus();
+  const live = createLiveTracker(bus);
   const simc = createSimcManager({
     db,
     dataDir: config.dataDir,
@@ -41,10 +47,13 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     currentBuild: () => simc.current(),
     launch: deps.launch,
     log: deps.log,
+    debugLogs: deps.debugLogs,
+    progressIntervalMs: deps.progressIntervalMs,
   });
   const handle = createHttpHandler({
     db,
     bus,
+    live,
     clientDir: config.clientDir,
     simc: { status: () => simc.status(), check: () => simc.check() },
   });

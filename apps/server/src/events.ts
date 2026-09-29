@@ -1,11 +1,9 @@
 import type { AppEvent as ClientEvent, SimStatus } from "@simbot/shared";
 
 export type AppEvent =
-  /** The Queue gained a Job; the runner wakes up. */
-  | { type: "queue.changed" }
   /** A Sim moved to a new status. */
   | { type: "sim.status"; simId: number; status: SimStatus }
-  /** Events the global `GET /api/events` SSE stream carries, per the shared schema. */
+  /** Events the global `GET /api/events` SSE stream carries, per the shared schema. `queue.changed` also wakes the runner. */
   | ClientEvent;
 
 /**

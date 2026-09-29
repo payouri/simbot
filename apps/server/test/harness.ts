@@ -3,6 +3,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
 import {
+  type AppEvent,
+  appEventSchema,
   type Import,
   importSchema,
   type Sim,
@@ -23,14 +25,20 @@ export const BUILD_TAG = "1210-2026-09-29-d08a1c3";
 
 /** Launches the fake `simc` replaying the scenario directory `scenario()` names at launch time. */
 export const fakeLaunch =
-  (scenario: () => string, report: () => string | undefined = () => undefined): Launch =>
+  (
+    scenario: () => string,
+    report: () => string | undefined = () => undefined,
+    gate: () => string | undefined = () => undefined,
+  ): Launch =>
   (_buildDir, args) => {
     const reportPath = report();
+    const gatePath = gate();
     return [
       process.execPath,
       FAKE_SIMC,
       `--scenario=${scenario()}`,
       ...(reportPath ? [`--report=${reportPath}`] : []),
+      ...(gatePath ? [`--gate=${gatePath}`] : []),
       ...args,
     ];
   };
@@ -78,12 +86,24 @@ export function installFakeBuild(dataDir: string, app: ReturnType<typeof createA
 export type Harness = ReturnType<typeof makeHarness>;
 
 /** A temp data dir plus an app over it, with typed helpers for the Quick Sim REST calls. */
-export function makeHarness(opts: { launch?: Launch; withBuild?: boolean } = {}) {
+export function makeHarness(
+  opts: {
+    launch?: Launch;
+    withBuild?: boolean;
+    debugLogs?: boolean;
+    progressIntervalMs?: number;
+  } = {},
+) {
   const root = mkdtempSync(join(tmpdir(), "simbot-quick-"));
   const dataDir = join(root, "data");
   const app = createApp(
     { dataDir, clientDir: join(root, "client") },
-    { launch: opts.launch, log: () => {} },
+    {
+      launch: opts.launch,
+      log: () => {},
+      debugLogs: opts.debugLogs,
+      progressIntervalMs: opts.progressIntervalMs,
+    },
   );
   if (opts.withBuild ?? true) installFakeBuild(dataDir, app, BUILD_TAG);
 
@@ -127,6 +147,49 @@ export function makeHarness(opts: { launch?: Launch; withBuild?: boolean } = {})
       await this.queue(draft.id);
       await app.idle();
       return this.sim(draft.id);
+    },
+    /** Connects to `GET /api/events` and collects every event, validated against the shared union. */
+    async subscribe() {
+      const abort = new AbortController();
+      const res = await app.fetch(
+        new Request("http://simbot.test/api/events", { signal: abort.signal }),
+      );
+      const events: AppEvent[] = [];
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      const pump = (async () => {
+        try {
+          for (;;) {
+            const chunk = await reader?.read();
+            if (!chunk || chunk.done) return;
+            buffer += decoder.decode(chunk.value, { stream: true });
+            for (let end = buffer.indexOf("\n\n"); end >= 0; end = buffer.indexOf("\n\n")) {
+              const frame = buffer.slice(0, end);
+              buffer = buffer.slice(end + 2);
+              const data = frame.split("\n").find((l) => l.startsWith("data: "));
+              if (data) events.push(appEventSchema.parse(JSON.parse(data.slice(6))));
+            }
+          }
+        } catch {
+          // Aborted.
+        }
+      })();
+      return {
+        events,
+        /** Polls until an event matches; fails the test after `ms`. */
+        async waitFor(match: (e: AppEvent) => boolean, ms = 5000) {
+          const stop = Date.now() + ms;
+          while (!events.some(match)) {
+            if (Date.now() > stop) throw new Error(`timed out; got ${JSON.stringify(events)}`);
+            await new Promise((r) => setTimeout(r, 10));
+          }
+        },
+        close() {
+          abort.abort();
+          void pump;
+        },
+      };
     },
     simFile: (simId: number, name: string) => join(dataDir, "sims", String(simId), name),
     readGz: (path: string) => gunzipSync(readFileSync(path)).toString("utf8"),

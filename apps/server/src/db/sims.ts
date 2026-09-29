@@ -4,6 +4,7 @@ import {
   characterSnapshotSchema,
   type DpsSummary,
   defaultSimSettings,
+  type QueueEntry,
   type Sim,
   type SimError,
   type SimResultsResponse,
@@ -265,4 +266,37 @@ export function getSimResults(db: Db, simId: number): SimResultsResponse | null 
       survived: r.survived === 1,
     })),
   };
+}
+
+/** The running Job first, then the waiting ones in the order they will run. */
+export function getQueue(db: Db): QueueEntry[] {
+  const rows = db
+    .query<
+      {
+        job_id: number;
+        sim_id: number;
+        job_status: "queued" | "running";
+        kind: "quick";
+        character_snapshot: string;
+        queued_at: string | null;
+        started_at: string | null;
+      },
+      []
+    >(
+      `SELECT j.id AS job_id, j.sim_id, j.status AS job_status, s.kind, s.character_snapshot,
+              s.queued_at, j.started_at
+       FROM jobs j JOIN sims s ON s.id = j.sim_id
+       WHERE j.kind = 'sim' AND j.status IN ('queued', 'running')
+       ORDER BY j.status = 'running' DESC, j.id`,
+    )
+    .all();
+  return rows.map((r) => ({
+    jobId: r.job_id,
+    simId: r.sim_id,
+    kind: r.kind,
+    status: r.job_status,
+    character: characterSnapshotSchema.parse(JSON.parse(r.character_snapshot)),
+    queuedAt: r.queued_at,
+    startedAt: r.started_at,
+  }));
 }

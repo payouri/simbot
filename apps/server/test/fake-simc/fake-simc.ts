@@ -10,6 +10,9 @@
  *                  SimC wrote no report
  *   exit           exit code (default 0)
  *
+ * If `--gate=<file>` is given, it writes stdout and stderr, then waits until that file exists
+ * before writing the report and exiting, so a test can observe a Sim mid-run.
+ *
  * If `--report=<file>` is given (also before the SimC arguments), it also records how it was launched there (pid, process
  * group, argv, and the input file's text), so tests can check what the runner did.
  */
@@ -25,7 +28,8 @@ if (!scenarioArg) {
 }
 const scenario = scenarioArg.slice("--scenario=".length);
 const reportArg = args.find((a) => a.startsWith("--report="));
-const simcArgs = args.filter((a) => a !== scenarioArg && a !== reportArg);
+const gateArg = args.find((a) => a.startsWith("--gate="));
+const simcArgs = args.filter((a) => a !== scenarioArg && a !== reportArg && a !== gateArg);
 const [input, ...options] = simcArgs;
 const option = (name: string) =>
   options.find((o) => o.startsWith(`${name}=`))?.slice(name.length + 1);
@@ -57,8 +61,13 @@ const read = (name: string) => {
   return existsSync(path) ? readFileSync(path) : null;
 };
 
-process.stdout.write(read("stdout.txt") ?? "");
-process.stderr.write(read("stderr.txt") ?? "");
+const flush = (stream: NodeJS.WriteStream, data: Buffer | string) =>
+  new Promise<void>((done) => void stream.write(data, () => done()));
+await flush(process.stdout, read("stdout.txt") ?? "");
+await flush(process.stderr, read("stderr.txt") ?? "");
+
+const gate = gateArg?.slice("--gate=".length);
+while (gate && !existsSync(gate)) await new Promise((r) => setTimeout(r, 10));
 
 const json2Path = option("json2");
 const gz = read("json2.json.gz");

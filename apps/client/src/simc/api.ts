@@ -1,6 +1,5 @@
 import { type SimcStatusResponse, simcStatusResponseSchema } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 
 export const SIMC_KEY = ["simc"] as const;
 
@@ -27,16 +26,4 @@ export function useCheckSimcNow() {
       readStatus(await fetch("/api/simc/check", { method: "POST" }), "POST /api/simc/check"),
     onSuccess: (status) => client.setQueryData(SIMC_KEY, status),
   });
-}
-
-/** Keeps the SimC status live: refetches whenever the server says it changed. */
-export function useSimcLiveUpdates() {
-  const client = useQueryClient();
-  useEffect(() => {
-    if (typeof EventSource === "undefined") return;
-    const source = new EventSource("/api/events");
-    const refresh = () => void client.invalidateQueries({ queryKey: SIMC_KEY });
-    source.addEventListener("simc.status_changed", refresh);
-    return () => source.close();
-  }, [client]);
 }

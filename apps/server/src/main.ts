@@ -2,7 +2,7 @@ import { createApp } from "./app";
 import { loadConfig } from "./config";
 
 const config = loadConfig();
-const app = createApp(config);
+const app = createApp(config, { debugLogs: process.env.SIMBOT_DEBUG_LOGS === "1" });
 const server = Bun.serve({ port: config.port, fetch: app.fetch });
 void app.boot();
 console.log(`simbot listening on ${server.url} (data: ${config.dataDir})`);

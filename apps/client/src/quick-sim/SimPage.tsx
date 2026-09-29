@@ -1,6 +1,8 @@
 import type { SimStatus } from "@simbot/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
+import { useRunningSim } from "../live/live";
+import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { getResults, getSim } from "./api";
 
 const STATUS_LABEL: Record<SimStatus, string> = {
@@ -29,13 +31,19 @@ export function SimPage() {
     queryFn: () => getResults(id),
     enabled: succeeded,
   });
+  const live = useRunningSim(id);
   const dps = results.data?.results.find((r) => r.isBaseline)?.dps;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 md:px-6">
-      <Link to="/quick-sim" className="text-[12.5px] text-muted hover:text-fg">
-        New Quick Sim
-      </Link>
+      <div className="flex gap-4 text-[12.5px]">
+        <Link to="/quick-sim" className="text-muted hover:text-fg">
+          New Quick Sim
+        </Link>
+        <Link to="/queue" className="text-muted hover:text-fg">
+          Queue
+        </Link>
+      </div>
       {sim.isPending && <p className="mt-6 text-muted">Loading…</p>}
       {sim.isError && <p className="mt-6 text-loss">Could not load this Sim.</p>}
       {sim.data && (
@@ -49,6 +57,16 @@ export function SimPage() {
 
           <section className="mt-6 rounded-[10px] border border-line bg-panel/60 p-5">
             <p className="text-[12.5px] text-muted">{STATUS_LABEL[sim.data.status]}</p>
+            {sim.data.status === "running" &&
+              (live?.progress ? (
+                <div className="mt-3">
+                  <ProgressReadout progress={live.progress} stage={live.stage} />
+                </div>
+              ) : (
+                <div className="mt-3">
+                  <WarmingUp />
+                </div>
+              ))}
             {dps && (
               <p className="num mt-2 text-[26px] font-semibold leading-none tracking-tight">
                 {dpsFormat.format(dps.mean)}

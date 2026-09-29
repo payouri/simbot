@@ -6,6 +6,17 @@ export { type Json2BuildInfo, Json2FormatError, readBuildInfo } from "./json2";
 export * from "./meta";
 export { probeBuild } from "./probe";
 export {
+  createLineSplitter,
+  createProgressParser,
+  type IterationProgress,
+  type ParsedLine,
+  type ProfilesetAggregate,
+  type ProgressLine,
+  parseDuration,
+  parseProgressLine,
+  toSimProgress,
+} from "./progress";
+export {
   buildInput,
   classifyExit,
   PRECISION_TARGET_ERROR,
