@@ -1,0 +1,600 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-29T19:02:55+00:00",
+  "title": "Design System: simbot",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Graphite Ground",
+        "canonical": "oklch(0.175 0.008 250)",
+        "light": "oklch(0.975 0.004 250)",
+        "cssVar": "--bg",
+        "tonalRamp": [
+          "oklch(0.15 0.008 250)",
+          "oklch(0.26 0.008 250)",
+          "oklch(0.37 0.008 250)",
+          "oklch(0.48 0.008 250)",
+          "oklch(0.6 0.008 250)",
+          "oklch(0.72 0.008 250)",
+          "oklch(0.84 0.008 250)",
+          "oklch(0.95 0.008 250)"
+        ]
+      },
+      "bg-sunk": {
+        "role": "neutral",
+        "displayName": "Sunk Graphite",
+        "canonical": "oklch(0.145 0.008 250)",
+        "light": "oklch(0.945 0.006 250)",
+        "cssVar": "--bg-sunk",
+        "tonalRamp": [
+          "oklch(0.15 0.008 250)",
+          "oklch(0.26 0.008 250)",
+          "oklch(0.37 0.008 250)",
+          "oklch(0.48 0.008 250)",
+          "oklch(0.6 0.008 250)",
+          "oklch(0.72 0.008 250)",
+          "oklch(0.84 0.008 250)",
+          "oklch(0.95 0.008 250)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Graphite",
+        "canonical": "oklch(0.205 0.009 250)",
+        "light": "oklch(0.995 0.002 250)",
+        "cssVar": "--panel",
+        "tonalRamp": [
+          "oklch(0.15 0.009 250)",
+          "oklch(0.26 0.009 250)",
+          "oklch(0.37 0.009 250)",
+          "oklch(0.48 0.009 250)",
+          "oklch(0.6 0.009 250)",
+          "oklch(0.72 0.009 250)",
+          "oklch(0.84 0.009 250)",
+          "oklch(0.95 0.009 250)"
+        ]
+      },
+      "panel-raised": {
+        "role": "neutral",
+        "displayName": "Raised Graphite",
+        "canonical": "oklch(0.235 0.01 250)",
+        "light": "oklch(1 0 0)",
+        "cssVar": "--panel-raised",
+        "tonalRamp": [
+          "oklch(0.15 0.01 250)",
+          "oklch(0.26 0.01 250)",
+          "oklch(0.37 0.01 250)",
+          "oklch(0.48 0.01 250)",
+          "oklch(0.6 0.01 250)",
+          "oklch(0.72 0.01 250)",
+          "oklch(0.84 0.01 250)",
+          "oklch(0.95 0.01 250)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(0.29 0.01 250)",
+        "light": "oklch(0.89 0.008 250)",
+        "cssVar": "--line",
+        "tonalRamp": [
+          "oklch(0.15 0.01 250)",
+          "oklch(0.26 0.01 250)",
+          "oklch(0.37 0.01 250)",
+          "oklch(0.48 0.01 250)",
+          "oklch(0.6 0.01 250)",
+          "oklch(0.72 0.01 250)",
+          "oklch(0.84 0.01 250)",
+          "oklch(0.95 0.01 250)"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "oklch(0.38 0.012 250)",
+        "light": "oklch(0.8 0.012 250)",
+        "cssVar": "--line-strong",
+        "tonalRamp": [
+          "oklch(0.15 0.012 250)",
+          "oklch(0.26 0.012 250)",
+          "oklch(0.37 0.012 250)",
+          "oklch(0.48 0.012 250)",
+          "oklch(0.6 0.012 250)",
+          "oklch(0.72 0.012 250)",
+          "oklch(0.84 0.012 250)",
+          "oklch(0.95 0.012 250)"
+        ]
+      },
+      "fg": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(0.94 0.006 250)",
+        "light": "oklch(0.22 0.012 250)",
+        "cssVar": "--fg",
+        "tonalRamp": [
+          "oklch(0.15 0.006 250)",
+          "oklch(0.26 0.006 250)",
+          "oklch(0.37 0.006 250)",
+          "oklch(0.48 0.006 250)",
+          "oklch(0.6 0.006 250)",
+          "oklch(0.72 0.006 250)",
+          "oklch(0.84 0.006 250)",
+          "oklch(0.95 0.006 250)"
+        ]
+      },
+      "fg-muted": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "oklch(0.74 0.012 250)",
+        "light": "oklch(0.44 0.014 250)",
+        "cssVar": "--fg-muted",
+        "tonalRamp": [
+          "oklch(0.15 0.012 250)",
+          "oklch(0.26 0.012 250)",
+          "oklch(0.37 0.012 250)",
+          "oklch(0.48 0.012 250)",
+          "oklch(0.6 0.012 250)",
+          "oklch(0.72 0.012 250)",
+          "oklch(0.84 0.012 250)",
+          "oklch(0.95 0.012 250)"
+        ]
+      },
+      "fg-faint": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "oklch(0.6 0.014 250)",
+        "light": "oklch(0.54 0.014 250)",
+        "cssVar": "--fg-faint",
+        "tonalRamp": [
+          "oklch(0.15 0.014 250)",
+          "oklch(0.26 0.014 250)",
+          "oklch(0.37 0.014 250)",
+          "oklch(0.48 0.014 250)",
+          "oklch(0.6 0.014 250)",
+          "oklch(0.72 0.014 250)",
+          "oklch(0.84 0.014 250)",
+          "oklch(0.95 0.014 250)"
+        ]
+      },
+      "action": {
+        "role": "primary",
+        "displayName": "Instrument Teal",
+        "canonical": "oklch(0.8 0.115 200)",
+        "light": "oklch(0.52 0.1 210)",
+        "cssVar": "--action",
+        "tonalRamp": [
+          "oklch(0.15 0.115 200)",
+          "oklch(0.26 0.115 200)",
+          "oklch(0.37 0.115 200)",
+          "oklch(0.48 0.115 200)",
+          "oklch(0.6 0.115 200)",
+          "oklch(0.72 0.115 200)",
+          "oklch(0.84 0.115 200)",
+          "oklch(0.95 0.115 200)"
+        ]
+      },
+      "action-strong": {
+        "role": "primary",
+        "displayName": "Instrument Teal, Hover",
+        "canonical": "oklch(0.86 0.12 200)",
+        "light": "oklch(0.45 0.1 210)",
+        "cssVar": "--action-strong",
+        "tonalRamp": [
+          "oklch(0.15 0.12 200)",
+          "oklch(0.26 0.12 200)",
+          "oklch(0.37 0.12 200)",
+          "oklch(0.48 0.12 200)",
+          "oklch(0.6 0.12 200)",
+          "oklch(0.72 0.12 200)",
+          "oklch(0.84 0.12 200)",
+          "oklch(0.95 0.12 200)"
+        ]
+      },
+      "action-ink": {
+        "role": "primary",
+        "displayName": "Teal Ink",
+        "canonical": "oklch(0.2 0.04 210)",
+        "light": "oklch(0.99 0.01 200)",
+        "cssVar": "--action-ink",
+        "tonalRamp": [
+          "oklch(0.15 0.04 210)",
+          "oklch(0.26 0.04 210)",
+          "oklch(0.37 0.04 210)",
+          "oklch(0.48 0.04 210)",
+          "oklch(0.6 0.04 210)",
+          "oklch(0.72 0.04 210)",
+          "oklch(0.84 0.04 210)",
+          "oklch(0.95 0.04 210)"
+        ]
+      },
+      "action-wash": {
+        "role": "primary",
+        "displayName": "Teal Wash",
+        "canonical": "oklch(0.8 0.115 200 / 0.12)",
+        "light": "oklch(0.52 0.1 210 / 0.1)",
+        "cssVar": "--action-wash"
+      },
+      "gain": {
+        "role": "secondary",
+        "displayName": "Gain Lime-Amber",
+        "canonical": "oklch(0.86 0.16 112)",
+        "light": "oklch(0.52 0.13 118)",
+        "cssVar": "--gain",
+        "tonalRamp": [
+          "oklch(0.15 0.16 112)",
+          "oklch(0.26 0.16 112)",
+          "oklch(0.37 0.16 112)",
+          "oklch(0.48 0.16 112)",
+          "oklch(0.6 0.16 112)",
+          "oklch(0.72 0.16 112)",
+          "oklch(0.84 0.16 112)",
+          "oklch(0.95 0.16 112)"
+        ]
+      },
+      "gain-wash": {
+        "role": "secondary",
+        "displayName": "Gain Wash",
+        "canonical": "oklch(0.86 0.16 112 / 0.14)",
+        "light": "oklch(0.7 0.16 115 / 0.2)",
+        "cssVar": "--gain-wash"
+      },
+      "loss": {
+        "role": "tertiary",
+        "displayName": "Loss Coral",
+        "canonical": "oklch(0.73 0.15 30)",
+        "light": "oklch(0.55 0.17 30)",
+        "cssVar": "--loss",
+        "tonalRamp": [
+          "oklch(0.15 0.15 30)",
+          "oklch(0.26 0.15 30)",
+          "oklch(0.37 0.15 30)",
+          "oklch(0.48 0.15 30)",
+          "oklch(0.6 0.15 30)",
+          "oklch(0.72 0.15 30)",
+          "oklch(0.84 0.15 30)",
+          "oklch(0.95 0.15 30)"
+        ]
+      },
+      "loss-wash": {
+        "role": "tertiary",
+        "displayName": "Loss Wash",
+        "canonical": "oklch(0.73 0.15 30 / 0.14)",
+        "light": "oklch(0.55 0.17 30 / 0.12)",
+        "cssVar": "--loss-wash"
+      },
+      "noise": {
+        "role": "tertiary",
+        "displayName": "Noise Slate",
+        "canonical": "oklch(0.64 0.03 250)",
+        "light": "oklch(0.56 0.03 250)",
+        "cssVar": "--noise",
+        "tonalRamp": [
+          "oklch(0.15 0.03 250)",
+          "oklch(0.26 0.03 250)",
+          "oklch(0.37 0.03 250)",
+          "oklch(0.48 0.03 250)",
+          "oklch(0.6 0.03 250)",
+          "oklch(0.72 0.03 250)",
+          "oklch(0.84 0.03 250)",
+          "oklch(0.95 0.03 250)"
+        ]
+      },
+      "noise-wash": {
+        "role": "tertiary",
+        "displayName": "Noise Wash",
+        "canonical": "oklch(0.64 0.03 250 / 0.18)",
+        "light": "oklch(0.56 0.03 250 / 0.14)",
+        "cssVar": "--noise-wash"
+      },
+      "q-poor": {
+        "role": "data",
+        "displayName": "Quality: Poor",
+        "canonical": "#9d9d9d",
+        "light": "#6f6f6f",
+        "cssVar": "--q-poor",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-common": {
+        "role": "data",
+        "displayName": "Quality: Common",
+        "canonical": "#f2f2f2",
+        "light": "#3a3a3a",
+        "cssVar": "--q-common",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-uncommon": {
+        "role": "data",
+        "displayName": "Quality: Uncommon",
+        "canonical": "#1eff00",
+        "light": "#148a00",
+        "cssVar": "--q-uncommon",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-rare": {
+        "role": "data",
+        "displayName": "Quality: Rare (border)",
+        "canonical": "#0070dd",
+        "light": "#0070dd",
+        "cssVar": "--q-rare",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-rare-text": {
+        "role": "data",
+        "displayName": "Quality: Rare (text)",
+        "canonical": "#3d9bff",
+        "light": "#005bb5",
+        "cssVar": "--q-rare-text",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-epic": {
+        "role": "data",
+        "displayName": "Quality: Epic (border)",
+        "canonical": "#a335ee",
+        "light": "#a335ee",
+        "cssVar": "--q-epic",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-epic-text": {
+        "role": "data",
+        "displayName": "Quality: Epic (text)",
+        "canonical": "#b862ff",
+        "light": "#8420c9",
+        "cssVar": "--q-epic-text",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      },
+      "q-legendary": {
+        "role": "data",
+        "displayName": "Quality: Legendary",
+        "canonical": "#ff8000",
+        "light": "#c25e00",
+        "cssVar": "--q-legendary",
+        "note": "WoW quality colour. Data only: item names, icon borders, item glow."
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The single page title on the paste step."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Character name and verdict headline."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Tray, table and ranking headers."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Item names, descriptions, settings line. Document base is 14px."
+      },
+      "body-small": {
+        "displayName": "Body Small",
+        "purpose": "Secondary copy, panel buttons, notices, table cells."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Slot names, stat lines, meta. Sentence case, faint."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Combination count beside Run and selected delta on the doll (26 to 28px)."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Every numeral, id, ilvl and log line; tabular Geist Mono."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-pop",
+        "value": "0 8px 24px -8px oklch(0.05 0.01 250 / 0.7), 0 2px 6px -2px oklch(0.05 0.01 250 / 0.5)",
+        "light": "0 8px 24px -10px oklch(0.3 0.02 250 / 0.25), 0 2px 6px -2px oklch(0.3 0.02 250 / 0.15)",
+        "purpose": "The inline slot tray only."
+      },
+      {
+        "name": "quality-glow",
+        "value": "0 0 0 1px Q, 0 6px 18px -4px color-mix(in oklch, Q 70%, transparent), 0 0 28px -6px color-mix(in oklch, Q 55%, transparent)",
+        "purpose": "Changed items in the displayed combination, Q = the item's quality colour. Data signal, not elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out-quart",
+        "value": "cubic-bezier(0.25, 1, 0.5, 1)",
+        "purpose": "Icon glow and opacity transitions."
+      },
+      {
+        "name": "duration-state",
+        "value": "150ms",
+        "purpose": "Colour and background changes on hover, toggle and selection; progress width (linear)."
+      },
+      {
+        "name": "duration-reveal",
+        "value": "200ms",
+        "purpose": "Chevron rotation, stage row opacity."
+      },
+      {
+        "name": "duration-glow",
+        "value": "250ms",
+        "purpose": "Quality glow lighting after mount on a new combination."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "All animation and transition durations collapse under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "phone-max",
+        "value": "767px",
+        "purpose": "Sheet collapses to a two-column slot grid."
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "content-max",
+        "value": "1440px"
+      }
+    ],
+    "theming": {
+      "default": "dark",
+      "light": "prefers-color-scheme: light, unless [data-theme=dark]; same role names translated",
+      "source": "apps/web/src/index.css"
+    }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one teal action per view: Run Top Gear, Read string.",
+      "html": "<button class=\"ds-btn-primary\"><svg width=\"15\" height=\"15\" viewBox=\"0 0 24 24\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M6 3l14 9-14 9z\"/></svg>Run Top Gear</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 20px;border:0;border-radius:7px;background:var(--action);color:var(--action-ink);font:600 14px/1 Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms}.ds-btn-primary:hover{background:var(--action-strong)}.ds-btn-primary:focus-visible{outline:2px solid var(--action);outline-offset:2px}.ds-btn-primary:disabled{background:var(--panel-raised);color:var(--fg-faint);cursor:not-allowed}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Outlined panel action: Stop and keep results, Edit and re-run, Retry.",
+      "html": "<button class=\"ds-btn-secondary\">Edit and re-run</button>",
+      "css": ".ds-btn-secondary{padding:6px 12px;border:1px solid var(--line-strong);border-radius:6px;background:transparent;color:var(--fg);font:500 12.5px/1.2 Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:background-color 150ms}.ds-btn-secondary:hover{background:var(--panel-raised)}.ds-btn-secondary:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Muted text action: New import, Use sample, Keep running.",
+      "html": "<button class=\"ds-btn-ghost\">New import</button>",
+      "css": ".ds-btn-ghost{padding:6px 10px;border:0;border-radius:6px;background:transparent;color:var(--fg-muted);font:400 12.5px/1.2 Geist,ui-sans-serif,system-ui,sans-serif;cursor:pointer;transition:color 150ms,background-color 150ms}.ds-btn-ghost:hover{color:var(--fg);background:var(--panel)}.ds-btn-ghost:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Settings Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Compact mono number field in the settings form.",
+      "html": "<label class=\"ds-field\"><span>Duration (s)</span><input class=\"ds-input\" type=\"number\" value=\"300\"></label>",
+      "css": ".ds-field{display:inline-flex;flex-direction:column;gap:6px;font:400 12.5px Geist,ui-sans-serif,sans-serif;color:var(--fg-faint)}.ds-input{height:28px;width:80px;padding:0 8px;border:1px solid var(--line);border-radius:5px;background:var(--panel);color:var(--fg);font:400 12.5px 'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;outline:none;caret-color:var(--action)}.ds-input:focus{border-color:var(--action)}"
+    },
+    {
+      "name": "Step Trail",
+      "kind": "nav",
+      "description": "Top bar progress: current on raised graphite, slash separators.",
+      "html": "<ol class=\"ds-steps\"><li>Import</li><li class=\"sep\">/</li><li>Setup</li><li class=\"sep\">/</li><li class=\"on\" aria-current=\"step\">Run</li><li class=\"sep\">/</li><li class=\"future\">Results</li></ol>",
+      "css": ".ds-steps{display:flex;align-items:center;gap:4px;margin:0;padding:0;list-style:none;font:400 12.5px Geist,ui-sans-serif,sans-serif;color:var(--fg-muted)}.ds-steps li{padding:2px 8px;border-radius:5px}.ds-steps .sep{padding:0;color:var(--line-strong)}.ds-steps .on{background:var(--panel-raised);color:var(--fg)}.ds-steps .future{color:var(--fg-faint)}"
+    },
+    {
+      "name": "Tags",
+      "kind": "chip",
+      "refersTo": "tag",
+      "description": "18px status chips in neutral and role tones.",
+      "html": "<span class=\"ds-tag\">Equipped</span> <span class=\"ds-tag ds-tag-action\">Vault</span> <span class=\"ds-tag ds-tag-gain\">Upgrade</span> <span class=\"ds-tag ds-tag-loss\">Provisional</span> <span class=\"ds-tag ds-tag-noise\">S2</span>",
+      "css": ".ds-tag{display:inline-flex;align-items:center;height:18px;padding:0 6px;border:1px solid var(--line);border-radius:4px;color:var(--fg-muted);font:500 11px/1 Geist,ui-sans-serif,sans-serif;white-space:nowrap}.ds-tag-action{border-color:color-mix(in oklch,var(--action) 40%,transparent);color:var(--action);background:var(--action-wash)}.ds-tag-gain{border-color:color-mix(in oklch,var(--gain) 40%,transparent);color:var(--gain);background:var(--gain-wash)}.ds-tag-loss{border-color:color-mix(in oklch,var(--loss) 40%,transparent);color:var(--loss);background:var(--loss-wash)}.ds-tag-noise{border-color:color-mix(in oklch,var(--noise) 40%,transparent);background:var(--noise-wash)}"
+    },
+    {
+      "name": "Segmented Choice",
+      "kind": "chip",
+      "refersTo": "segment-on",
+      "description": "Fight style and precision pickers.",
+      "html": "<div class=\"ds-seg\"><button class=\"on\">Patchwerk</button><button>Hectic Add Cleave</button><button>Dungeon Slice</button></div>",
+      "css": ".ds-seg{display:flex;gap:4px}.ds-seg button{padding:4px 10px;border:0;border-radius:5px;background:transparent;color:var(--fg-muted);font:400 12.5px Geist,ui-sans-serif,sans-serif;cursor:pointer;transition:color 150ms,background-color 150ms}.ds-seg button:hover{color:var(--fg)}.ds-seg button.on{background:var(--panel-raised);color:var(--fg);box-shadow:0 0 0 1px var(--line-strong)}.ds-seg button:focus-visible{outline:2px solid var(--action);outline-offset:2px}"
+    },
+    {
+      "name": "Slot Tile with Quality Glow",
+      "kind": "custom",
+      "refersTo": "slot-tile",
+      "description": "A character-sheet slot; the icon glows in its quality colour when the item changed in the displayed combination.",
+      "html": "<div class=\"ds-slot\"><span class=\"ds-icon ds-glow\" style=\"--q:var(--q-epic)\"><span class=\"ds-ilvl\">678</span></span><span class=\"ds-slot-text\"><span class=\"ds-slot-label\">Trinket</span><span class=\"ds-slot-name\" style=\"color:var(--q-epic-text)\">Signet of the Hollow Choir</span><span class=\"ds-slot-meta\">3 of 7 candidates</span></span></div>",
+      "css": ".ds-slot{display:flex;align-items:center;gap:12px;width:248px;padding:8px 10px;border-radius:6px;transition:background-color 150ms;font-family:Geist,ui-sans-serif,sans-serif}.ds-slot:hover{background:var(--panel)}.ds-icon{position:relative;display:inline-flex;flex-shrink:0;width:48px;height:48px;border:1px solid var(--q);border-radius:5px;background:var(--bg-sunk);overflow:hidden;transition:box-shadow 250ms cubic-bezier(0.25,1,0.5,1)}.ds-glow{box-shadow:0 0 0 1px var(--q),0 6px 18px -4px color-mix(in oklch,var(--q) 70%,transparent),0 0 28px -6px color-mix(in oklch,var(--q) 55%,transparent)}.ds-ilvl{position:absolute;right:0;bottom:0;padding:0 4px;border-top-left-radius:4px;background:oklch(0.1 0.01 250/0.82);color:oklch(0.96 0 0);font:500 10px/14px 'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}.ds-slot-text{display:flex;flex-direction:column;gap:2px;min-width:0}.ds-slot-label{font-size:11.5px;color:var(--fg-faint)}.ds-slot-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ds-slot-meta{font:400 11.5px 'Geist Mono',ui-monospace,monospace;color:var(--action)}"
+    },
+    {
+      "name": "Rank Row with Delta Bar",
+      "kind": "custom",
+      "refersTo": "rank-row-selected",
+      "description": "Ranked combination on a shared scale: delta bar, error band with whiskers, delta and error.",
+      "html": "<button class=\"ds-rank on\"><span class=\"ds-rank-n\">2</span><span class=\"ds-bar\"><span class=\"zero\"></span><span class=\"fill\"></span><span class=\"err\"></span><span class=\"dot\"></span></span><span class=\"ds-rank-d\"><span>+1.84%</span><small>±0.21%</small></span></button>",
+      "css": ".ds-rank{display:grid;grid-template-columns:34px minmax(120px,1fr) 92px;align-items:center;gap:12px;width:420px;height:42px;padding:0 8px;border:0;border-radius:6px;background:transparent;text-align:left;cursor:pointer;font-family:'Geist Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums;transition:background-color 150ms}.ds-rank:hover{background:var(--panel)}.ds-rank.on{background:var(--action-wash);box-shadow:0 0 0 1px color-mix(in oklch,var(--action) 45%,transparent)}.ds-rank:focus-visible{outline:2px solid var(--action);outline-offset:2px}.ds-rank-n{font-size:12px;color:var(--fg-faint)}.ds-bar{position:relative;height:12px}.ds-bar .zero{position:absolute;top:0;bottom:0;left:20%;width:1px;background:var(--line-strong)}.ds-bar .fill{position:absolute;top:50%;left:20%;width:55%;height:55%;transform:translateY(-50%);border-radius:2px;background:var(--gain);opacity:.9}.ds-bar .err{position:absolute;top:0;bottom:0;left:69%;width:12%;border-left:1px solid var(--gain);border-right:1px solid var(--gain);background:color-mix(in oklch,var(--gain) 18%,transparent)}.ds-bar .dot{position:absolute;top:50%;left:75%;width:2px;height:2px;border-radius:50%;transform:translate(-50%,-50%);background:var(--fg)}.ds-rank-d{display:flex;flex-direction:column;align-items:flex-end;font-size:12.5px;line-height:1.2;color:var(--gain)}.ds-rank-d small{font-size:11px;color:var(--fg-faint)}"
+    },
+    {
+      "name": "Keyboard Key",
+      "kind": "custom",
+      "refersTo": "kbd",
+      "description": "Shortcut hint beside Run and in the ranking header.",
+      "html": "<span class=\"ds-kbds\"><kbd class=\"ds-kbd\">Ctrl</kbd><kbd class=\"ds-kbd\">↵</kbd></span>",
+      "css": ".ds-kbds{display:inline-flex;gap:4px}.ds-kbd{display:inline-flex;align-items:center;justify-content:center;height:18px;min-width:18px;padding:0 4px;border:1px solid var(--line-strong);border-radius:4px;background:var(--bg-sunk);color:var(--fg-muted);font:400 10.5px/1 'Geist Mono',ui-monospace,monospace}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Instrument Beside the Game",
+    "overview": "simbot is a precise instrument that sits next to World of Warcraft, alt-tabbed on a desktop after a loot drop. It reads like an engineering tool rather than a fantasy one: tinted graphite surfaces, one teal voice for action, and numbers that are always set in tabular mono and always shown with their uncertainty. The Top Gear flow is built on the character sheet itself: six slots per side column, main hand bottom centre, and a command column in the middle that changes job from setup to run to verdict while the sheet stays put.\n\nDensity is high and calm. Type is small (13px body, 12.5px for most secondary copy), hierarchy comes from weight, tone and position instead of size jumps, and surfaces separate by one tonal step and a hairline, not by shadow. The anchors are a streaming build log, trace rows on a shared scale, and resizable panels. The system refuses the category default of a gold or neon WoW tool with ornamental frames.\n\nWoW itself appears only as data: item quality colours on item names and icon borders, and one earned moment of spectacle, where changed items in the winning set glow in their own quality colour.",
+    "keyCharacteristics": [
+      "Dark first; light is a translation of the same roles, not a separate design.",
+      "Four semantic roles (action, gain, loss, noise) on cool graphite neutrals.",
+      "Quality colours are data, never chrome.",
+      "Every number is tabular mono; every delta carries its error.",
+      "The character sheet is the layout; panels open beside it inline, not in modals."
+    ],
+    "rules": [
+      {
+        "name": "The Data Not Chrome Rule",
+        "body": "Quality colours appear only on item names, icon borders and the item glow. Never on buttons, headings, backgrounds or any UI state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Noise Is Not a Win Rule",
+        "body": "A delta whose magnitude is below its error is drawn in noise slate, never gain or loss. The tone is decided by the numbers, not by the sign.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Voice Rule",
+        "body": "Teal is the only interactive colour. Gain and loss never become button fills; the single exception is the confirm step of Discard, which fills with loss.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every numeral that can change or be compared is Geist Mono with tabular figures. No proportional digits in data.",
+        "section": "typography"
+      },
+      {
+        "name": "The Weight Not Size Rule",
+        "body": "Hierarchy steps by weight (400, 500 for item names, 600 for headings) and ink tone, with size jumps reserved for the one headline and one figure per view.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Glow Rule",
+        "body": "Only an item that changed in the displayed combination glows, and only in its own quality colour. Nothing else in the interface glows.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do draw every delta with its error, and tone it noise slate when the magnitude is below the error.",
+      "Do set every figure in Geist Mono with tabular numerals.",
+      "Do keep quality colours pure on item names and icon borders, using the `-text` variants for rare and epic names.",
+      "Do open detail beside the sheet as an inline tray; confirm destructive actions inline.",
+      "Do separate surfaces by one tonal step and a 1px hairline before reaching for a shadow.",
+      "Do author dark first and translate light from the same role names."
+    ],
+    "donts": [
+      "Don't use quality colours, gold or fantasy framing for chrome.",
+      "Don't use side-stripe borders, gradient text or decorative glass.",
+      "Don't make a hero-metric template or grids of identical cards.",
+      "Don't reach for a modal as the first instinct.",
+      "Don't add eyebrow kickers above headings.",
+      "Don't use em dashes in UI copy.",
+      "Don't glow anything except changed items in the displayed combination.",
+      "Don't use uncommon green for gain."
+    ]
+  }
+}

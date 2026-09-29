@@ -1,0 +1,159 @@
+@import "tailwindcss";
+
+/*
+ * simbot tokens. Dark is authored first; light is a translation of it.
+ * Four roles: action (teal), gain (lime-amber), loss (coral), noise (slate).
+ * WoW quality colours are data, not chrome: item names and icon borders only.
+ */
+:root {
+  color-scheme: dark;
+  /* graphite neutrals, tinted cool */
+  --bg: oklch(0.175 0.008 250);
+  --bg-sunk: oklch(0.145 0.008 250);
+  --panel: oklch(0.205 0.009 250);
+  --panel-raised: oklch(0.235 0.01 250);
+  --line: oklch(0.29 0.01 250);
+  --line-strong: oklch(0.38 0.012 250);
+  --fg: oklch(0.94 0.006 250);
+  --fg-muted: oklch(0.74 0.012 250);
+  --fg-faint: oklch(0.6 0.014 250);
+
+  --action: oklch(0.8 0.115 200);
+  --action-strong: oklch(0.86 0.12 200);
+  --action-ink: oklch(0.2 0.04 210);
+  --action-wash: oklch(0.8 0.115 200 / 0.12);
+
+  --gain: oklch(0.86 0.16 112);
+  --gain-wash: oklch(0.86 0.16 112 / 0.14);
+  --loss: oklch(0.73 0.15 30);
+  --loss-wash: oklch(0.73 0.15 30 / 0.14);
+  --noise: oklch(0.64 0.03 250);
+  --noise-wash: oklch(0.64 0.03 250 / 0.18);
+
+  --q-poor: #9d9d9d;
+  --q-common: #f2f2f2;
+  --q-uncommon: #1eff00;
+  --q-rare: #0070dd;
+  --q-rare-text: #3d9bff;
+  --q-epic: #a335ee;
+  --q-epic-text: #b862ff;
+  --q-legendary: #ff8000;
+
+  --shadow-pop: 0 8px 24px -8px oklch(0.05 0.01 250 / 0.7), 0 2px 6px -2px oklch(0.05 0.01 250 / 0.5);
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: oklch(0.975 0.004 250);
+    --bg-sunk: oklch(0.945 0.006 250);
+    --panel: oklch(0.995 0.002 250);
+    --panel-raised: oklch(1 0 0);
+    --line: oklch(0.89 0.008 250);
+    --line-strong: oklch(0.8 0.012 250);
+    --fg: oklch(0.22 0.012 250);
+    --fg-muted: oklch(0.44 0.014 250);
+    --fg-faint: oklch(0.54 0.014 250);
+
+    --action: oklch(0.52 0.1 210);
+    --action-strong: oklch(0.45 0.1 210);
+    --action-ink: oklch(0.99 0.01 200);
+    --action-wash: oklch(0.52 0.1 210 / 0.1);
+
+    --gain: oklch(0.52 0.13 118);
+    --gain-wash: oklch(0.7 0.16 115 / 0.2);
+    --loss: oklch(0.55 0.17 30);
+    --loss-wash: oklch(0.55 0.17 30 / 0.12);
+    --noise: oklch(0.56 0.03 250);
+    --noise-wash: oklch(0.56 0.03 250 / 0.14);
+
+    /* same hues, darkened just enough to read on a light ground */
+    --q-poor: #6f6f6f;
+    --q-common: #3a3a3a;
+    --q-uncommon: #148a00;
+    --q-rare-text: #005bb5;
+    --q-epic-text: #8420c9;
+    --q-legendary: #c25e00;
+
+    --shadow-pop: 0 8px 24px -10px oklch(0.3 0.02 250 / 0.25), 0 2px 6px -2px oklch(0.3 0.02 250 / 0.15);
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-sunk: var(--bg-sunk);
+  --color-panel: var(--panel);
+  --color-raised: var(--panel-raised);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-fg: var(--fg);
+  --color-muted: var(--fg-muted);
+  --color-faint: var(--fg-faint);
+  --color-action: var(--action);
+  --color-action-strong: var(--action-strong);
+  --color-action-ink: var(--action-ink);
+  --color-action-wash: var(--action-wash);
+  --color-gain: var(--gain);
+  --color-gain-wash: var(--gain-wash);
+  --color-loss: var(--loss);
+  --color-loss-wash: var(--loss-wash);
+  --color-noise: var(--noise);
+  --color-noise-wash: var(--noise-wash);
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SFMono-Regular", monospace;
+  --shadow-pop: var(--shadow-pop);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: var(--action-wash);
+    color: var(--fg);
+  }
+  input,
+  textarea {
+    caret-color: var(--action);
+  }
+  :focus-visible {
+    outline: 2px solid var(--action);
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+  a {
+    text-underline-offset: 3px;
+  }
+}
+
+/* data numerals are always tabular */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

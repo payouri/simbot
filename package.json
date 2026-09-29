@@ -1,0 +1,8 @@
+{
+  "name": "simbot",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "prototype:top-gear": "bun --cwd apps/web dev"
+  }
+}
