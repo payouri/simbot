@@ -452,7 +452,7 @@
     "theming": {
       "default": "dark",
       "light": "prefers-color-scheme: light, unless [data-theme=dark]; same role names translated",
-      "source": "apps/web/src/index.css"
+      "source": "apps/client/src/index.css"
     }
   },
   "components": [

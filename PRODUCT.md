@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Decided in the wayfinder map ([#1](https://github.com/payouri/simbot/issues/1)): a TypeScript pnpm-style monorepo with `apps/web` (React, Vite, shadcn/ui, Tailwind, TanStack Query, Zustand), `apps/api` (Bun, which runs `simc` as a child process) and `packages/shared`. Persistence is `bun:sqlite`. It ships as one portable Docker container.
+Decided in the wayfinder map ([#1](https://github.com/payouri/simbot/issues/1)): a TypeScript pnpm-style monorepo with `apps/client` (React, Vite, shadcn/ui, Tailwind, TanStack Query, Zustand), `apps/api` (Bun, which runs `simc` as a child process) and `packages/shared`. Persistence is `bun:sqlite`. It ships as one portable Docker container.
 
 ## Users
 

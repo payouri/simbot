@@ -29,7 +29,16 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 - Never get past the hook with `--no-verify`, `-c core.hooksPath=…` or by editing `.githooks/`. If it refuses, rebase the merge commit away.
 - Catch a branch up with `git rebase main`, not `git merge main`. A merge commit on the branch gets refused when the branch lands.
 
+## Layout
+
+- `apps/client`: React + Vite UI (the Paperdoll prototype lives in `src/prototype`).
+- `apps/server`: one Bun process, split into `src/http`, `src/runner` and `src/db`. `src/app.ts` (`createApp`) is the server seam that tests drive.
+- `packages/shared`: zod schemas and enums. Imports only zod.
+- `packages/simc`: pure SimC library, no DB or HTTP code.
+- `bun run dev` starts the server and the Vite client. `SIMBOT_DATA_DIR` sets the data dir (default `./data`).
+- Import boundaries (`http` and `runner` never import each other, `simc` has no DB or HTTP, `shared` only zod) are Biome `noRestrictedImports` overrides in `biome.json`, covered by `tests/boundaries.test.ts`.
+
 ## Verification gate
 
-- `cd apps/web && bun run typecheck`: run it before calling any `apps/web` change done. It is the only app check today.
+- `bun run check`: Biome (lint, format, import boundaries), tsc for every package, and `bun test`. Run it before calling any change done.
 - `.githooks/test-pre-push.sh`: run it after changing anything in `.githooks/`.

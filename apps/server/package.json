@@ -1,0 +1,14 @@
+{
+  "name": "@simbot/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/main.ts",
+    "start": "bun src/main.ts",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@simbot/shared": "workspace:*",
+    "@simbot/simc": "workspace:*"
+  }
+}

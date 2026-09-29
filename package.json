@@ -1,9 +1,24 @@
 {
   "name": "simbot",
   "private": true,
-  "workspaces": ["apps/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "prototype:top-gear": "bun --cwd apps/web dev"
+    "dev": "bun run --filter './apps/*' dev",
+    "build": "bun run --filter './apps/client' build",
+    "start": "bun --cwd apps/server start",
+    "typecheck": "tsc -p . && bun run --filter '*' typecheck",
+    "lint": "biome check .",
+    "test": "bun test",
+    "check": "biome check . && bun run typecheck && bun test",
+    "prototype:top-gear": "bun --cwd apps/client dev"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.0",
+    "@types/bun": "^1.3.0",
+    "typescript": "^7.0.2"
   }
 }
