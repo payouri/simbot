@@ -1,4 +1,4 @@
-<!-- Owner: payouri. Last audited 2026-09-29 against payouri/agentic-research agentsMd/rulebook.md. -->
+<!-- Owner: payouri. Last audited 2026-09-30 against payouri/agentic-research agentsMd/rulebook.md. -->
 # simbot
 
 ## Read these before the matching work
@@ -21,6 +21,15 @@ Issues live in GitHub Issues on `payouri/simbot`, managed with the `gh` CLI. See
 
 Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
 
+## Git
+
+<!-- Authority for linear history is .githooks/pre-push. This prose repeats it so any harness knows why a push is refused. GitHub can't enforce it server-side on a private free-plan repo, so the hook and the PR merge setting are the only mechanisms. -->
+
+- `main` has linear history. GitHub only allows rebase merges on PRs, and `.githooks/pre-push` refuses any push that adds a merge commit to `main`. To land a branch, rebase it onto `main` and fast-forward (`git merge --ff-only`).
+- Never get past the hook with `--no-verify`, `-c core.hooksPath=…` or by editing `.githooks/`. If it refuses, rebase the merge commit away.
+- Catch a branch up with `git rebase main`, not `git merge main`. A merge commit on the branch gets refused when the branch lands.
+
 ## Verification gate
 
-- `cd apps/web && bun run typecheck`: run it before calling any `apps/web` change done. It is the only check that exists today.
+- `cd apps/web && bun run typecheck`: run it before calling any `apps/web` change done. It is the only app check today.
+- `.githooks/test-pre-push.sh`: run it after changing anything in `.githooks/`.

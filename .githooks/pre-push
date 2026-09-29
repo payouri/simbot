@@ -1,0 +1,36 @@
+#!/bin/sh
+# Reject pushes that would add merge commits to main. History on main stays
+# linear: rebase the branch onto main, then fast-forward.
+#
+# Known limits: this is a client-side hook, so it only runs where
+# core.hooksPath points at .githooks (the root `prepare` script sets it), and
+# `git push --no-verify` skips it. It judges the destination ref, not the local
+# branch name, so `git push origin feat:main` is caught and a branch called
+# main-refactor is not. GitHub can't back it up server-side: branch protection
+# and rulesets need GitHub Pro on a private repo. Tested by test-pre-push.sh.
+
+remote="$1"
+zero=$(git hash-object --stdin </dev/null | tr '0-9a-f' '0')
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+	[ "$remote_ref" = "refs/heads/main" ] || continue
+	[ "$local_sha" = "$zero" ] && continue # deleting main
+
+	if [ "$remote_sha" = "$zero" ]; then
+		range="$local_sha --not --remotes=$remote"
+	else
+		range="$remote_sha..$local_sha"
+	fi
+
+	merges=$(git rev-list --merges $range)
+	if [ -n "$merges" ]; then
+		echo "pre-push: refusing to push merge commits to main:" >&2
+		for sha in $merges; do
+			git log -1 --format='  %h %s' "$sha" >&2
+		done
+		echo "Rebase onto main and fast-forward instead." >&2
+		exit 1
+	fi
+done
+
+exit 0

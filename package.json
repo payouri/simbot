@@ -3,6 +3,7 @@
   "private": true,
   "workspaces": ["apps/*"],
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "prototype:top-gear": "bun --cwd apps/web dev"
   }
 }
