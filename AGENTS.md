@@ -36,6 +36,7 @@ Single-context: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/age
 - `packages/shared`: zod schemas and enums. Imports only zod.
 - `packages/simc`: pure SimC library, no DB or HTTP code.
 - `bun run dev` starts the server and the Vite client. `SIMBOT_DATA_DIR` sets the data dir (default `./data`).
+- `apps/server/src/simc`: SimC Build fetch (Docker Hub registry HTTP API through an injected `fetch`), layer extraction into `<data>/simc/<tag>/` and the Current SimC Build. `createApp(config, { fetch })` does not touch the network; `main.ts` calls `app.boot()`, which installs the latest nightly when there is no Current SimC Build.
 - Import boundaries (`http` and `runner` never import each other, `simc` has no DB or HTTP, `shared` only zod) are Biome `noRestrictedImports` overrides in `biome.json`, covered by `tests/boundaries.test.ts`.
 
 ## Verification gate

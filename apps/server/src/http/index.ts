@@ -1,9 +1,17 @@
 import { existsSync, statSync } from "node:fs";
 import { join, normalize, sep } from "node:path";
-import { healthResponseSchema } from "@simbot/shared";
+import {
+  healthResponseSchema,
+  type SimcStatusResponse,
+  simcStatusResponseSchema,
+} from "@simbot/shared";
 import type { Db } from "../db";
 
-export type HttpDeps = { db: Db; clientDir: string };
+export type HttpDeps = {
+  db: Db;
+  clientDir: string;
+  simcStatus: () => Promise<SimcStatusResponse>;
+};
 
 const json = (body: unknown, status = 200) => Response.json(body, { status });
 
@@ -26,13 +34,17 @@ function serveClient(clientDir: string, pathname: string): Response {
 }
 
 /** Builds the request handler: `/api/*` REST routes, everything else is the built client. */
-export function createHttpHandler({ db, clientDir }: HttpDeps) {
-  return (req: Request): Response => {
+export function createHttpHandler({ db, clientDir, simcStatus }: HttpDeps) {
+  return async (req: Request): Promise<Response> => {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/health") {
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
       db.query("SELECT 1").get();
       return json(healthResponseSchema.parse({ status: "ok" }));
+    }
+    if (pathname === "/api/simc") {
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return json(simcStatusResponseSchema.parse(await simcStatus()));
     }
     if (pathname === "/api" || pathname.startsWith("/api/")) {
       return json({ error: "not_found" }, 404);
