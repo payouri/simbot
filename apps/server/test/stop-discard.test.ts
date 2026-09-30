@@ -198,6 +198,27 @@ describe("POST /api/sims/:id/stop refusals", () => {
   });
 });
 
+describe("DELETE /api/sims/:id", () => {
+  test("a running Sim is 409 and keeps running; a finished one is deleted with its folder", async () => {
+    start();
+    const sim = await runningSim();
+    const refused = await h.call("DELETE", `/api/sims/${sim.id}`);
+    expect(refused.status).toBe(409);
+    expect(apiErrorSchema.parse(await refused.json()).error).toBe("invalid_transition");
+    expect((await h.sim(sim.id)).status).toBe("running");
+
+    release();
+    await h.app.idle();
+    expect((await h.sim(sim.id)).status).toBe("succeeded");
+    const deleted = await h.call("DELETE", `/api/sims/${sim.id}`);
+    expect(deleted.status).toBe(204);
+    expect(await deleted.text()).toBe("");
+    expect(existsSync(join(h.dataDir, "sims", String(sim.id)))).toBe(false);
+    expect((await h.call("GET", `/api/sims/${sim.id}`)).status).toBe(404);
+    expect((await h.call("DELETE", `/api/sims/${sim.id}`)).status).toBe(404);
+  });
+});
+
 describe("crash recovery (a real server process, killed and restarted)", () => {
   type Server = { proc: Bun.Subprocess<"ignore", "pipe", "inherit">; base: string };
   const servers: Server[] = [];

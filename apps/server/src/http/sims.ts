@@ -353,7 +353,7 @@ export function deleteSim_Handler(db: Db, rawId: string, dataDir: string): Respo
     // Folder might not exist, which is fine
   }
 
-  return json({ success: true }, 204);
+  return new Response(null, { status: 204 });
 }
 
 /** `POST /api/sims/:id/copy-to-draft`: Copy a Sim's input into a new Draft. */

@@ -10,6 +10,7 @@ import {
   simSchema,
 } from "@simbot/shared";
 import { createApp } from "../src/app";
+import { recordStage } from "../src/db/sims";
 import type { Launch } from "../src/runner/run-sim";
 import {
   FAKE_SIMC,
@@ -485,6 +486,66 @@ describe("crash recovery between Stages", () => {
         before.filter((r) => r.stage < 3).map(({ is_baseline: _, ...r }) => r),
       );
       expect(after.filter((r) => r.stage === 3)).toHaveLength(12);
+    } finally {
+      app.close();
+    }
+  });
+  test("a finished Stage between two interruptions resets the count, so the Sim resumes", async () => {
+    start(bandReply);
+    const draft = await topGear([...HEADS, ...NECKS, ...SHOULDERS, ...CHESTS]);
+    await h.queue(draft.id);
+    await h.app.idle();
+    const stage2 = h.app.db
+      .query<
+        { combination_id: number; dps_mean: number; dps_mean_error: number; survived: number },
+        [number]
+      >(
+        `SELECT r.combination_id, r.dps_mean, r.dps_mean_error, r.survived FROM stage_results r
+         JOIN combinations c ON c.id = r.combination_id WHERE c.sim_id = ? AND r.stage = 2`,
+      )
+      .all(draft.id);
+
+    // Interrupted once in Stage 2 and resumed: the Job is running again with one interruption.
+    h.app.db.run(
+      "DELETE FROM stage_results WHERE stage >= 2 AND combination_id IN (SELECT id FROM combinations WHERE sim_id = ?)",
+      [draft.id],
+    );
+    h.app.db.run("UPDATE sims SET status = 'running', finished_at = NULL WHERE id = ?", [draft.id]);
+    h.app.db.run(
+      "UPDATE jobs SET status = 'running', finished_at = NULL, interruptions = 1 WHERE sim_id = ?",
+      [draft.id],
+    );
+    // Stage 2 finishes, then the server dies during Stage 3.
+    recordStage(
+      h.app.db,
+      2,
+      stage2.map((r) => ({
+        combinationId: r.combination_id,
+        dps: { mean: r.dps_mean, meanError: r.dps_mean_error },
+        survived: r.survived === 1,
+      })),
+    );
+    const { dataDir, root } = h;
+    h.app.close();
+
+    calls = [];
+    const stage = smartLaunch(() => root, bandReply, calls);
+    const app = createApp(
+      { dataDir, clientDir: join(root, "client") },
+      {
+        launch: (dir, args) =>
+          /stage-\d+\.simc$/.test(args[0] as string)
+            ? stage(dir, args)
+            : [process.execPath, FAKE_SIMC, `--scenario=${join(IMPORT_ITEMS, "success")}`, ...args],
+        log: () => {},
+        isSimcProcess: isFakeSimc,
+      },
+    );
+    try {
+      await app.idle();
+      const res = await app.fetch(new Request(`http://simbot.test/api/sims/${draft.id}`));
+      expect(simSchema.parse(await res.json()).status).toBe("succeeded");
+      expect(calls.map((c) => c.stage)).toEqual([3]);
     } finally {
       app.close();
     }

@@ -392,6 +392,15 @@ export function recordStage(db: Db, stage: number, outcomes: readonly StageOutco
     for (const o of outcomes) {
       insert.run(o.combinationId, stage, o.dps.mean, o.dps.meanError, o.survived ? 1 : 0);
     }
+    // A finished Stage is progress: only interruptions with none in between count as in a row.
+    const first = outcomes[0];
+    if (first) {
+      db.run(
+        `UPDATE jobs SET interruptions = 0 WHERE kind = 'sim' AND status = 'running'
+           AND sim_id = (SELECT sim_id FROM combinations WHERE id = ?)`,
+        [first.combinationId],
+      );
+    }
   })();
 }
 
@@ -707,11 +716,15 @@ export type DeleteResult = { ok: true } | { ok: false; reason: "not_found" | "in
  * nothing left to stop it by. Files are the caller's concern.
  */
 export function deleteSim(db: Db, simId: number): DeleteResult {
-  const result = db.run("DELETE FROM sims WHERE id = ? AND status NOT IN ('queued', 'running')", [
-    simId,
-  ]);
-  if (result.changes > 0) return { ok: true };
-  return getSim(db, simId) ? { ok: false, reason: "in_queue" } : { ok: false, reason: "not_found" };
+  return db.transaction((): DeleteResult => {
+    const result = db.run("DELETE FROM sims WHERE id = ? AND status NOT IN ('queued', 'running')", [
+      simId,
+    ]);
+    if (result.changes > 0) return { ok: true };
+    return getSim(db, simId)
+      ? { ok: false, reason: "in_queue" }
+      : { ok: false, reason: "not_found" };
+  })();
 }
 
 /** The Combinations frozen on a Sim, in the order they were generated (the baseline first). */
