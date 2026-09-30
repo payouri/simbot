@@ -254,14 +254,49 @@ describe("the PTR pass of the Check Sim", () => {
     },
   );
 
-  test("the failure is only shown while PTR Sims are on", async () => {
+  test("the failure stays on the build with PTR Sims off, so a copied PTR Draft still sees it", async () => {
     bootPtr(checkScenario({ exit: 1 }));
     await setPtr(true);
     await applyJob({ kind: "nightly" });
     expect((await status()).current?.ptrCheckError).toBeTruthy();
     await setPtr(false);
-    expect((await status()).current?.ptrCheckError).toBeNull();
-    expect((await status()).installed.every((b) => b.ptrCheckError === null)).toBe(true);
+    const off = await status();
+    expect(off.ptrEnabled).toBe(false);
+    expect(off.current?.ptrCheckError).toBeTruthy();
+    expect(ptrAvailable(off.current as NonNullable<typeof off.current>)).toBe(false);
+  });
+
+  test("neither pass hands SimC the Import's file, network or ptr options", async () => {
+    const inputs = bootPtr(checkScenario());
+    await setPtr(true);
+    const text = `${addonString()}\nsave=${join(root, "stolen.simc")}\nhtml=${join(root, "x.html")}\ninput=/etc/passwd\nptr=1\n`;
+    expect((await call("POST", "/api/imports", { text })).status).toBe(201);
+    await applyJob({ kind: "nightly" });
+
+    expect(inputs).toHaveLength(3);
+    for (const input of inputs) {
+      expect(input).not.toMatch(/^(save|html|input)=/m);
+      expect(input).toContain("deathknight=");
+    }
+    // Only the PTR pass selects PTR: the Import's own ptr=1 never reaches the Live passes.
+    expect(inputs.filter((i) => /^ptr=1$/m.test(i))).toHaveLength(1);
+  });
+
+  test("after install the SimC page still marks the PTR data change the update made", async () => {
+    bootPtr(checkScenario());
+    const file = join(dataDir, "simc", OLD, "build.json");
+    const old = JSON.parse(readFileSync(file, "utf8"));
+    writeFileSync(file, JSON.stringify({ ...old, ptrGameDataVersion: "12.1.5.69000" }));
+    await setPtr(true);
+    await applyJob({ kind: "nightly" });
+    await app.idle();
+    const body = await status();
+
+    expect(body.current?.tag).toBe(LATEST_NIGHTLY);
+    expect(body.update?.target ?? null).toBeNull();
+    expect(body.update?.ptrChange).toEqual({ from: "12.1.5.69000", to: "12.1.5.69952" });
+    await setPtr(false);
+    expect((await status()).update?.ptrChange ?? null).toBeNull();
   });
 
   test("setting off: no PTR pass runs and nothing is recorded", async () => {

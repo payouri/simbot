@@ -135,11 +135,14 @@ describe("Live and PTR versions on the status", () => {
     expect(ptrAvailable(body.current as NonNullable<typeof body.current>)).toBe(true);
   });
 
-  test("with the setting off, no PTR version leaves the server", async () => {
+  test("with the setting off, builds keep their real PTR version, so a PTR Draft copied then is judged on the facts", async () => {
     boot(quietWorld, { current: { ptrGameDataVersion: "12.1.5.69952" } });
     const body = await status();
-    expect(body.current?.ptrGameDataVersion).toBeNull();
-    expect(body.installed.map((b) => b.ptrGameDataVersion)).toEqual([null]);
+    expect(body.ptrEnabled).toBe(false);
+    expect(body.current?.ptrGameDataVersion).toBe("12.1.5.69952");
+    expect(body.installed.map((b) => b.ptrGameDataVersion)).toEqual(["12.1.5.69952"]);
+    // The runner will run a PTR Sim on this build, so the status must not say it has no PTR.
+    expect(ptrAvailable(body.current as NonNullable<typeof body.current>)).toBe(true);
     expect(body.update?.ptrChange ?? null).toBeNull();
   });
 
@@ -164,7 +167,7 @@ describe("Live and PTR versions on the status", () => {
       readFileSync(join(dataDir, "simc", LATEST_NIGHTLY, "build.json"), "utf8"),
     );
     expect(onDisk).toMatchObject({ gameDataVersion: LIVE, ptrGameDataVersion: "12.1.5.69952" });
-    expect((await status()).current?.ptrGameDataVersion).toBeNull();
+    expect((await status()).current?.ptrGameDataVersion).toBe("12.1.5.69952");
     expect((await setPtr(true)).current).toMatchObject({
       gameDataVersion: LIVE,
       ptrGameDataVersion: "12.1.5.69952",
@@ -192,6 +195,28 @@ describe("the update offer", () => {
     const body = await offered();
     expect(body.update?.state).toBe("installable");
     expect(body.update?.ptrChange ?? null).toBeNull();
+  });
+
+  test("reads the Seed's PTR version only from the Seed directory, never from the working directory", async () => {
+    // A build.json for the Seed's tag sits in the working directory, but no Seed directory is wired.
+    const cwd = process.cwd();
+    const elsewhere = join(root, "cwd");
+    writeBuild(elsewhere, SEED, { ptrGameDataVersion: "12.1.5.70077" });
+    writeBuild(join(dataDir, "simc", CURRENT), CURRENT, { ptrGameDataVersion: "12.1.5.69952" });
+    app = createApp(
+      { dataDir, clientDir: join(root, "client") },
+      { fetch: quietWorld, sleep: async () => {}, log: () => {}, seedTag: () => SEED },
+    );
+    app.db.run("INSERT INTO settings (key, value) VALUES ('simc.current_tag', ?)", [CURRENT]);
+    process.chdir(elsewhere);
+    try {
+      await setPtr(true);
+      const body = await offered();
+      expect(body.update?.target).toEqual({ source: "seed", tag: SEED });
+      expect(body.update?.ptrChange ?? null).toBeNull();
+    } finally {
+      process.chdir(cwd);
+    }
   });
 
   test("shows no mark when the PTR version is unchanged or the current one is unknown", async () => {

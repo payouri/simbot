@@ -1,4 +1,5 @@
 import type { DpsSummary } from "@simbot/shared";
+import { stripPtrOption, stripUnsafeOptions } from "./addon-string";
 import { baselineDps, checkSimJson2Schema, Json2FormatError, readJson2 } from "./json2";
 
 /** Name of the one profileset a Check Sim runs; it must come back in the report. */
@@ -8,12 +9,13 @@ export const CHECK_SIM_PROFILESET = "Check Sim";
 export const CHECK_SIM_TARGET_ERROR = 1;
 
 /**
- * The SimC input for a Check Sim: the Addon String (or a profile from the build) unchanged, a
- * short fixed fight, the 1% target error, and one profileset override so the build's profileset
- * path is exercised too.
+ * The SimC input for a Check Sim: the Addon String (or a profile from the build) without its
+ * file, network and `ptr` options, a short fixed fight, the 1% target error, and one profileset
+ * override so the build's profileset path is exercised too.
  */
 export function buildCheckSimInput(profile: string, gameData: "live" | "ptr" = "live"): string {
-  const head = profile.endsWith("\n") ? profile : `${profile}\n`;
+  const safe = stripPtrOption(stripUnsafeOptions(profile));
+  const head = safe.endsWith("\n") ? safe : `${safe}\n`;
   return `${head}${[
     "",
     "# simbot Check Sim",

@@ -22,9 +22,8 @@ export type SimcBuildInfo = z.infer<typeof simcBuildInfoSchema>;
 export const simcBuildSchema = simcBuildInfoSchema.extend({
   tag: z.string().min(1),
   /**
-   * Why the PTR pass of this build's Check Sim failed, e.g. a non-zero exit; null when it passed,
-   * never ran, or while PTR Sims are off. Recorded against the tag, apart from the Live Check
-   * Sim, and never a reason to reject the build: only PTR is unavailable on it.
+   * Why the PTR pass of this build's Check Sim failed, e.g. a non-zero exit; null when it passed
+   * or never ran. Recorded against the tag, apart from the Live Check Sim, and never a reason to reject the build: only PTR is unavailable on it.
    */
   ptrCheckError: z.string().min(1).nullable().optional(),
 });
@@ -90,7 +89,9 @@ export const simcUpdateStatusSchema = z.object({
   target: simcUpdateTargetSchema.nullable(),
   /**
    * Set only while PTR Sims are on and both builds' PTR versions are known: the offered target
-   * changes the PTR game data from `from` to `to`. Computed when the status is read, never stored (so absent on a stored check).
+   * changes the PTR game data from `from` to `to` or, with no target, the SimC Update that made
+   * the current build current did. Computed when the status is read, never stored (so absent on a
+   * stored check).
    */
   ptrChange: z
     .object({ from: z.string().min(1), to: z.string().min(1) })
@@ -172,8 +173,9 @@ export const simcStatusResponseSchema = z.object({
   /** How many builds retention keeps. */
   keep: z.number().int().min(1),
   /**
-   * Whether PTR Sims are on. While off, no build in this response carries a PTR version and the
-   * update offer has no `ptrChange`: none of the PTR information leaves the server.
+   * Whether PTR Sims are on. The builds carry their real PTR version and Check Sim failure either
+   * way, so a PTR Draft copied while off is judged on the facts; the client shows them only while
+   * on. While off the update offer has no `ptrChange`.
    */
   ptrEnabled: z.boolean(),
   /** The latest SimC Update Job while it is queued, running or failed; null once it is done. */

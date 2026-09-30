@@ -57,6 +57,8 @@ const CURRENT_KEY = "simc.current_tag";
 const UPDATE_KEY = "simc.update_check";
 const KEEP_KEY = "simc.keep";
 const PTR_ENABLED_KEY = "simc.ptr_enabled";
+/** The PTR data change of the last SimC Update, as `{ tag, from, to }` for the tag it made current. */
+const PTR_CHANGE_KEY = "simc.ptr_change";
 /** Set once the first-start update to the latest nightly has been queued; never queued again. */
 const FIRST_UPDATE_KEY = "simc.first_update_queued";
 
@@ -148,26 +150,39 @@ export function createSimcManager(deps: SimcManagerDeps) {
 
   const ptrEnabled = () => getSetting(PTR_ENABLED_KEY) === "1";
 
-  /** A build as the status shows it: without its PTR version or failure while PTR Sims are off. */
-  const shown = (b: SimcBuild, withPtr: boolean): SimcBuild =>
-    withPtr ? b : { ...b, ptrGameDataVersion: null, ptrCheckError: null };
+  /** The PTR data change the SimC Update that made `tag` current brought, if it brought one. */
+  const installedPtrChange = (tag: string): SimcUpdateStatus["ptrChange"] => {
+    const raw = getSetting(PTR_CHANGE_KEY);
+    if (!raw) return null;
+    try {
+      const stored = JSON.parse(raw) as { tag?: unknown; from?: unknown; to?: unknown };
+      return stored.tag === tag && typeof stored.from === "string" && typeof stored.to === "string"
+        ? { from: stored.from, to: stored.to }
+        : null;
+    } catch {
+      return null;
+    }
+  };
 
   /**
    * The offered target's PTR data change against the current build, when both PTR versions are
    * known: an installed target, or the Seed SimC Build (its `build.json` ships with the app). A
-   * nightly that is not installed yet has no known PTR version, so it carries no mark.
+   * nightly that is not installed yet has no known PTR version, so it carries no mark. With no
+   * target, the change the install of the current build made, so the mark is still there after it.
    */
   const ptrChangeOf = async (
     build: SimcBuild | null,
     update: SimcUpdateStatus,
   ): Promise<SimcUpdateStatus["ptrChange"]> => {
     const target = update.target;
+    if (build && !target) return installedPtrChange(build.tag);
     const from = build?.ptrGameDataVersion;
     if (!target || !from) return null;
+    const dir = seedDir();
     const known =
       (await readInstalledBuild(dataDir, target.tag)) ??
-      (target.source === "seed" && target.tag === seedTag()
-        ? await readBuildRecord(seedDir() ?? "", target.tag)
+      (target.source === "seed" && target.tag === seedTag() && dir
+        ? await readBuildRecord(dir, target.tag)
         : null);
     const to = known?.ptrGameDataVersion;
     return to && to !== from ? { from, to } : null;
@@ -181,13 +196,13 @@ export function createSimcManager(deps: SimcManagerDeps) {
     const failed = ptrCheckErrors(db);
     const installed = await listInstalledBuilds(dataDir);
     return {
-      current: build && shown(build, withPtr),
+      current: build,
       install,
       update: update && {
         ...update,
         ptrChange: withPtr ? await ptrChangeOf(build, update) : null,
       },
-      installed: installed.map((b) => shown(withPtrCheck(b, failed), withPtr)),
+      installed: installed.map((b) => withPtrCheck(b, failed)),
       keep: keepCount(),
       ptrEnabled: withPtr,
       job: latestOpenSimcJob(db),
@@ -429,8 +444,22 @@ export function createSimcManager(deps: SimcManagerDeps) {
         installedHere = true;
       }
       const before = currentTag();
+      const replaced =
+        before && before !== build.tag ? await readInstalledBuild(dataDir, before) : null;
+      const ptrFrom = replaced?.ptrGameDataVersion;
+      const ptrTo = build.ptrGameDataVersion;
       db.transaction(() => {
         setCurrentTag(build.tag);
+        if (replaced) {
+          if (ptrFrom && ptrTo && ptrFrom !== ptrTo) {
+            putSetting(
+              PTR_CHANGE_KEY,
+              JSON.stringify({ tag: build.tag, from: ptrFrom, to: ptrTo }),
+            );
+          } else {
+            db.run("DELETE FROM settings WHERE key = ?", [PTR_CHANGE_KEY]);
+          }
+        }
         if (ptrPass) savePtrCheck(db, build.tag, ptrPass.error);
         if (imp) {
           if (baseline && before && before !== build.tag) {

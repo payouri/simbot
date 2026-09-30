@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { CHECK_SIM_PROFILESET, readCheckSimResult } from "./check-sim";
+import { buildCheckSimInput, CHECK_SIM_PROFILESET, readCheckSimResult } from "./check-sim";
 
 const report = (dps: Record<string, number>) =>
   JSON.stringify({
@@ -19,5 +19,17 @@ describe("readCheckSimResult", () => {
 
   test("has no iteration count when the report has no std_dev", () => {
     expect(readCheckSimResult(report({})).iterations).toBeNull();
+  });
+});
+
+describe("buildCheckSimInput", () => {
+  const profile =
+    'mage="X"\nlevel=80\nsave=/data/simbot.sqlite\nhtml=/app/client/index.html\noutput=/tmp/o\ninput=/etc/passwd\nptr=1\n';
+
+  test.each(["live", "ptr"] as const)("drops file, network and ptr options on the %s pass", (g) => {
+    const input = buildCheckSimInput(profile, g);
+    expect(input).toContain('mage="X"\nlevel=80\n');
+    expect(input).not.toMatch(/^(save|html|output|input)=/m);
+    expect(input.match(/^ptr=1$/gm) ?? []).toHaveLength(g === "ptr" ? 1 : 0);
   });
 });
