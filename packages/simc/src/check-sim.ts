@@ -1,5 +1,5 @@
-import { checkSimJson2Schema, type DpsSummary } from "@simbot/shared";
-import { Json2FormatError } from "./json2";
+import type { DpsSummary } from "@simbot/shared";
+import { baselineDps, checkSimJson2Schema, Json2FormatError, readJson2 } from "./json2";
 
 /** Name of the one profileset a Check Sim runs; it must come back in the report. */
 export const CHECK_SIM_PROFILESET = "Check Sim";
@@ -41,30 +41,12 @@ export function readCheckSimResult(text: string | null): {
   /** Iterations the run needed (`(std_dev / mean_std_dev)^2`), when the report has `std_dev`. */
   iterations: number | null;
 } {
-  if (text === null) throw new Json2FormatError("no json2 report was written");
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch {
-    throw new Json2FormatError("json2 report is not valid JSON");
-  }
-  const parsed = checkSimJson2Schema.safeParse(raw);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    throw new Json2FormatError(`${issue?.path.join(".") ?? ""}: ${issue?.message ?? "invalid"}`);
-  }
-  const { sim } = parsed.data;
+  const { sim } = readJson2(text, checkSimJson2Schema);
   if (!sim.profilesets.results.some((r) => r.name === CHECK_SIM_PROFILESET)) {
     throw new Json2FormatError(`profileset "${CHECK_SIM_PROFILESET}" missing from the report`);
   }
-  const dps = sim.players[0]?.collected_data.dps;
-  if (!dps) throw new Json2FormatError("no player in report");
+  const { summary, stdDev, meanStdDev } = baselineDps(sim);
   const iterations =
-    dps.std_dev !== undefined && dps.mean_std_dev > 0
-      ? Math.round((dps.std_dev / dps.mean_std_dev) ** 2)
-      : null;
-  return {
-    dps: { mean: dps.mean, meanError: dps.mean_std_dev * sim.options.confidence_estimator },
-    iterations,
-  };
+    stdDev !== undefined && meanStdDev > 0 ? Math.round((stdDev / meanStdDev) ** 2) : null;
+  return { dps: summary, iterations };
 }

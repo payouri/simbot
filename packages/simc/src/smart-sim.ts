@@ -1,13 +1,7 @@
-import {
-  type CombinationDefinition,
-  type DpsSummary,
-  type Precision,
-  type SimSettings,
-  stageJson2Schema,
-} from "@simbot/shared";
+import type { CombinationDefinition, DpsSummary, Precision, SimSettings } from "@simbot/shared";
 import { equippedTalentsLine, parseAddonString } from "./addon-string";
 import { normalizeSlot } from "./item-pass";
-import { Json2FormatError } from "./json2";
+import { baselineDps, Json2FormatError, readJson2, stageJson2Schema } from "./json2";
 import { buildInput, PRECISION_TARGET_ERROR } from "./quick-sim";
 
 /**
@@ -199,21 +193,8 @@ export type StageReport = {
  * entry means that profileset failed. Throws `Json2FormatError`.
  */
 export function readStageReport(text: string | null, expected: readonly number[]): StageReport {
-  if (text === null) throw new Json2FormatError("no json2 report was written");
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch {
-    throw new Json2FormatError("json2 report is not valid JSON");
-  }
-  const parsed = stageJson2Schema.safeParse(raw);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    throw new Json2FormatError(`${issue?.path.join(".") ?? ""}: ${issue?.message ?? "invalid"}`);
-  }
-  const { sim } = parsed.data;
-  const dps = sim.players[0]?.collected_data.dps;
-  if (!dps) throw new Json2FormatError("no player in report");
+  const { sim } = readJson2(text, stageJson2Schema);
+  const baseline = baselineDps(sim).summary;
   const confidence = sim.options.confidence_estimator;
   const byName = new Map((sim.profilesets?.results ?? []).map((r) => [r.name, r]));
   const profilesets = new Map<number, DpsSummary>();
@@ -228,10 +209,7 @@ export function readStageReport(text: string | null, expected: readonly number[]
     if (meanError === null) throw new Json2FormatError(`profileset "${id}" has no error`);
     profilesets.set(id, { mean: r.mean, meanError });
   }
-  return {
-    baseline: { mean: dps.mean, meanError: dps.mean_std_dev * confidence },
-    profilesets,
-  };
+  return { baseline, profilesets };
 }
 
 /** The Combination SimC refused in an exit-80 stderr (`Profileset '<id>'`), if it names one. */

@@ -13,6 +13,7 @@ import {
   readQuickSimResult,
   stageArgs,
 } from "./index";
+import { quickSimJson2Schema, readJson2 } from "./json2";
 
 const recorded = JSON.parse(
   readFileSync(join(import.meta.dir, "../../../apps/server/src/simc/fixtures/json2.json"), "utf8"),
@@ -122,6 +123,13 @@ describe("Quick Sim input and result", () => {
     for (const bad of [null, "nope", "{}", report(10, 0), '{"sim":{"players":[]}}']) {
       expect(() => readQuickSimResult(bad)).toThrow(Json2FormatError);
     }
+  });
+
+  test("readJson2 rejects a missing, non-JSON or misshapen report with Json2FormatError", () => {
+    for (const bad of [null, "nope", "{}"]) {
+      expect(() => readJson2(bad, quickSimJson2Schema)).toThrow(Json2FormatError);
+    }
+    expect(() => readJson2(report(10, 0), quickSimJson2Schema)).toThrow(/confidence_estimator/);
   });
 
   test("classifyExit keeps the code and prefers the Error: line", () => {

@@ -1,11 +1,5 @@
-import {
-  type DpsSummary,
-  type Precision,
-  quickSimJson2Schema,
-  type SimError,
-  type SimSettings,
-} from "@simbot/shared";
-import { Json2FormatError } from "./json2";
+import type { DpsSummary, Precision, SimError, SimSettings } from "@simbot/shared";
+import { baselineDps, quickSimJson2Schema, readJson2 } from "./json2";
 
 /** Final-Stage `target_error` (percent of DPS) per precision preset. */
 export const PRECISION_TARGET_ERROR: Readonly<Record<Precision, number>> = {
@@ -59,24 +53,7 @@ export function stageArgs(inputPath: string, json2Path: string): string[] {
  * `mean_std_dev × confidence_estimator`. Throws `Json2FormatError` for anything unexpected.
  */
 export function readQuickSimResult(text: string | null): { dps: DpsSummary } {
-  if (text === null) throw new Json2FormatError("no json2 report was written");
-  let raw: unknown;
-  try {
-    raw = JSON.parse(text);
-  } catch {
-    throw new Json2FormatError("json2 report is not valid JSON");
-  }
-  const parsed = quickSimJson2Schema.safeParse(raw);
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0];
-    throw new Json2FormatError(`${issue?.path.join(".") ?? ""}: ${issue?.message ?? "invalid"}`);
-  }
-  const { sim } = parsed.data;
-  const dps = sim.players[0]?.collected_data.dps;
-  if (!dps) throw new Json2FormatError("no player in report");
-  return {
-    dps: { mean: dps.mean, meanError: dps.mean_std_dev * sim.options.confidence_estimator },
-  };
+  return { dps: baselineDps(readJson2(text, quickSimJson2Schema).sim).summary };
 }
 
 const STDERR_KEEP = 2000;

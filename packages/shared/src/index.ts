@@ -2,7 +2,6 @@ export * from "./combinations";
 export * from "./events";
 export * from "./health";
 export * from "./items";
-export * from "./json2";
 export * from "./paperdoll";
 export * from "./ranking";
 export * from "./redress";
