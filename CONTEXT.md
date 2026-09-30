@@ -73,8 +73,12 @@ _Avoid_: config, options
 Which game data inside a SimC Build a Sim runs against: Live (the default) or PTR. A Sim set to PTR runs on the Current SimC Build with SimC's `ptr=1`, but fails instead of falling back if the build carries no PTR data distinct from Live or its PTR data is unavailable (e.g. from a failed PTR Check Sim). Part of Sim Settings, frozen with them; the Sim also records the exact game data version it ran on.
 _Avoid_: branch (a SimC git branch), PTR mode, realm
 
+**PTR Sim**:
+A Sim whose Game Data is PTR. Once it exists it behaves like any other Sim: a copy of a PTR Sim stays PTR and can be queued whatever the PTR Sims setting, and queued, running and past PTR Sims are unaffected by turning the setting off.
+_Avoid_: PTR run, PTR mode
+
 **PTR Sims**:
-An optional feature that runs a second pass during Check Sim with `ptr=1` to detect and record which SimC Builds have distinct PTR data available. When PTR Sims are off, the app hides PTR data and Game Data stays at Live.
+The `simc.ptr_enabled` setting, off by default and set on the SimC page. It controls only what can be started or shown: the Game Data choice on new Drafts, each SimC Build's PTR version and PTR change mark, and the PTR pass of Check Sim (which detects which builds have distinct PTR data). It never changes existing PTR Sims.
 _Avoid_: PTR mode, PTR flag
 
 **Combination**:
