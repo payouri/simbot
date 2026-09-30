@@ -5,6 +5,7 @@ import {
   initErrorActor,
   parseItemLine,
   planItemPass,
+  profileLines,
   type RawItem,
   readItemPass,
   renderItemPass,
@@ -211,5 +212,20 @@ describe("initErrorActor", () => {
     ).toBe("c4");
     expect(initErrorActor("Trivial: Player 'c4' attempting to use Action")).toBeNull();
     expect(initErrorActor("Error: cannot open input file")).toBeNull();
+  });
+});
+
+describe("profileLines", () => {
+  test("drops file-writing options from an untrusted Addon String", () => {
+    const text = [
+      'mage="A"',
+      "level=80",
+      "html=/data/db.sqlite",
+      "save=/home/u/.bashrc",
+      "json+=/x",
+      "level=80 xml=/y",
+      "input=/etc/passwd",
+    ].join("\n");
+    expect(profileLines(text)).toEqual(['mage="base"', "level=80"]);
   });
 });

@@ -98,6 +98,14 @@ describe("Quick Sim input and result", () => {
     expect(input.trimEnd().endsWith("iterations=10")).toBe(true);
   });
 
+  test("buildInput drops file-writing options of the Addon String", () => {
+    const text =
+      'mage="A"\nhtml=/data/db.sqlite\nsave=/home/u/.bashrc\nXML=1\nlevel=80\nspec=frost';
+    const input = buildInput(text, settings);
+    expect(input).not.toMatch(/html=|save=|xml/i);
+    expect(input).toContain("level=80\nspec=frost\n");
+  });
+
   test("stageArgs puts output options after the input file", () => {
     expect(stageArgs("/t/in.simc", "/t/out.json")).toEqual([
       "/t/in.simc",

@@ -45,6 +45,31 @@ export const isEquipmentSlot = (key: string) => EQUIPMENT_SLOTS.has(key);
 /** Whether `key` is the class line that opens a character (`mage="Name"`). */
 export const isClassKey = (key: string) => CLASS_KEYS.has(key);
 
+/**
+ * SimC options that write files, read files or reach the network. An Addon String is untrusted
+ * text, so no line that sets one of them may reach SimC.
+ */
+const UNSAFE_OPTION =
+  /^(html|xml|json\d*|json_.*|csv|save(_.*)?|output|log|debug_log|input|hosted_html|xml_style|armory|wowhead|bcp_api|apikey|.*_(output|file|path|dir)(_.*)?|.*_plot_output.*)$/;
+
+/** Whether the line sets a file-writing, file-reading or network SimC option. */
+export function isUnsafeOptionLine(line: string): boolean {
+  return line.split(/\s+/).some((token) => {
+    const eq = token.indexOf("=");
+    if (eq < 1) return false;
+    const key = token.slice(0, eq).replace(/[+-]$/, "").toLowerCase();
+    return UNSAFE_OPTION.test(key);
+  });
+}
+
+/** The Addon String without the lines that set an unsafe SimC option. */
+export function stripUnsafeOptions(addonString: string): string {
+  return addonString
+    .split(/(?<=\r\n|\n|\r)/)
+    .filter((line) => !isUnsafeOptionLine(line))
+    .join("");
+}
+
 export type ProfileHeader = {
   region: string;
   realm: string;

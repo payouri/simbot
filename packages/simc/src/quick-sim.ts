@@ -1,4 +1,5 @@
 import type { DpsSummary, Precision, SimError, SimSettings } from "@simbot/shared";
+import { stripUnsafeOptions } from "./addon-string";
 import { baselineDps, quickSimJson2Schema, readJson2 } from "./json2";
 
 /** Final-Stage `target_error` (percent of DPS) per precision preset. */
@@ -36,7 +37,8 @@ export function buildInput(
     ...(options.extraLines ?? []),
   ];
   if (settings.rawOptions.trim() !== "") lines.push("# Raw options", settings.rawOptions);
-  const head = addonString.endsWith("\n") ? addonString : `${addonString}\n`;
+  const safe = stripUnsafeOptions(addonString);
+  const head = safe.endsWith("\n") ? safe : `${safe}\n`;
   return `${head}${lines.join("\n")}\n`;
 }
 

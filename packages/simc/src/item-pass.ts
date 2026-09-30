@@ -6,7 +6,7 @@ import type {
   UnknownReport,
 } from "@simbot/shared";
 import { z } from "zod";
-import { isClassKey, isEquipmentSlot } from "./addon-string";
+import { isClassKey, isEquipmentSlot, isUnsafeOptionLine } from "./addon-string";
 import type { ItemMeta, MetaItem } from "./meta";
 
 /**
@@ -164,7 +164,8 @@ export const BASE_ACTOR = "base";
 /** The profile lines of an Addon String: everything that is not a comment or an item. */
 export function profileLines(addonString: string): string[] {
   const out: string[] = [];
-  for (const line of addonString.split(/\r?\n/)) {
+  for (const line of addonString.split(/\r\n|\n|\r/)) {
+    if (isUnsafeOptionLine(line)) continue;
     const eq = line.indexOf("=");
     if (!line.trim() || line.startsWith("#") || eq < 1) continue;
     const key = line.slice(0, eq).trim();
