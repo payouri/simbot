@@ -72,7 +72,9 @@ export const populateFromRegistry =
 export const populateFromSeed =
   (seedDir: string) =>
   async (dir: string): Promise<void> => {
-    await cp(seedDir, dir, { recursive: true });
+    // Verbatim: the default rewrites a relative symlink (libz.so.1 -> libz.so.1.3.2) to an absolute
+    // path into the seed, so the installed build would keep depending on the seed's location.
+    await cp(seedDir, dir, { recursive: true, verbatimSymlinks: true });
   };
 
 /** Moves a staged build into place: `.partial/<tag>/` becomes `simc/<tag>/`. */

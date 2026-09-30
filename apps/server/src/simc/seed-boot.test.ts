@@ -1,5 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readlinkSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
@@ -24,6 +33,9 @@ async function bakeSeed() {
   const dir = join(seedRoot, "simc", SEED);
   mkdirSync(join(dir, "lib"), { recursive: true });
   mkdirSync(join(dir, "profiles"), { recursive: true });
+  mkdirSync(join(dir, "usr", "lib"), { recursive: true });
+  writeFileSync(join(dir, "usr", "lib", "libz.so.1.3.2"), "lib");
+  symlinkSync("libz.so.1.3.2", join(dir, "usr", "lib", "libz.so.1"));
   writeFileSync(join(dir, "lib", "ld-musl-x86_64.so.1"), '#!/bin/sh\nshift 2\nexec "$@"\n');
   writeFileSync(
     join(dir, "simc"),
@@ -110,6 +122,15 @@ describe("first start on the Seed SimC Build", () => {
     expect(body.job?.status).toBe("failed");
     expect(body.job?.error).toBeTruthy();
     expect(updateJobs()).toBe(1);
+  });
+
+  test("the installed seed keeps its relative library symlinks, so it never points back at the seed", async () => {
+    boot(offline);
+    await app.boot();
+    await app.idle();
+    expect(readlinkSync(join(dataDir, "simc", SEED, "usr", "lib", "libz.so.1"))).toBe(
+      "libz.so.1.3.2",
+    );
   });
 
   test("online: exactly one update to the latest nightly, and later starts queue none", async () => {
