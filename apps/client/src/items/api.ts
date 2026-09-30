@@ -1,14 +1,12 @@
 import { type ImportItemsResponse, importItemsResponseSchema } from "@simbot/shared";
 import { useQuery } from "@tanstack/react-query";
+import { request } from "../api/http";
 
 export function useImportItems(importId: number) {
   return useQuery({
     queryKey: ["import", importId, "items"],
-    queryFn: async (): Promise<ImportItemsResponse> => {
-      const res = await fetch(`/api/imports/${importId}/items`);
-      if (!res.ok) throw new Error(`GET /api/imports/${importId}/items failed: ${res.status}`);
-      return importItemsResponseSchema.parse(await res.json());
-    },
+    queryFn: (): Promise<ImportItemsResponse> =>
+      request("GET", `/api/imports/${importId}/items`, importItemsResponseSchema),
   });
 }
 

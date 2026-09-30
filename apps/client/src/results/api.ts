@@ -1,4 +1,4 @@
-import { type SimResultsResponse, simResultsResponseSchema } from "@simbot/shared";
+import type { SimResultsResponse } from "@simbot/shared";
 import { useQuery } from "@tanstack/react-query";
 import { getResults } from "../quick-sim/api";
 
@@ -6,7 +6,7 @@ import { getResults } from "../quick-sim/api";
 export function useSimResults(simId: number, enabled: boolean) {
   return useQuery<SimResultsResponse>({
     queryKey: ["sim", simId, "results"],
-    queryFn: async () => simResultsResponseSchema.parse(await getResults(simId)),
+    queryFn: async () => getResults(simId),
     enabled,
   });
 }

@@ -1,22 +1,17 @@
-import {
-  type SimcJobTarget,
-  type SimcStatusResponse,
-  simcStatusResponseSchema,
-} from "@simbot/shared";
+import { type SimcJobTarget, simcStatusResponseSchema } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { request } from "../api/http";
 
 export const SIMC_KEY = ["simc"] as const;
 
-async function readStatus(res: Response, what: string): Promise<SimcStatusResponse> {
-  if (!res.ok) throw new Error(`${what} failed: ${res.status}`);
-  return simcStatusResponseSchema.parse(await res.json());
-}
+const statusRequest = (method: string, path: string, body?: unknown) =>
+  request(method, path, simcStatusResponseSchema, body);
 
 /** The stored SimC status. The server refreshes a stale one in the background and says so over SSE. */
 export function useSimcStatus() {
   return useQuery({
     queryKey: SIMC_KEY,
-    queryFn: async () => readStatus(await fetch("/api/simc"), "GET /api/simc"),
+    queryFn: () => statusRequest("GET", "/api/simc"),
     // Poll while the boot-time install is running so the build appears without a reload.
     refetchInterval: (q) =>
       q.state.data?.install.state === "installing" || q.state.data?.job?.status === "running"
@@ -29,8 +24,7 @@ export function useSimcStatus() {
 export function useCheckSimcNow() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async () =>
-      readStatus(await fetch("/api/simc/check", { method: "POST" }), "POST /api/simc/check"),
+    mutationFn: () => statusRequest("POST", "/api/simc/check"),
     onSuccess: (status) => client.setQueryData(SIMC_KEY, status),
   });
 }
@@ -39,13 +33,8 @@ export function useCheckSimcNow() {
 export function useQueueSimcJob() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (target: SimcJobTarget) => {
-      const res = await fetch("/api/simc/jobs", {
-        method: "POST",
-        body: JSON.stringify({ target }),
-      });
-      if (!res.ok) throw new Error(`POST /api/simc/jobs failed: ${res.status}`);
-    },
+    mutationFn: (target: SimcJobTarget) =>
+      request("POST", "/api/simc/jobs", { parse: () => undefined }, { target }),
     onSettled: () => client.invalidateQueries({ queryKey: SIMC_KEY }),
   });
 }
@@ -54,11 +43,7 @@ export function useQueueSimcJob() {
 export function useSetKeepBuilds() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (keep: number) =>
-      readStatus(
-        await fetch("/api/simc/settings", { method: "PATCH", body: JSON.stringify({ keep }) }),
-        "PATCH /api/simc/settings",
-      ),
+    mutationFn: (keep: number) => statusRequest("PATCH", "/api/simc/settings", { keep }),
     onSuccess: (status) => client.setQueryData(SIMC_KEY, status),
   });
 }

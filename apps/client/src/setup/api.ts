@@ -1,5 +1,4 @@
 import {
-  apiErrorSchema,
   type CombinationPreview,
   combinationPreviewSchema,
   type ImportSetup,
@@ -12,16 +11,13 @@ import {
 } from "@simbot/shared";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { request } from "../api/http";
 
 /** The Draft as the server has it. Never cached past the page: the page owns the edits. */
 export function useDraftQuery(id: number) {
   return useQuery({
     queryKey: ["sim", id, "setup"],
-    queryFn: async (): Promise<Sim> => {
-      const res = await fetch(`/api/sims/${id}`);
-      if (!res.ok) throw new Error(`GET /api/sims/${id} failed: ${res.status}`);
-      return simSchema.parse(await res.json());
-    },
+    queryFn: (): Promise<Sim> => request("GET", `/api/sims/${id}`, simSchema),
     staleTime: Number.POSITIVE_INFINITY,
     gcTime: 0,
     refetchOnWindowFocus: false,
@@ -32,11 +28,8 @@ export function useDraftQuery(id: number) {
 export function useImportSetup(importId: number) {
   return useQuery({
     queryKey: ["import", importId, "setup"],
-    queryFn: async (): Promise<ImportSetup> => {
-      const res = await fetch(`/api/imports/${importId}/parsed`);
-      if (!res.ok) throw new Error(`GET /api/imports/${importId}/parsed failed: ${res.status}`);
-      return importSetupSchema.parse(await res.json());
-    },
+    queryFn: (): Promise<ImportSetup> =>
+      request("GET", `/api/imports/${importId}/parsed`, importSetupSchema),
   });
 }
 
@@ -46,22 +39,7 @@ export async function patchSim(
   body: PatchSimRequest,
   opts: { keepalive?: boolean } = {},
 ): Promise<Sim> {
-  const res = await fetch(`/api/sims/${id}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-    keepalive: opts.keepalive,
-  });
-  const payload: unknown = await res.json().catch(() => null);
-  if (!res.ok) {
-    const err = apiErrorSchema.safeParse(payload);
-    throw new Error(
-      err.success
-        ? (err.data.issues?.[0]?.message ?? err.data.message ?? err.data.error)
-        : `Saving failed (${res.status}).`,
-    );
-  }
-  return simSchema.parse(payload);
+  return request("PATCH", `/api/sims/${id}`, simSchema, body, { keepalive: opts.keepalive });
 }
 
 /** A value that follows `value` after it has stayed put for `ms`. */
@@ -91,16 +69,14 @@ export function useCombinationPreview(
   );
   return useQuery({
     queryKey: ["sim", simId, "preview", body],
-    queryFn: async ({ signal }): Promise<CombinationPreview> => {
-      const res = await fetch(`/api/sims/${simId}/preview-combinations`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body,
-        signal,
-      });
-      if (!res.ok) throw new Error(`Preview failed (${res.status}).`);
-      return combinationPreviewSchema.parse(await res.json());
-    },
+    queryFn: ({ signal }): Promise<CombinationPreview> =>
+      request(
+        "POST",
+        `/api/sims/${simId}/preview-combinations`,
+        combinationPreviewSchema,
+        JSON.parse(body),
+        { signal },
+      ),
     placeholderData: keepPreviousData,
     staleTime: Number.POSITIVE_INFINITY,
     refetchOnWindowFocus: false,
@@ -109,8 +85,5 @@ export function useCombinationPreview(
 }
 
 /** `POST /api/sims/:id/preselect`: the default preselection, saved on the Draft. */
-export async function preselectDraft(id: number): Promise<Sim> {
-  const res = await fetch(`/api/sims/${id}/preselect`, { method: "POST" });
-  if (!res.ok) throw new Error(`Preselecting failed (${res.status}).`);
-  return simSchema.parse(await res.json());
-}
+export const preselectDraft = (id: number): Promise<Sim> =>
+  request("POST", `/api/sims/${id}/preselect`, simSchema);

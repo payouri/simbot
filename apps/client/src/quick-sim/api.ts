@@ -1,5 +1,4 @@
 import {
-  apiErrorSchema,
   type Character,
   type CreateSimRequest,
   characterConflictSchema,
@@ -16,32 +15,7 @@ import {
   simSchema,
   type UpdateCharacterRequest,
 } from "@simbot/shared";
-
-/** Throws an Error carrying the server's message for a non-2xx response. */
-async function request<T>(
-  method: string,
-  path: string,
-  schema: { parse(raw: unknown): T },
-  body?: unknown,
-): Promise<T> {
-  const res = await fetch(path, {
-    method,
-    headers: body === undefined ? undefined : { "content-type": "application/json" },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const payload: unknown = await res.json().catch(() => null);
-  if (!res.ok) {
-    const err = apiErrorSchema.safeParse(payload);
-    const first = err.success ? err.data.issues?.[0]?.message : undefined;
-    const more = err.success ? Math.max(0, (err.data.issues?.length ?? 0) - 1) : 0;
-    throw new Error(
-      err.success
-        ? `${err.data.message ?? err.data.error}${first ? ` ${first}` : ""}${more > 0 ? ` (and ${more} more)` : ""}`
-        : `${method} ${path} failed: ${res.status}`,
-    );
-  }
-  return schema.parse(payload);
-}
+import { ApiRequestError, request } from "../api/http";
 
 export const createImport = (text: string) =>
   request("POST", "/api/imports", importSchema, { text });
@@ -88,19 +62,13 @@ export async function updateCharacter(
   id: number,
   patch: UpdateCharacterRequest,
 ): Promise<Character> {
-  const res = await fetch(`/api/characters/${id}`, {
-    method: "PATCH",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(patch),
-  });
-  const payload: unknown = await res.json().catch(() => null);
-  if (res.status === 409) {
-    const conflict = characterConflictSchema.safeParse(payload);
-    if (conflict.success) throw new CharacterConflictError(conflict.data.conflictingCharacter);
+  try {
+    return await request("PATCH", `/api/characters/${id}`, characterSchema, patch);
+  } catch (err) {
+    if (err instanceof ApiRequestError && err.status === 409) {
+      const conflict = characterConflictSchema.safeParse(err.payload);
+      if (conflict.success) throw new CharacterConflictError(conflict.data.conflictingCharacter);
+    }
+    throw err;
   }
-  if (!res.ok) {
-    const err = apiErrorSchema.safeParse(payload);
-    throw new Error(err.success ? (err.data.message ?? err.data.error) : "Edit failed.");
-  }
-  return characterSchema.parse(payload);
 }
