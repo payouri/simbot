@@ -1,4 +1,5 @@
 import {
+  CONSUMABLE_KEYS,
   type CombinationPreview,
   fightStyleSchema,
   type ImportItemsResponse,
@@ -23,9 +24,11 @@ import type { SaveState } from "./autosave";
 import {
   CONSUMABLE_LABEL,
   candidatesInPlay,
+  effectiveConsumables,
   loadoutName,
   prettyOption,
   type SlotItems,
+  setConsumable,
   slotsInPlay,
   toggleLoadout,
   toggleLock,
@@ -152,6 +155,55 @@ function SettingsForm({
   );
 }
 
+/** The one consumable set every Combination runs with. An empty field keeps the export's. */
+function ConsumablesForm({
+  exported,
+  selection,
+  onSelection,
+}: {
+  exported: Readonly<Record<string, string>>;
+  selection: TopGearSelection;
+  onSelection: (next: TopGearSelection) => void;
+}) {
+  const picked = selection.consumables ?? {};
+  return (
+    <div className="flex flex-col gap-3 rounded-[8px] border border-line bg-sunk/60 p-3.5 text-[12.5px]">
+      <p className="text-faint">
+        One set for every combination, as SimC names it. Leave a field empty to keep the Addon
+        String's, or write <span className="num">disabled</span> for none.
+      </p>
+      <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2">
+        {CONSUMABLE_KEYS.map((key) => (
+          <label key={key} className="contents">
+            <span className="text-faint">{CONSUMABLE_LABEL[key] ?? key}</span>
+            <input
+              type="text"
+              value={picked[key] ?? ""}
+              placeholder={exported[key] ?? "SimC default"}
+              maxLength={120}
+              spellCheck={false}
+              onChange={(e) => onSelection(setConsumable(selection, key, e.target.value))}
+              className={clsx(inputClass, "w-full min-w-0 placeholder:text-faint")}
+            />
+          </label>
+        ))}
+      </div>
+      {Object.keys(picked).length > 0 && (
+        <button
+          type="button"
+          className="self-start text-[12px] text-muted underline hover:text-fg"
+          onClick={() => {
+            const { consumables: _, ...rest } = selection;
+            onSelection(rest);
+          }}
+        >
+          Use the Addon String's set
+        </button>
+      )}
+    </div>
+  );
+}
+
 function SaveNote({ save, onRetry }: { save: SaveState; onRetry: () => void }) {
   if (save.kind === "error") {
     return (
@@ -206,6 +258,7 @@ export function Command({
   onRetry: () => void;
 }) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [consumablesOpen, setConsumablesOpen] = useState(false);
   const simc = useSimcStatus();
   const chip = chipView(simc.data);
   const c = sim.character;
@@ -215,7 +268,8 @@ export function Command({
   const issues = preview?.issues ?? [];
   const canRun = !running && issues.length === 0;
   const count = new Intl.NumberFormat("en-US");
-  const consumables = Object.entries(setup?.consumables ?? {});
+  const exported = setup?.consumables ?? {};
+  const consumables = effectiveConsumables(exported, selection.consumables);
 
   return (
     <div className="flex h-full flex-col gap-5 rounded-[10px] border border-line bg-panel/60 p-5">
@@ -272,16 +326,32 @@ export function Command({
           )}
         </dd>
         <dt className="text-faint">Consumables</dt>
-        <dd className="text-muted">
-          {consumables.length === 0
-            ? "None in the Addon String"
-            : consumables.map(([key, value], i) => (
-                <span key={key}>
-                  {i > 0 && ", "}
-                  <span className="text-faint">{CONSUMABLE_LABEL[key] ?? key} </span>
-                  {prettyOption(value)}
-                </span>
-              ))}
+        <dd>
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-left text-muted hover:text-fg"
+            aria-expanded={consumablesOpen}
+            onClick={() => setConsumablesOpen((v) => !v)}
+          >
+            <span>
+              {consumables.length === 0
+                ? "None in the Addon String"
+                : consumables.map(({ key, value, picked }, i) => (
+                    <span key={key}>
+                      {i > 0 && ", "}
+                      <span className="text-faint">{CONSUMABLE_LABEL[key] ?? key} </span>
+                      <span className={clsx(picked && "text-fg")}>{prettyOption(value)}</span>
+                    </span>
+                  ))}
+            </span>
+            <ChevronDown
+              size={14}
+              className={clsx(
+                "shrink-0 transition-transform duration-200",
+                consumablesOpen && "rotate-180",
+              )}
+            />
+          </button>
         </dd>
         <dt className="text-faint">Sim</dt>
         <dd>
@@ -329,6 +399,9 @@ export function Command({
         )}
       </dl>
 
+      {consumablesOpen && (
+        <ConsumablesForm exported={exported} selection={selection} onSelection={onSelection} />
+      )}
       {settingsOpen && <SettingsForm settings={settings} onChange={onSettings} />}
 
       <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">

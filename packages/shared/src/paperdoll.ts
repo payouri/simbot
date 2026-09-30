@@ -84,6 +84,27 @@ const SIMC_SLOT_GROUP: Record<string, PaperdollSlot> = {
 export const paperdollSlotOf = (simcSlot: string): PaperdollSlot | null =>
   SIMC_SLOT_GROUP[simcSlot] ?? null;
 
+/** The SimC options a consumable set is made of, in the order they are written. */
+export const CONSUMABLE_KEYS = [
+  "flask",
+  "food",
+  "potion",
+  "augmentation",
+  "temporary_enchant",
+] as const;
+export const consumableKeySchema = z.enum(CONSUMABLE_KEYS);
+export type ConsumableKey = z.infer<typeof consumableKeySchema>;
+
+/**
+ * One consumable as SimC names it (`flask_of_power_3`, `main_hand:oil_3`), or `disabled` for
+ * none. No spaces or line breaks, so a value can only ever write its own option line.
+ */
+export const consumableValueSchema = z.string().regex(/^[A-Za-z0-9_.:-]{1,120}$/);
+
+/** The user's consumable set: an option given here replaces the Addon String's for every Combination. */
+export const consumableSetSchema = z.partialRecord(consumableKeySchema, consumableValueSchema);
+export type ConsumableSet = z.infer<typeof consumableSetSchema>;
+
 /**
  * What a Top Gear Sim is built from, as far as the setup can say: which Candidate Items are in
  * play (by `ImportItem.index` in the Import's item list), which Talent Loadouts (by position in
@@ -99,6 +120,8 @@ export const topGearSelectionSchema = z.object({
   catalystCharges: z.number().int().min(0).max(100).optional(),
   /** Upgrade budget (crests) the Combination may spend; absent: not limited. */
   upgradeBudget: z.number().int().min(0).max(100000).optional(),
+  /** The consumable set every Combination runs with; an option left out keeps the export's. */
+  consumables: consumableSetSchema.optional(),
   /** The default preselection has been applied (or declined), so it is not applied again. */
   preselected: z.boolean().optional(),
 });
@@ -119,8 +142,16 @@ export const normalizeSelection = (s: TopGearSelection): TopGearSelection => ({
   ...(s.minTierPieces ? { minTierPieces: s.minTierPieces } : {}),
   ...(s.catalystCharges !== undefined ? { catalystCharges: s.catalystCharges } : {}),
   ...(s.upgradeBudget !== undefined ? { upgradeBudget: s.upgradeBudget } : {}),
+  ...(consumablesOf(s.consumables) ? { consumables: consumablesOf(s.consumables) } : {}),
   ...(s.preselected ? { preselected: true } : {}),
 });
+
+/** A consumable set in key order; undefined when it overrides nothing. */
+function consumablesOf(set: ConsumableSet | undefined): ConsumableSet | undefined {
+  if (!set) return undefined;
+  const entries = CONSUMABLE_KEYS.flatMap((k) => (set[k] ? [[k, set[k]] as const] : []));
+  return entries.length > 0 ? Object.fromEntries(entries) : undefined;
+}
 
 /** A Talent Loadout of an Import, as the setup lists it. */
 export const importLoadoutSchema = z.object({

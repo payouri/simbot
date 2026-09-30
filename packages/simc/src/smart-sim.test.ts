@@ -162,6 +162,35 @@ describe("buildStageInput", () => {
     expect(input).not.toContain("target_error=0.2");
   });
 
+  test("writes the user's consumable set on the base actor, before any profileset", () => {
+    const consumables = { flask: "flask_of_alchemical_chaos_3", food: "disabled" };
+    const withSurvivor = buildStageInput({
+      addonString,
+      settings: defaultSimSettings,
+      targetError: 0.3,
+      baseline,
+      profilesets: [
+        {
+          id: 4,
+          definition: { kind: "gear", gear: { ...gear.equipped, head }, talentLoadout: null },
+        },
+      ],
+      consumables,
+    });
+    const tail = withSurvivor.slice(addonString.length);
+    expect(tail).toContain("\nflask=flask_of_alchemical_chaos_3\nfood=disabled\n");
+    expect(tail.indexOf("flask=")).toBeLessThan(tail.indexOf("# Profilesets"));
+    const alone = buildStageInput({
+      addonString,
+      settings: defaultSimSettings,
+      targetError: 0.2,
+      baseline,
+      profilesets: [],
+      consumables,
+    });
+    expect(alone.slice(addonString.length)).toContain("\nflask=flask_of_alchemical_chaos_3\n");
+  });
+
   test("with no survivor it is the Quick Sim input at that target", () => {
     const input = buildStageInput({
       addonString,

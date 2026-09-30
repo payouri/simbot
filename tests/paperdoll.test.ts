@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import {
   candidatesInPlay,
+  effectiveConsumables,
   groupBySlot,
   includedCount,
   loadoutName,
   setCandidates,
+  setConsumable,
   slotsInPlay,
   toggleItem,
   toggleLoadout,
@@ -72,6 +74,29 @@ describe("Top Gear Selection", () => {
     expect(defaultTopGearSelection(null).talentLoadouts).toEqual([]);
   });
 
+  test("keeps a consumable set in key order and drops an empty one", () => {
+    const base = { included: [], talentLoadouts: [], lockedSlots: [] };
+    const n = normalizeSelection({
+      ...base,
+      consumables: { potion: "tempered_potion_3", flask: "flask_of_alchemical_chaos_3" },
+    });
+    expect(JSON.stringify(n.consumables)).toBe(
+      JSON.stringify({ flask: "flask_of_alchemical_chaos_3", potion: "tempered_potion_3" }),
+    );
+    expect(topGearSelectionSchema.safeParse(n).success).toBe(true);
+    expect(normalizeSelection({ ...base, consumables: {} })).toEqual(base);
+  });
+
+  test("rejects a consumable value that would write another SimC line", () => {
+    const base = { included: [], talentLoadouts: [], lockedSlots: [] };
+    expect(
+      topGearSelectionSchema.safeParse({ ...base, consumables: { food: "x\nthreads=1" } }).success,
+    ).toBe(false);
+    expect(
+      topGearSelectionSchema.safeParse({ ...base, consumables: { tabard: "x" } }).success,
+    ).toBe(false);
+  });
+
   test("rejects a slot the sheet does not have", () => {
     expect(
       topGearSelectionSchema.safeParse({ included: [], talentLoadouts: [], lockedSlots: ["x"] })
@@ -137,5 +162,30 @@ describe("setup model", () => {
     expect(loadoutName({ comment: " Raid ", equipped: true }, 0)).toBe("Raid");
     expect(loadoutName({ comment: null, equipped: true }, 0)).toBe("Equipped talents");
     expect(loadoutName({ comment: null, equipped: false }, 2)).toBe("Loadout 3");
+  });
+});
+
+describe("consumable set", () => {
+  const base = { included: [], talentLoadouts: [], lockedSlots: [] };
+
+  test("picking one replaces the Addon String's for that option only", () => {
+    const s = setConsumable(base, "flask", "flask of alchemical chaos 3");
+    expect(s.consumables).toEqual({ flask: "flask_of_alchemical_chaos_3" });
+    expect(effectiveConsumables({ flask: "old_flask", food: "feast" }, s.consumables)).toEqual([
+      { key: "flask", value: "flask_of_alchemical_chaos_3", picked: true },
+      { key: "food", value: "feast", picked: false },
+    ]);
+  });
+
+  test("an export with no consumables can still be given a set", () => {
+    const s = setConsumable(base, "food", "feast_of_the_midnight_masquerade");
+    expect(effectiveConsumables({}, s.consumables)).toEqual([
+      { key: "food", value: "feast_of_the_midnight_masquerade", picked: true },
+    ]);
+  });
+
+  test("clearing the last pick goes back to the export's set", () => {
+    const s = setConsumable(setConsumable(base, "potion", "p"), "potion", "");
+    expect(s).toEqual(base);
   });
 });

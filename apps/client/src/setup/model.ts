@@ -1,4 +1,7 @@
 import {
+  CONSUMABLE_KEYS,
+  type ConsumableKey,
+  type ConsumableSet,
   type ImportItem,
   PAPERDOLL_LEFT,
   PAPERDOLL_RIGHT,
@@ -126,6 +129,40 @@ export function slotsInPlay(
 
 /** A SimC option value as words: `flask_of_power_3` becomes "flask of power 3". */
 export const prettyOption = (value: string) => value.replaceAll("_", " ");
+
+/**
+ * The selection with one consumable of the set picked. Typed text becomes a SimC token (spaces
+ * to underscores, anything else dropped); an empty value goes back to the Addon String's.
+ */
+export function setConsumable(
+  selection: TopGearSelection,
+  key: ConsumableKey,
+  value: string,
+): TopGearSelection {
+  const token = value
+    .replace(/\s/g, "_")
+    .replace(/[^A-Za-z0-9_.:-]/g, "")
+    .slice(0, 120);
+  const { [key]: _, ...rest } = selection.consumables ?? {};
+  const consumables: ConsumableSet = token === "" ? rest : { ...rest, [key]: token };
+  const { consumables: __, ...without } = selection;
+  return Object.keys(consumables).length === 0 ? without : { ...without, consumables };
+}
+
+type EffectiveConsumable = { key: ConsumableKey; value: string; picked: boolean };
+
+/** The set a Combination runs with: the user's pick per option, else the Addon String's. */
+export function effectiveConsumables(
+  exported: Readonly<Record<string, string>>,
+  picked: ConsumableSet | undefined,
+): EffectiveConsumable[] {
+  return CONSUMABLE_KEYS.flatMap((key): EffectiveConsumable[] => {
+    const own = picked?.[key];
+    if (own) return [{ key, value: own, picked: true }];
+    const value = exported[key];
+    return value ? [{ key, value, picked: false }] : [];
+  });
+}
 
 export const CONSUMABLE_LABEL: Record<string, string> = {
   flask: "Flask",

@@ -69,6 +69,7 @@ export {
   CULL_KEEP_TOP,
   CULL_SIGMAS,
   type CullEntry,
+  consumableLines,
   cull,
   type ImportGear,
   ITERATIONS_CEILING,

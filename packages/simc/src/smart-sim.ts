@@ -1,4 +1,11 @@
-import type { CombinationDefinition, DpsSummary, Precision, SimSettings } from "@simbot/shared";
+import {
+  CONSUMABLE_KEYS,
+  type CombinationDefinition,
+  type ConsumableSet,
+  type DpsSummary,
+  type Precision,
+  type SimSettings,
+} from "@simbot/shared";
 import { equippedTalentsLine, parseAddonString } from "./addon-string";
 import { normalizeSlot } from "./item-pass";
 import { baselineDps, Json2FormatError, readJson2, stageJson2Schema } from "./json2";
@@ -156,7 +163,15 @@ export type StageInputPlan = {
   baseline: CombinationDefinition;
   /** The survivors that run as profilesets (never the baseline). */
   profilesets: readonly { id: number; definition: CombinationDefinition }[];
+  /** The user's consumable set, written on the base actor so every Combination runs with it. */
+  consumables?: ConsumableSet;
 };
+
+/** One option line per consumable the set gives, in key order. */
+export function consumableLines(set: ConsumableSet | undefined): string[] {
+  if (!set) return [];
+  return CONSUMABLE_KEYS.flatMap((key) => (set[key] ? [`${key}=${set[key]}`] : []));
+}
 
 /**
  * The SimC input of one Stage: the Addon String as the base actor (Combination 1), the Sim
@@ -164,13 +179,18 @@ export type StageInputPlan = {
  * survivor. A Stage with no profilesets is a Quick Sim's input unchanged.
  */
 export function buildStageInput(plan: StageInputPlan): string {
+  const consumables = consumableLines(plan.consumables);
   if (plan.profilesets.length === 0) {
-    return buildInput(plan.addonString, plan.settings, { targetError: plan.targetError });
+    return buildInput(plan.addonString, plan.settings, {
+      targetError: plan.targetError,
+      extraLines: consumables,
+    });
   }
   const gear = readImportGear(plan.addonString);
   const head = buildInput(plan.addonString, plan.settings, {
     targetError: plan.targetError,
     extraLines: [
+      ...consumables,
       `iterations=${ITERATIONS_CEILING}`,
       `profileset_work_threads=${PROFILESET_WORK_THREADS}`,
     ],

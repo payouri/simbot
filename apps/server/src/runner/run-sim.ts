@@ -292,6 +292,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
             targetError,
             baseline: baseline.definition,
             profilesets: survivors.map((r) => ({ id: r.id, definition: r.definition })),
+            consumables: sim.topGearSelection?.consumables,
           }),
         );
         bus.emit({
