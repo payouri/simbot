@@ -161,6 +161,13 @@ export function saveCheckSim(
   );
 }
 
+/** Whether `tag` has a Check Sim on this Import. */
+export function hasCheckSim(db: Db, tag: string, importId: number): boolean {
+  return !!db
+    .query("SELECT 1 FROM check_sim_results WHERE build_tag = ? AND import_id = ?")
+    .get(tag, importId);
+}
+
 /** The cost of the newest Check Sim of `tag`: wall time, iterations and the error it reached. */
 export function getCheckSimCost(
   db: Db,

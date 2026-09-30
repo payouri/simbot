@@ -516,13 +516,29 @@ describe("Check Sim delta", () => {
     expect(rows).toEqual({ n: 2 });
   });
 
-  test("no delta when the previous build was checked on another Import", async () => {
+  test("after a re-import the previous build is checked on the new Import, so the delta still shows", async () => {
     bootWithOld();
     await importText();
+    scenario = checkScenario({ mean: 100_000 });
     await applyJob({ kind: "installed", tag: OLD });
-    await call("POST", "/api/imports", { text: `${addonString()}\n# edited\n` });
+    const second = (await (
+      await call("POST", "/api/imports", { text: `${addonString()}\n# edited\n` })
+    ).json()) as { id: number };
+    scenario = checkScenario({ mean: 120_000 });
     const body = await applyJob({ kind: "nightly" });
-    expect(body.checkSim?.previous).toBeNull();
+    expect(body.checkSim).toMatchObject({
+      tag: LATEST_NIGHTLY,
+      importId: second.id,
+      previous: { tag: OLD },
+    });
+  });
+
+  test("a Seed-style build with no Check Sim gets a delta once an Import exists", async () => {
+    bootWithOld();
+    const imp = await importText();
+    expect((await status()).checkSim).toBeNull();
+    const body = await applyJob({ kind: "nightly" });
+    expect(body.checkSim).toMatchObject({ importId: imp.id, previous: { tag: OLD } });
   });
 });
 

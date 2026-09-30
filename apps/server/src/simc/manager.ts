@@ -18,6 +18,7 @@ import {
   finishSimcJob,
   getCheckSim,
   getSimcJob,
+  hasCheckSim,
   latestImport,
   latestOpenSimcJob,
   queueSimcJob,
@@ -314,6 +315,23 @@ export function createSimcManager(deps: SimcManagerDeps) {
       const imp = latestImport(db);
       const tmpRoot = join(dataDir, "tmp");
       await mkdir(tmpRoot, { recursive: true });
+      // The Current SimC Build has no Check Sim on this Import yet (a re-import, or a Seed build
+      // that never ran one): run it now so the delta against it always exists. Best effort.
+      const baseTag = currentTag();
+      let baseline: Awaited<ReturnType<typeof runCheckSim>> | null = null;
+      if (imp && baseTag && baseTag !== tag && !hasCheckSim(db, baseTag, imp.id)) {
+        baseline = await runCheckSim({
+          dir: buildDir(dataDir, baseTag),
+          tmpRoot,
+          addonString: imp.text,
+          launch: deps.launch,
+        }).catch((err) => {
+          log(
+            `simc: baseline check sim of ${baseTag} failed: ${err instanceof Error ? err.message : err}`,
+          );
+          return null;
+        });
+      }
       const { dps, durationMs, iterations } = await runCheckSim({
         dir: staged ? partialDir(dataDir, tag) : buildDir(dataDir, tag),
         tmpRoot,
@@ -340,6 +358,16 @@ export function createSimcManager(deps: SimcManagerDeps) {
       db.transaction(() => {
         setCurrentTag(build.tag);
         if (imp) {
+          if (baseline && before && before !== build.tag) {
+            saveCheckSim(db, {
+              buildTag: before,
+              importId: imp.id,
+              previousTag: null,
+              dps: baseline.dps,
+              durationMs: baseline.durationMs,
+              iterations: baseline.iterations,
+            });
+          }
           saveCheckSim(db, {
             buildTag: build.tag,
             importId: imp.id,
