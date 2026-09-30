@@ -1,7 +1,13 @@
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
-import type { SimcBuild, SimError, SimLogLevel, SimProgress } from "@simbot/shared";
+import {
+  isTopGear,
+  type SimcBuild,
+  type SimError,
+  type SimLogLevel,
+  type SimProgress,
+} from "@simbot/shared";
 import {
   buildStageInput,
   type CullEntry,
@@ -240,7 +246,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       return fail({ kind: "no_simc_build", message: "No SimC Build is installed." });
     }
 
-    if (sim.kind === "top_gear" && deps.revalidate && getFrozenSimcTag(db, sim.id) !== build.tag) {
+    if (isTopGear(sim) && deps.revalidate && getFrozenSimcTag(db, sim.id) !== build.tag) {
       const problems = await deps.revalidate(sim.id);
       if (problems.length > 0) {
         return fail({

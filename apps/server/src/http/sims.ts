@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   combinationPreviewSchema,
   createSimRequestSchema,
+  isTopGear,
   MAX_COMBINATIONS,
   patchSimRequestSchema,
   previewCombinationsRequestSchema,
@@ -124,10 +125,7 @@ export async function postQueueSim(
   const current = getSim(db, id);
   if (!current) return apiError(404, "sim_not_found");
   let plan: QueuePlan | undefined;
-  // A Draft with Candidate Items included is a Top Gear whatever it started as.
-  const isTopGear =
-    current.kind === "top_gear" || (current.topGearSelection?.included.length ?? 0) > 0;
-  if (isTopGear && current.status === "draft" && current.topGearSelection) {
+  if (isTopGear(current) && current.status === "draft" && current.topGearSelection) {
     const frozen = await combos.freeze(current);
     if (!frozen.ok) {
       return apiError(422, "invalid_combinations", {
@@ -170,7 +168,7 @@ export async function postPreviewCombinations(
   const id = parseId(rawId);
   const sim = id === null ? null : getSim(db, id);
   if (!sim) return apiError(404, "sim_not_found");
-  if (sim.kind !== "top_gear" && sim.topGearSelection === null) {
+  if (!sim.topGearSelection) {
     return apiError(409, "not_top_gear", { message: "This Sim has no Top Gear selection." });
   }
   const body = await readBody(req, previewCombinationsRequestSchema);
@@ -331,12 +329,21 @@ export function getSims(db: Db, req: Request): Response {
   return json(simListResponseSchema.parse(items));
 }
 
-/** `DELETE /api/sims/:id`: Delete a Sim and its folder. */
+/**
+ * `DELETE /api/sims/:id`: Delete a Sim and its folder. 409 `invalid_transition` while it is
+ * queued or running: Stop or Discard it first.
+ */
 export function deleteSim_Handler(db: Db, rawId: string, dataDir: string): Response {
   const id = parseId(rawId);
   if (id === null) return apiError(404, "sim_not_found");
   const deleted = deleteSim(db, id);
-  if (!deleted) return apiError(404, "sim_not_found");
+  if (!deleted.ok) {
+    return deleted.reason === "not_found"
+      ? apiError(404, "sim_not_found")
+      : apiError(409, "invalid_transition", {
+          message: "A queued or running Sim cannot be deleted. Stop or Discard it first.",
+        });
+  }
 
   // Delete the sim's folder
   const simDir = join(dataDir, "sims", String(id));

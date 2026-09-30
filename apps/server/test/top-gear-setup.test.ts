@@ -79,6 +79,34 @@ describe("creating a Draft for the setup", () => {
     expect(copy.topGearSelection).toEqual({ included: [], talentLoadouts: [0], lockedSlots: [] });
   });
 
+  test("a Quick Sim Draft and its copy answer alike, and adding Candidates makes it a Top Gear", async () => {
+    start();
+    const imp = await h.importText(importItemsAddonString());
+    const created = await h.createSim(imp.id);
+    const copied = simSchema.parse(
+      await (await h.call("POST", "/api/sims", { copyFromSimId: created.id })).json(),
+    );
+    for (const sim of [created, copied]) {
+      expect(sim.kind).toBe("quick");
+      expect(sim.topGearSelection).toEqual({ included: [], talentLoadouts: [0], lockedSlots: [] });
+      const preview = await h.call("POST", `/api/sims/${sim.id}/preview-combinations`, {});
+      expect(preview.status).toBe(200);
+    }
+    const items = importItemsResponseSchema.parse(
+      await (await h.call("GET", `/api/imports/${imp.id}/items`)).json(),
+    ).items;
+    const one = selectable(items)[0] as ImportItem;
+    const saved = simSchema.parse(
+      await (
+        await patch(created.id, {
+          topGearSelection: { included: [one.index], talentLoadouts: [0], lockedSlots: [] },
+        })
+      ).json(),
+    );
+    // The Draft is a Top Gear as soon as it is saved with Candidates, not only once queued.
+    expect(saved.kind).toBe("top_gear");
+  });
+
   test("exactly one of importId and copyFromSimId", async () => {
     start();
     const { imp, sim } = await draft();

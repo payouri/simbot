@@ -1,4 +1,4 @@
-import type { SimStatus } from "@simbot/shared";
+import { isTopGear, type SimStatus } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router";
 import { ImportItems } from "../items/ImportItems";
@@ -33,7 +33,7 @@ export function SimPage() {
   const succeeded = sim.data?.status === "succeeded";
   // A finished or stopped Top Gear has its own results view; it loads the results itself.
   const topGearResults =
-    sim.data?.kind === "top_gear" && (succeeded || sim.data.status === "cancelled");
+    !!sim.data && isTopGear(sim.data) && (succeeded || sim.data.status === "cancelled");
   const results = useQuery({
     queryKey: ["sim", id, "results"],
     queryFn: () => getResults(id),
@@ -90,7 +90,7 @@ export function SimPage() {
                   <WarmingUp />
                 </div>
               ))}
-            {sim.data.kind === "top_gear" && sim.data.status !== "queued" && (
+            {isTopGear(sim.data) && sim.data.status !== "queued" && (
               <StageLadder simId={id} status={sim.data.status} />
             )}
             {sim.data.status === "running" && <RunLog simId={id} />}

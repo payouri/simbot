@@ -69,7 +69,8 @@ export function getSim(db: Db, id: number): Sim | null {
 
 /**
  * Creates a Draft from an Import. Omitted settings take the defaults; the merged settings and
- * the Character Snapshot are frozen on the Sim, and it starts with the default Top Gear Selection. Null when the Import is unknown.
+ * the Character Snapshot are frozen on the Sim, and it starts with the default Top Gear
+ * Selection whatever its kind, so any Draft can open the setup. Null when the Import is unknown.
  */
 export function createSim(
   db: Db,
@@ -94,8 +95,7 @@ export function createSim(
   };
   const kind = input.kind ?? "quick";
   const settings = simSettingsSchema.parse({ ...defaultSimSettings, ...input.settings });
-  const selection =
-    kind === "top_gear" ? defaultTopGearSelection(equippedLoadoutIndex(db, input.importId)) : null;
+  const selection = defaultTopGearSelection(equippedLoadoutIndex(db, input.importId));
   return insertDraft(db, {
     kind,
     importId: input.importId,
@@ -129,6 +129,13 @@ export function copySim(
   });
 }
 
+/**
+ * The kind a Draft has with `selection` saved on it: Candidates included make it a Top Gear
+ * whatever it started as. The one place that rule lives, applied on every write of a Draft.
+ */
+const draftKind = (kind: SimKind, selection: TopGearSelection | null): SimKind =>
+  (selection?.included.length ?? 0) > 0 ? "top_gear" : kind;
+
 function insertDraft(
   db: Db,
   d: {
@@ -145,7 +152,7 @@ function insertDraft(
                        top_gear_selection, created_at)
      VALUES (?, 'draft', ?, ?, ?, ?, ?, ?)`,
     [
-      d.kind,
+      draftKind(d.kind, d.selection),
       d.importId,
       d.characterId,
       JSON.stringify(d.snapshot),
@@ -165,7 +172,8 @@ export type UpdateDraftResult =
 
 /**
  * Saves a Draft's Sim Settings (merged over the stored ones) and Top Gear Selection (replaced
- * whole). The row must still be a Draft when written, so a Sim queued in between is left alone.
+ * whole); Candidates included make it a Top Gear. The row must still be a Draft when written, so
+ * a Sim queued in between is left alone.
  */
 export function updateDraft(
   db: Db,
@@ -181,8 +189,14 @@ export function updateDraft(
       ? normalizeSelection(patch.topGearSelection)
       : current.topGearSelection;
     db.run(
-      "UPDATE sims SET settings = ?, top_gear_selection = ? WHERE id = ? AND status = 'draft'",
-      [JSON.stringify(settings), selection ? JSON.stringify(selection) : null, id],
+      `UPDATE sims SET settings = ?, top_gear_selection = ?, kind = ?
+       WHERE id = ? AND status = 'draft'`,
+      [
+        JSON.stringify(settings),
+        selection ? JSON.stringify(selection) : null,
+        draftKind(current.kind, selection),
+        id,
+      ],
     );
     const sim = getSim(db, id);
     if (!sim) throw new Error("sim vanished");
@@ -255,10 +269,7 @@ export function queueSim(db: Db, id: number, plan?: QueuePlan): QueueResult {
       for (const c of plan.combinations) {
         insert.run(id, JSON.stringify(c.definition), c.isBaseline ? 1 : 0);
       }
-      db.run("UPDATE sims SET frozen_simc_tag = ?, kind = 'top_gear' WHERE id = ?", [
-        plan.simcTag,
-        id,
-      ]);
+      db.run("UPDATE sims SET frozen_simc_tag = ? WHERE id = ?", [plan.simcTag, id]);
     } else {
       insert.run(id, JSON.stringify({ kind: "equipped" }), 1);
     }
@@ -688,12 +699,19 @@ export function listSims(db: Db, filters: SimListFilters): Sim[] {
   return rows.map(toSim);
 }
 
+export type DeleteResult = { ok: true } | { ok: false; reason: "not_found" | "in_queue" };
+
 /**
- * Deletes a Sim by ID. Returns true if the Sim existed and was deleted.
+ * Deletes a Sim, with its Job, Combinations and Stage Results (ON DELETE CASCADE). A queued or
+ * running Sim is refused: its Job is still live, and deleting it would leave SimC running with
+ * nothing left to stop it by. Files are the caller's concern.
  */
-export function deleteSim(db: Db, simId: number): boolean {
-  const result = db.run("DELETE FROM sims WHERE id = ?", [simId]);
-  return result.changes > 0;
+export function deleteSim(db: Db, simId: number): DeleteResult {
+  const result = db.run("DELETE FROM sims WHERE id = ? AND status NOT IN ('queued', 'running')", [
+    simId,
+  ]);
+  if (result.changes > 0) return { ok: true };
+  return getSim(db, simId) ? { ok: false, reason: "in_queue" } : { ok: false, reason: "not_found" };
 }
 
 /** The Combinations frozen on a Sim, in the order they were generated (the baseline first). */

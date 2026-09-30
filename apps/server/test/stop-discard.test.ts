@@ -112,6 +112,22 @@ describe("Stop and Discard a running Sim", () => {
     expect(results.results).toHaveLength(1);
   });
 
+  test("a queued or running Sim cannot be deleted, and can still be stopped", async () => {
+    start();
+    const sim = await runningSim();
+    const res = await h.call("DELETE", `/api/sims/${sim.id}`);
+    expect(res.status).toBe(409);
+    expect(apiErrorSchema.parse(await res.json()).error).toBe("invalid_transition");
+    expect((await h.sim(sim.id)).status).toBe("running");
+
+    expect((await h.stop(sim.id, true)).status).toBe(202);
+    await h.app.idle();
+    expect((await h.sim(sim.id)).status).toBe("cancelled");
+    // Once it has settled it can be deleted, folder and all.
+    expect((await h.call("DELETE", `/api/sims/${sim.id}`)).status).toBe(204);
+    expect(existsSync(join(h.dataDir, "sims", String(sim.id)))).toBe(false);
+  });
+
   test("a stubborn SimC that ignores SIGTERM is SIGKILLed after the grace period", async () => {
     start({ killGraceMs: 100 });
     stubborn = true;

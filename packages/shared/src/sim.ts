@@ -164,6 +164,13 @@ export const simSchema = z.object({
 export type Sim = z.infer<typeof simSchema>;
 
 /**
+ * Whether a Sim is a Top Gear: its `kind`, and only that. The server keeps `kind` right as the
+ * Draft is edited (a Draft saved with Candidates included is a Top Gear), so nothing else needs
+ * to look at the selection to tell.
+ */
+export const isTopGear = (sim: Pick<Sim, "kind">) => sim.kind === "top_gear";
+
+/**
  * `POST /api/sims`: a Draft from an Import (`importId`) or as a copy of another Sim's input
  * (`copyFromSimId`); exactly one. Omitted settings take the defaults (a copy: the source's).
  * `kind` defaults to a Quick Sim for an Import and to the source's kind for a copy.

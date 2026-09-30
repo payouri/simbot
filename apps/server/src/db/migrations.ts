@@ -152,4 +152,15 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE combinations ADD COLUMN invalid_stage INTEGER;
     `,
   },
+  {
+    id: 9,
+    name: "top_gear_kind_from_selection",
+    sql: `
+      -- A Draft with Candidates included is a Top Gear: its kind now says so as the Draft is
+      -- saved, not only once it is queued. Brings Drafts saved before that rule in line.
+      UPDATE sims SET kind = 'top_gear'
+      WHERE status = 'draft' AND kind = 'quick'
+        AND json_array_length(top_gear_selection, '$.included') > 0;
+    `,
+  },
 ];
