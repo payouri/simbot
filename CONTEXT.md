@@ -66,8 +66,12 @@ One request to SimC and everything about it: its input, its Sim Settings, its Ch
 _Avoid_: run, job, simulation report
 
 **Sim Settings**:
-The simulation parameters a Sim ran with (fight style, duration, targets, precision, raw SimC options), frozen on the Sim so later changes to defaults or presets never alter it.
+The simulation parameters a Sim ran with (fight style, duration, targets, precision, Game Data, raw SimC options), frozen on the Sim so later changes to defaults or presets never alter it.
 _Avoid_: config, options
+
+**Game Data**:
+Which game data inside a SimC Build a Sim runs against: Live (the default) or PTR. Every SimC Build carries both, so a PTR Sim runs on the Current SimC Build with SimC's `ptr=1`. Part of Sim Settings, frozen with them; the Sim also records the exact game data version it ran on.
+_Avoid_: branch (a SimC git branch), PTR mode, realm
 
 **Combination**:
 One full set of the user-configurable choices that affect a Sim's output: gear per slot (with enchants and gems), talents, consumables. Character-dependent traits (class, spec, race) and fight settings are not part of it.
