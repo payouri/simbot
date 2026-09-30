@@ -70,8 +70,12 @@ The simulation parameters a Sim ran with (fight style, duration, targets, precis
 _Avoid_: config, options
 
 **Game Data**:
-Which game data inside a SimC Build a Sim runs against: Live (the default) or PTR. Every SimC Build carries both, so a PTR Sim runs on the Current SimC Build with SimC's `ptr=1`. Part of Sim Settings, frozen with them; the Sim also records the exact game data version it ran on.
+Which game data inside a SimC Build a Sim runs against: Live (the default) or PTR. A Sim set to PTR runs on the Current SimC Build with SimC's `ptr=1`, but fails instead of falling back if the build carries no PTR data distinct from Live or its PTR data is unavailable (e.g. from a failed PTR Check Sim). Part of Sim Settings, frozen with them; the Sim also records the exact game data version it ran on.
 _Avoid_: branch (a SimC git branch), PTR mode, realm
+
+**PTR Sims**:
+An optional feature that runs a second pass during Check Sim with `ptr=1` to detect and record which SimC Builds have distinct PTR data available. When PTR Sims are off, the app hides PTR data and Game Data stays at Live.
+_Avoid_: PTR mode, PTR flag
 
 **Combination**:
 One full set of the user-configurable choices that affect a Sim's output: gear per slot (with enchants and gems), talents, consumables. Character-dependent traits (class, spec, race) and fight settings are not part of it.
