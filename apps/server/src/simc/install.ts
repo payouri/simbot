@@ -12,9 +12,13 @@ export const simcRoot = (dataDir: string) => join(dataDir, "simc");
 export const buildDir = (dataDir: string, tag: string) => join(simcRoot(dataDir), tag);
 
 /** Reads an installed build's record, or null if it isn't installed (or is unreadable). */
-export async function readInstalledBuild(dataDir: string, tag: string): Promise<SimcBuild | null> {
+export const readInstalledBuild = (dataDir: string, tag: string) =>
+  readBuildRecord(buildDir(dataDir, tag), tag);
+
+/** Reads the `build.json` of the build laid out in `dir` (an installed build or the Seed). */
+export async function readBuildRecord(dir: string, tag: string): Promise<SimcBuild | null> {
   try {
-    const raw = await readFile(join(buildDir(dataDir, tag), BUILD_FILE), "utf8");
+    const raw = await readFile(join(dir, BUILD_FILE), "utf8");
     const parsed = simcBuildSchema.safeParse(JSON.parse(raw));
     return parsed.success && parsed.data.tag === tag ? parsed.data : null;
   } catch {

@@ -40,6 +40,7 @@ import {
   partialDir,
   populateFromRegistry,
   populateFromSeed,
+  readBuildRecord,
   readInstalledBuild,
   removeBuild,
   simcRoot,
@@ -52,6 +53,7 @@ import { runUpdateCheck } from "./updates";
 const CURRENT_KEY = "simc.current_tag";
 const UPDATE_KEY = "simc.update_check";
 const KEEP_KEY = "simc.keep";
+const PTR_ENABLED_KEY = "simc.ptr_enabled";
 /** Set once the first-start update to the latest nightly has been queued; never queued again. */
 const FIRST_UPDATE_KEY = "simc.first_update_queued";
 
@@ -134,19 +136,53 @@ export function createSimcManager(deps: SimcManagerDeps) {
     return tag ? await readInstalledBuild(dataDir, tag) : null;
   };
 
+  const ptrEnabled = () => getSetting(PTR_ENABLED_KEY) === "1";
+
+  /** A build as the status shows it: without its PTR version while PTR Sims are off. */
+  const shown = (b: SimcBuild, withPtr: boolean): SimcBuild =>
+    withPtr ? b : { ...b, ptrGameDataVersion: null };
+
+  /**
+   * The offered target's PTR data change against the current build, when both PTR versions are
+   * known: an installed target, or the Seed SimC Build (its `build.json` ships with the app). A
+   * nightly that is not installed yet has no known PTR version, so it carries no mark.
+   */
+  const ptrChangeOf = async (
+    build: SimcBuild | null,
+    update: SimcUpdateStatus,
+  ): Promise<SimcUpdateStatus["ptrChange"]> => {
+    const target = update.target;
+    const from = build?.ptrGameDataVersion;
+    if (!target || !from) return null;
+    const known =
+      (await readInstalledBuild(dataDir, target.tag)) ??
+      (target.source === "seed" && target.tag === seedTag()
+        ? await readBuildRecord(seedDir() ?? "", target.tag)
+        : null);
+    const to = known?.ptrGameDataVersion;
+    return to && to !== from ? { from, to } : null;
+  };
+
   const statusOf = async (
     build: SimcBuild | null,
     update: SimcUpdateStatus | null,
-  ): Promise<SimcStatusResponse> => ({
-    current: build,
-    install,
-    update,
-    installed: await listInstalledBuilds(dataDir),
-    keep: keepCount(),
-    job: latestOpenSimcJob(db),
-    checkSim: build ? getCheckSim(db, build.tag) : null,
-    itemMetaError: build && metaFailure?.tag === build.tag ? metaFailure.message : null,
-  });
+  ): Promise<SimcStatusResponse> => {
+    const withPtr = ptrEnabled();
+    return {
+      current: build && shown(build, withPtr),
+      install,
+      update: update && {
+        ...update,
+        ptrChange: withPtr ? await ptrChangeOf(build, update) : null,
+      },
+      installed: (await listInstalledBuilds(dataDir)).map((b) => shown(b, withPtr)),
+      keep: keepCount(),
+      ptrEnabled: withPtr,
+      job: latestOpenSimcJob(db),
+      checkSim: build ? getCheckSim(db, build.tag) : null,
+      itemMetaError: build && metaFailure?.tag === build.tag ? metaFailure.message : null,
+    };
+  };
 
   let inFlight: Promise<void> | null = null;
 
@@ -468,6 +504,12 @@ export function createSimcManager(deps: SimcManagerDeps) {
     async setKeep(keep: number): Promise<void> {
       putSetting(KEEP_KEY, String(keep));
       await evict();
+      events.emit({ type: "simc.status_changed" });
+    },
+
+    /** Turns PTR Sims on or off. It changes only what is shown and what can be started. */
+    setPtrEnabled(enabled: boolean): void {
+      putSetting(PTR_ENABLED_KEY, enabled ? "1" : "0");
       events.emit({ type: "simc.status_changed" });
     },
 

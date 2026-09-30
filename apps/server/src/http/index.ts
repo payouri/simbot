@@ -67,6 +67,8 @@ export type HttpDeps = {
     >;
     /** Sets how many SimC Builds retention keeps. */
     setKeep: (keep: number) => Promise<void>;
+    /** Turns PTR Sims on or off. */
+    setPtrEnabled: (enabled: boolean) => void;
   };
 };
 
@@ -223,7 +225,8 @@ export function createHttpHandler({
       if (req.method !== "PATCH") return json({ error: "method_not_allowed" }, 405);
       const body = await readBody(req, simcSettingsRequestSchema);
       if (!body.ok) return body.res;
-      await simc.setKeep(body.data.keep);
+      if (body.data.ptrEnabled !== undefined) simc.setPtrEnabled(body.data.ptrEnabled);
+      if (body.data.keep !== undefined) await simc.setKeep(body.data.keep);
       return json(simcStatusResponseSchema.parse(await simc.status()));
     }
     if (pathname === "/api/events") {

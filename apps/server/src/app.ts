@@ -105,6 +105,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
       check: () => simc.check(),
       queueJob: (target) => simc.queueJob(target),
       setKeep: (keep) => simc.setKeep(keep),
+      setPtrEnabled: (enabled) => simc.setPtrEnabled(enabled),
     },
   });
   return {

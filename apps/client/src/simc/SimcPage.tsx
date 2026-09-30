@@ -1,12 +1,20 @@
 import {
   deltaTone,
   MAX_KEEP_BUILDS,
+  ptrAvailable,
+  type SimcBuild,
   type SimcCheckSim,
   type SimcJob,
   type SimcStatusResponse,
   type SimcUpdateStatus,
 } from "@simbot/shared";
-import { useCheckSimcNow, useQueueSimcJob, useSetKeepBuilds, useSimcStatus } from "./api";
+import {
+  useCheckSimcNow,
+  useQueueSimcJob,
+  useSetKeepBuilds,
+  useSetPtrEnabled,
+  useSimcStatus,
+} from "./api";
 import { STEP_LABEL, targetLabel } from "./labels";
 
 const FIELDS = [
@@ -16,6 +24,10 @@ const FIELDS = [
   ["Branch", "gitBranch"],
   ["Game data version", "gameDataVersion"],
 ] as const;
+
+/** The PTR line of a build: its version and what it is for, or why there is none. */
+const ptrLabel = (b: SimcBuild) =>
+  ptrAvailable(b) ? (b.ptrGameDataVersion ?? "") : "No PTR available";
 
 const SUMMARY: Record<SimcUpdateStatus["state"], (u: SimcUpdateStatus) => string> = {
   up_to_date: () => "SimC is up to date.",
@@ -123,6 +135,32 @@ function CheckSimDelta({ check }: { check: SimcCheckSim }) {
   );
 }
 
+/** The PTR Sims switch, next to the other SimC settings. */
+function PtrToggle({ enabled }: { enabled: boolean }) {
+  const setPtr = useSetPtrEnabled();
+  return (
+    <section className="rounded-xl border border-line bg-panel p-5">
+      <label className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={enabled}
+          disabled={setPtr.isPending}
+          onChange={(e) => setPtr.mutate(e.currentTarget.checked)}
+          className="mt-0.5"
+        />
+        <span>
+          <span className="text-[14px] font-semibold">PTR Sims</span>
+          <span className="mt-1 block text-[12.5px] text-muted">
+            Shows the Live and PTR game data each SimC Build carries, and marks SimC Updates that
+            change the PTR data.
+          </span>
+        </span>
+      </label>
+      {setPtr.isError && <p className="mt-2 text-loss">That did not go through. Try again.</p>}
+    </section>
+  );
+}
+
 function Installed({ status }: { status: SimcStatusResponse }) {
   const queue = useQueueSimcJob();
   const setKeep = useSetKeepBuilds();
@@ -154,7 +192,14 @@ function Installed({ status }: { status: SimcStatusResponse }) {
           const isCurrent = b.tag === status.current?.tag;
           return (
             <li key={b.tag} className="flex items-center justify-between gap-3 py-2">
-              <span className="num min-w-0 break-all text-[12.5px]">{b.tag}</span>
+              <span className="min-w-0">
+                <span className="num block break-all text-[12.5px]">{b.tag}</span>
+                {status.ptrEnabled && (
+                  <span className="num block text-[12px] text-muted">
+                    Live {b.gameDataVersion} · PTR {ptrLabel(b)}
+                  </span>
+                )}
+              </span>
               {isCurrent ? (
                 <span className="shrink-0 text-[12.5px] text-muted">Current</span>
               ) : (
@@ -264,6 +309,11 @@ function Update({ status }: { status: SimcStatusResponse }) {
         {update ? (
           <>
             <p className="mt-3">{SUMMARY[update.state](update)}</p>
+            {status.ptrEnabled && update.ptrChange && (
+              <p className="num mt-1 text-[12.5px]">
+                PTR {update.ptrChange.from} → {update.ptrChange.to}
+              </p>
+            )}
             {update.state === "installable" && update.target && (
               <InstallButton status={status} target={update.target.source} />
             )}
@@ -305,7 +355,17 @@ export function SimcPage() {
       {status?.current && (
         <Build
           title="Current SimC Build"
-          rows={FIELDS.map(([label, key]) => [label, status.current?.[key] ?? ""])}
+          rows={[
+            ...FIELDS.map(([label, key]): [string, string] => [
+              key === "gameDataVersion" && status.ptrEnabled
+                ? `Live ${label.toLowerCase()}`
+                : label,
+              status.current?.[key] ?? "",
+            ]),
+            ...(status.ptrEnabled
+              ? [["PTR game data version", ptrLabel(status.current)] as [string, string]]
+              : []),
+          ]}
         />
       )}
       {status && !status.current && (
@@ -338,6 +398,7 @@ export function SimcPage() {
       {status?.current && <Update status={status} />}
       {status?.checkSim && <CheckSimDelta check={status.checkSim} />}
       {status && status.installed.length > 0 && <Installed status={status} />}
+      {status && <PtrToggle enabled={status.ptrEnabled} />}
     </main>
   );
 }

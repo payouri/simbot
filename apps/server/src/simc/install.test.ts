@@ -71,6 +71,7 @@ describe("boot with an empty data dir", () => {
       gitRevision: "d08a1c3",
       gitBranch: "midnight",
       gameDataVersion: "12.1.0.69933",
+      ptrGameDataVersion: null,
     };
     expect(body).toEqual({
       current: build,
@@ -78,6 +79,7 @@ describe("boot with an empty data dir", () => {
       update: null,
       installed: [build],
       keep: 3,
+      ptrEnabled: false,
       job: null,
       checkSim: null,
       itemMetaError: null,

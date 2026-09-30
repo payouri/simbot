@@ -47,3 +47,13 @@ export function useSetKeepBuilds() {
     onSuccess: (status) => client.setQueryData(SIMC_KEY, status),
   });
 }
+
+/** Turns PTR Sims on or off (`PATCH /api/simc/settings`). */
+export function useSetPtrEnabled() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (ptrEnabled: boolean) =>
+      statusRequest("PATCH", "/api/simc/settings", { ptrEnabled }),
+    onSuccess: (status) => client.setQueryData(SIMC_KEY, status),
+  });
+}

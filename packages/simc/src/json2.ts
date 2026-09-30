@@ -19,7 +19,10 @@ export type Json2BuildInfo = {
   simcVersion: string;
   gitRevision: string;
   gitBranch: string;
+  /** The Live game data version (`dbc.Live.wow_version`). */
   gameDataVersion: string;
+  /** The PTR game data version (`dbc.PTR.wow_version`); null when the build carries no PTR data. */
+  ptrGameDataVersion: string | null;
 };
 
 export class Json2FormatError extends Error {
@@ -29,18 +32,23 @@ export class Json2FormatError extends Error {
   }
 }
 
-/** Reads the build identity out of a json2 report. */
+/**
+ * Reads the build identity out of a json2 report: both game data versions, Live and PTR,
+ * whichever one the probe itself ran on.
+ */
 export function readBuildInfo(json2: unknown): Json2BuildInfo {
   const parsed = json2Schema.safeParse(json2);
   if (!parsed.success) throw new Json2FormatError(parsed.error.issues[0]?.message ?? "invalid");
   const { dbc } = parsed.data.sim.options;
-  const game = gameVersionSchema.safeParse(dbc[dbc.version_used]);
-  if (!game.success) throw new Json2FormatError(`no game data for "${dbc.version_used}"`);
+  const live = gameVersionSchema.safeParse(dbc.Live);
+  if (!live.success) throw new Json2FormatError('no game data for "Live"');
+  const ptr = gameVersionSchema.safeParse(dbc.PTR);
   return {
     simcVersion: parsed.data.version,
     gitRevision: parsed.data.git_revision,
     gitBranch: parsed.data.git_branch,
-    gameDataVersion: game.data.wow_version,
+    gameDataVersion: live.data.wow_version,
+    ptrGameDataVersion: ptr.success ? ptr.data.wow_version : null,
   };
 }
 

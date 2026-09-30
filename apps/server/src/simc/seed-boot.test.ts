@@ -54,6 +54,7 @@ JSON
     gitRevision: "d08a1c3",
     gitBranch: "midnight",
     gameDataVersion: "12.1.0.69933",
+    ptrGameDataVersion: "12.1.5.69952",
   };
   writeFileSync(join(dir, "build.json"), JSON.stringify(build));
   await ensureBuildMeta({ dataDir: seedRoot, build, fetch: fakeRegistry().fetch });

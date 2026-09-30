@@ -195,6 +195,7 @@ export function installFakeBuild(dataDir: string, app: ReturnType<typeof createA
     gitRevision: tag.split("-").at(-1),
     gitBranch: "midnight",
     gameDataVersion: "12.1.0.69933",
+    ptrGameDataVersion: "12.1.5.69952",
   });
   writeFileSync(join(dir, "build.json"), JSON.stringify(build));
   app.db.run(

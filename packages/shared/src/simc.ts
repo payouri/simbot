@@ -7,8 +7,14 @@ export const simcBuildInfoSchema = z.object({
   /** Short commit SHA the build was made from. */
   gitRevision: z.string().min(1),
   gitBranch: z.string().min(1),
-  /** The WoW client build the game data matches, e.g. `12.1.0.69933`. */
+  /** The WoW client build the Live game data matches, e.g. `12.1.0.69933`. */
   gameDataVersion: z.string().min(1),
+  /**
+   * The WoW client build the PTR game data matches, e.g. `12.1.5.69952`. Null when the build
+   * carries none, and for a build probed before PTR versions were recorded (it counts as having
+   * no PTR available until it is installed again).
+   */
+  ptrGameDataVersion: z.string().min(1).nullable().default(null),
 });
 export type SimcBuildInfo = z.infer<typeof simcBuildInfoSchema>;
 
@@ -17,6 +23,13 @@ export const simcBuildSchema = simcBuildInfoSchema.extend({
   tag: z.string().min(1),
 });
 export type SimcBuild = z.infer<typeof simcBuildSchema>;
+
+/**
+ * Whether a build has a PTR to sim on: its PTR game data differs from Live. (The Check Sim
+ * pass adds "and it did not fail" later.)
+ */
+export const ptrAvailable = (b: Pick<SimcBuildInfo, "gameDataVersion" | "ptrGameDataVersion">) =>
+  b.ptrGameDataVersion !== null && b.ptrGameDataVersion !== b.gameDataVersion;
 
 /** Progress of the boot-time fetch of the latest nightly. */
 export const simcInstallStateSchema = z.object({
@@ -65,6 +78,14 @@ export const simcUpdateStatusSchema = z.object({
   commits: z.array(simcCommitSchema),
   compareUrl: z.string().nullable(),
   target: simcUpdateTargetSchema.nullable(),
+  /**
+   * Set only while PTR Sims are on and both builds' PTR versions are known: the offered target
+   * changes the PTR game data from `from` to `to`. Computed when the status is read, never stored (so absent on a stored check).
+   */
+  ptrChange: z
+    .object({ from: z.string().min(1), to: z.string().min(1) })
+    .nullable()
+    .optional(),
 });
 export type SimcUpdateStatus = z.infer<typeof simcUpdateStatusSchema>;
 
@@ -107,10 +128,16 @@ export const MAX_KEEP_BUILDS = 20;
 export const DEFAULT_KEEP_BUILDS = 3;
 
 /** `PATCH /api/simc/settings`. */
-export const simcSettingsRequestSchema = z.object({
-  /** How many SimC Builds to keep installed (the current one and any in use always stay). */
-  keep: z.number().int().min(1).max(MAX_KEEP_BUILDS),
-});
+export const simcSettingsRequestSchema = z
+  .object({
+    /** How many SimC Builds to keep installed (the current one and any in use always stay). */
+    keep: z.number().int().min(1).max(MAX_KEEP_BUILDS).optional(),
+    /** Turns PTR Sims on or off (`simc.ptr_enabled`). */
+    ptrEnabled: z.boolean().optional(),
+  })
+  .refine((s) => s.keep !== undefined || s.ptrEnabled !== undefined, {
+    message: "Send at least one setting.",
+  });
 export type SimcSettingsRequest = z.infer<typeof simcSettingsRequestSchema>;
 
 const checkSimDpsSchema = z.object({ mean: z.number(), meanError: z.number() });
@@ -134,6 +161,11 @@ export const simcStatusResponseSchema = z.object({
   installed: z.array(simcBuildSchema),
   /** How many builds retention keeps. */
   keep: z.number().int().min(1),
+  /**
+   * Whether PTR Sims are on. While off, no build in this response carries a PTR version and the
+   * update offer has no `ptrChange`: none of the PTR information leaves the server.
+   */
+  ptrEnabled: z.boolean(),
   /** The latest SimC Update Job while it is queued, running or failed; null once it is done. */
   job: simcJobSchema.nullable(),
   /** The Check Sim DPS of the Current SimC Build and, when both exist, of the build before it. */

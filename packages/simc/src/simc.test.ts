@@ -35,20 +35,31 @@ test("readBuildInfo reads version, commit, branch and game data version from jso
     gitRevision: "d08a1c3",
     gitBranch: "midnight",
     gameDataVersion: "12.1.0.69933",
+    ptrGameDataVersion: "12.1.5.69952",
   });
 });
 
-test("readBuildInfo follows dbc.version_used", () => {
+test("readBuildInfo reads both game data versions whichever one the report ran on", () => {
   const ptr = structuredClone(recorded);
   ptr.sim.options.dbc.version_used = "PTR";
-  expect(readBuildInfo(ptr).gameDataVersion).toBe("12.1.5.69952");
+  const info = readBuildInfo(ptr);
+  expect(info.gameDataVersion).toBe("12.1.0.69933");
+  expect(info.ptrGameDataVersion).toBe("12.1.5.69952");
+});
+
+test("readBuildInfo reports no PTR version for a build without PTR data", () => {
+  const noPtr = structuredClone(recorded) as { sim: { options: { dbc: Record<string, unknown> } } };
+  delete noPtr.sim.options.dbc.PTR;
+  expect(readBuildInfo(noPtr).ptrGameDataVersion).toBeNull();
 });
 
 test("readBuildInfo rejects a changed format", () => {
   const { git_branch: _, ...missing } = recorded;
   expect(() => readBuildInfo(missing)).toThrow("SimC output format changed");
-  const noGame = structuredClone(recorded);
-  noGame.sim.options.dbc.version_used = "Nope";
+  const noGame = structuredClone(recorded) as {
+    sim: { options: { dbc: Record<string, unknown> } };
+  };
+  delete noGame.sim.options.dbc.Live;
   expect(() => readBuildInfo(noGame)).toThrow("SimC output format changed");
   expect(() => readBuildInfo(null)).toThrow("SimC output format changed");
 });
