@@ -1,6 +1,7 @@
 import type { QueueEntry, SimcUpdateQueueEntry, SimQueueEntry } from "@simbot/shared";
 import { Link } from "react-router";
 import { useRunningSim } from "../live/live";
+import { GameDataBadge } from "../simc/GameData";
 import { STEP_LABEL, targetLabel } from "../simc/labels";
 import { useQueueQuery } from "./api";
 import { errorLabel, formatEta, fraction } from "./format";
@@ -40,6 +41,9 @@ function SimRow({ entry, position }: { entry: SimQueueEntry; position: number })
           {entry.character.name}
           <span className="ml-2 text-[12.5px] font-normal text-muted">
             Quick Sim · {entry.character.spec} {entry.character.class}
+          </span>
+          <span className="ml-2 align-middle">
+            <GameDataBadge gameData={entry.gameData} />
           </span>
         </Link>
         <Status status={entry.status} />

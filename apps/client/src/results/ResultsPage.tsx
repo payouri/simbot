@@ -22,7 +22,7 @@ import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { copySimToDraft } from "../quick-sim/api";
 import { ItemName, ItemTile, Tag } from "../setup/ItemTile";
 import { Sheet, type Side, useIsPhone } from "../setup/Sheet";
-import { GameDataBadge } from "../simc/GameData";
+import { CopyToPtrDraft, GameDataBadge } from "../simc/GameData";
 import { useSimResults } from "./api";
 import { DeltaBar, fmtDps, fmtPct, fmtSigned } from "./DeltaBar";
 import { layoutStorage, RESULTS_LAYOUT_ID } from "./layout";
@@ -211,6 +211,11 @@ function Verdict({
         >
           Edit and re-run
         </button>
+        <CopyToPtrDraft
+          simId={sim.id}
+          gameData={sim.settings.gameData}
+          className="rounded-[6px] border border-line-strong px-3 py-1.5 text-[12.5px] font-medium hover:bg-raised disabled:opacity-50"
+        />
         {edit.isError && (
           <p role="alert" className="text-[12.5px] text-loss">
             {edit.error.message}

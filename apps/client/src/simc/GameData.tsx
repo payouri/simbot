@@ -1,5 +1,8 @@
 import { type GameData, ptrAvailable } from "@simbot/shared";
+import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
+import { useNavigate } from "react-router";
+import { copySimToPtrDraft } from "../quick-sim/api";
 import { Tag } from "../setup/ItemTile";
 import { useSimcStatus } from "./api";
 
@@ -72,5 +75,46 @@ export function GameDataControl({
         </span>
       )}
     </fieldset>
+  );
+}
+
+/**
+ * "Copy to PTR Draft", next to a Sim's copy action: the same setup as a new Draft on PTR Game
+ * Data. Shown only while PTR Sims are on and the Current SimC Build has PTR data. A copy of a PTR
+ * Sim is already PTR (the plain copy does that, even with the setting off), so none is offered.
+ */
+export function CopyToPtrDraft({
+  simId,
+  gameData,
+  className,
+}: {
+  simId: number;
+  gameData: GameData;
+  className?: string;
+}) {
+  const status = useSimcStatus().data;
+  const navigate = useNavigate();
+  const copy = useMutation({
+    mutationFn: () => copySimToPtrDraft(simId),
+    onSuccess: (draft) => navigate(`/sims/${draft.id}/setup`),
+  });
+  if (gameData === "ptr" || !status?.ptrEnabled || !status.current || !ptrAvailable(status.current))
+    return null;
+  return (
+    <>
+      <button
+        type="button"
+        disabled={copy.isPending}
+        onClick={() => copy.mutate()}
+        className={className}
+      >
+        Copy to PTR Draft
+      </button>
+      {copy.isError && (
+        <span role="alert" className="text-[12.5px] text-loss">
+          {copy.error.message}
+        </span>
+      )}
+    </>
   );
 }

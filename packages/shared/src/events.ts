@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { characterSnapshotSchema, simKindSchema } from "./sim";
+import { characterSnapshotSchema, gameDataSchema, simKindSchema } from "./sim";
 import { simcJobStatusSchema, simcJobTargetSchema, simcUpdateStepSchema } from "./simc";
 
 /** A Sim Job in the Queue: the running one, or one waiting its turn. */
@@ -8,6 +8,7 @@ export const simQueueEntrySchema = z.object({
   jobId: z.number().int(),
   simId: z.number().int(),
   kind: simKindSchema,
+  gameData: gameDataSchema.default("live"),
   status: z.enum(["queued", "running"]),
   character: characterSnapshotSchema,
   queuedAt: z.string().nullable(),

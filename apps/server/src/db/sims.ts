@@ -780,12 +780,13 @@ export function getSimQueueEntries(db: Db): SimQueueEntry[] {
         job_status: "queued" | "running";
         kind: SimKind;
         character_snapshot: string;
+        settings: string;
         queued_at: string | null;
         started_at: string | null;
       },
       []
     >(
-      `SELECT j.id AS job_id, j.sim_id, j.status AS job_status, s.kind, s.character_snapshot,
+      `SELECT j.id AS job_id, j.sim_id, j.status AS job_status, s.kind, s.character_snapshot, s.settings,
               s.queued_at, j.started_at
        FROM jobs j JOIN sims s ON s.id = j.sim_id
        WHERE j.kind = 'sim' AND j.status IN ('queued', 'running')
@@ -797,6 +798,7 @@ export function getSimQueueEntries(db: Db): SimQueueEntry[] {
     jobId: r.job_id,
     simId: r.sim_id,
     kind: r.kind,
+    gameData: simSettingsSchema.parse(JSON.parse(r.settings)).gameData,
     status: r.job_status,
     character: characterSnapshotSchema.parse(JSON.parse(r.character_snapshot)),
     queuedAt: r.queued_at,

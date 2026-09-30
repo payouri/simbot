@@ -40,6 +40,9 @@ export const deleteSim = (id: number) =>
   request("DELETE", `/api/sims/${id}`, { parse: () => ({ success: true }) });
 export const copySimToDraft = (id: number) =>
   request("POST", `/api/sims/${id}/copy-to-draft`, simSchema);
+/** A Draft with the Sim's input, re-run under PTR Game Data. */
+export const copySimToPtrDraft = (id: number) =>
+  createSim({ copyFromSimId: id, settings: { gameData: "ptr" } });
 /** Stop (`keep: true`, running Sim becomes cancelled) or Discard (`keep: false`, back to Draft). */
 export const stopSim = (id: number, keep: boolean) =>
   request("POST", `/api/sims/${id}/stop`, simSchema, { keep });

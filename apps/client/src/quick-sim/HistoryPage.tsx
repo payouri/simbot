@@ -2,7 +2,7 @@ import type { SimListItem, SimStatus } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { GameDataBadge } from "../simc/GameData";
+import { CopyToPtrDraft, GameDataBadge } from "../simc/GameData";
 import { copySimToDraft, deleteSim, listCharacters, listSims } from "./api";
 
 const STATUS_LABEL: Record<SimStatus, string> = {
@@ -197,6 +197,11 @@ export function HistoryPage() {
                             >
                               Copy
                             </button>
+                            <CopyToPtrDraft
+                              simId={sim.id}
+                              gameData={sim.gameData}
+                              className="text-action hover:text-action-strong disabled:text-muted"
+                            />
                             <button
                               type="button"
                               onClick={() => handleDelete(sim.id)}

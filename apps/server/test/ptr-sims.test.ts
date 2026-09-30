@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   apiErrorSchema,
+  queueResponseSchema,
   simcStatusResponseSchema,
   simListResponseSchema,
   simSchema,
@@ -28,6 +29,8 @@ const setPtr = async (on: boolean) => {
   // Reading the status starts a background update check; let it finish before the test ends.
   await h.app.idle();
 };
+
+const rmLaunch = () => rmSync(report, { force: true });
 
 /** The SimC input the fake `simc` was launched with. */
 const launched = () =>
@@ -208,5 +211,96 @@ describe("running a PTR Sim", () => {
     const status = simcStatusResponseSchema.parse(await (await h.call("GET", "/api/simc")).json());
     await h.app.idle();
     expect(status.ptrEnabled).toBe(true);
+  });
+});
+
+describe("Copy to PTR Draft and PTR Sims with the setting on and off", () => {
+  const copyAsPtr = (id: number) =>
+    h.call("POST", "/api/sims", { copyFromSimId: id, settings: { gameData: "ptr" } });
+
+  test("a Live Sim copied to a PTR Draft keeps its setup, runs on PTR and is badged PTR", async () => {
+    await start();
+    const live = await h.runQuickSim({ targets: 3 });
+    const res = await copyAsPtr(live.id);
+    expect(res.status).toBe(201);
+    const draft = simSchema.parse(await res.json());
+    expect(draft).toMatchObject({
+      status: "draft",
+      importId: live.importId,
+      settings: { gameData: "ptr", targets: 3 },
+    });
+    rmLaunch();
+    await h.queue(draft.id);
+    await h.app.idle();
+    expect(launched()).toMatch(/^ptr=1$/m);
+    expect((await h.sim(draft.id)).gameDataVersion).toBe("12.1.5.69952");
+    const list = simListResponseSchema.parse(await (await h.call("GET", "/api/sims")).json());
+    expect(list.find((s) => s.id === draft.id)?.gameData).toBe("ptr");
+    expect(list.find((s) => s.id === live.id)?.gameData).toBe("live");
+  });
+
+  test("copying a Live Sim to PTR is refused while the setting is off", async () => {
+    await start();
+    const live = await h.runQuickSim();
+    await setPtr(false);
+    const res = await copyAsPtr(live.id);
+    expect(res.status).toBe(409);
+    expect(apiErrorSchema.parse(await res.json()).error).toBe("ptr_disabled");
+  });
+
+  test("copying a PTR Sim gives a PTR Draft that queues and runs with the setting off", async () => {
+    await start();
+    const ptr = await h.runQuickSim({ gameData: "ptr" });
+    await setPtr(false);
+    for (const copy of [
+      await h.call("POST", `/api/sims/${ptr.id}/copy-to-draft`),
+      await h.call("POST", "/api/sims", { copyFromSimId: ptr.id }),
+      await copyAsPtr(ptr.id),
+    ]) {
+      expect(copy.status).toBe(201);
+      const draft = simSchema.parse(await copy.json());
+      expect(draft.settings.gameData).toBe("ptr");
+      rmLaunch();
+      expect((await h.queue(draft.id)).status).toBe("queued");
+      await h.app.idle();
+      expect(launched()).toMatch(/^ptr=1$/m);
+      expect((await h.sim(draft.id)).status).toBe("succeeded");
+    }
+  });
+
+  test("the Queue says which Sims are PTR", async () => {
+    await start();
+    const imp = await h.importText();
+    const ptr = await h.createSim(imp.id, { gameData: "ptr" });
+    const live = await h.createSim(imp.id);
+    await h.queue(ptr.id);
+    await h.queue(live.id);
+    const queue = queueResponseSchema.parse(await (await h.call("GET", "/api/queue")).json());
+    const gameData = (id: number) =>
+      queue.entries.flatMap((e) => (e.type === "sim" && e.simId === id ? [e.gameData] : []));
+    expect(gameData(ptr.id)).toEqual(["ptr"]);
+    expect(gameData(live.id)).toEqual(["live"]);
+    await h.app.idle();
+  });
+
+  test("turning the setting off leaves queued and past PTR Sims as they were", async () => {
+    await start();
+    const past = await h.runQuickSim({ gameData: "ptr" });
+    const imp = await h.importText();
+    const waiting = await h.createSim(imp.id, { gameData: "ptr" });
+    rmLaunch();
+    await h.queue(waiting.id);
+    await setPtr(false);
+    await h.app.idle();
+    const ran = await h.sim(waiting.id);
+    expect(ran).toMatchObject({ status: "succeeded", settings: { gameData: "ptr" } });
+    expect(launched()).toMatch(/^ptr=1$/m);
+    expect(await h.sim(past.id)).toMatchObject({
+      status: "succeeded",
+      settings: { gameData: "ptr" },
+    });
+    expect(await h.results(past.id)).toMatchObject({ gameData: "ptr" });
+    const list = simListResponseSchema.parse(await (await h.call("GET", "/api/sims")).json());
+    expect(list.filter((s) => s.gameData === "ptr")).toHaveLength(2);
   });
 });
