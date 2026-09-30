@@ -32,6 +32,7 @@ type SimRow = {
   kind: SimKind;
   status: SimStatus;
   import_id: number;
+  import_ptr_client: number;
   character_id: number;
   character_snapshot: string;
   settings: string;
@@ -45,11 +46,16 @@ type SimRow = {
   finished_at: string | null;
 };
 
+const SIM_SELECT = `
+  SELECT s.*, i.ptr_client AS import_ptr_client
+  FROM sims s JOIN imports i ON i.id = s.import_id`;
+
 const toSim = (row: SimRow): Sim => ({
   id: row.id,
   kind: row.kind,
   status: row.status,
   importId: row.import_id,
+  importPtrClient: row.import_ptr_client === 1,
   characterId: row.character_id,
   character: characterSnapshotSchema.parse(JSON.parse(row.character_snapshot)),
   settings: simSettingsSchema.parse(JSON.parse(row.settings)),
@@ -66,7 +72,7 @@ const toSim = (row: SimRow): Sim => ({
 });
 
 export function getSim(db: Db, id: number): Sim | null {
-  const row = db.query<SimRow, [number]>("SELECT * FROM sims WHERE id = ?").get(id);
+  const row = db.query<SimRow, [number]>(`${SIM_SELECT} WHERE s.id = ?`).get(id);
   return row ? toSim(row) : null;
 }
 
@@ -811,18 +817,18 @@ export function listSims(db: Db, filters: SimListFilters): Sim[] {
   const params: (number | string)[] = [];
 
   if (filters.characterId !== undefined) {
-    whereConditions.push("character_id = ?");
+    whereConditions.push("s.character_id = ?");
     params.push(filters.characterId);
   }
   if (filters.status !== undefined) {
-    whereConditions.push("status = ?");
+    whereConditions.push("s.status = ?");
     params.push(filters.status as string);
   }
 
   const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
   const rows = db
     .query<SimRow, (number | string)[]>(
-      `SELECT * FROM sims ${whereClause} ORDER BY finished_at DESC NULLS LAST, queued_at DESC NULLS LAST, created_at DESC`,
+      `${SIM_SELECT} ${whereClause} ORDER BY s.finished_at DESC NULLS LAST, s.queued_at DESC NULLS LAST, s.created_at DESC`,
     )
     .all(...params);
 

@@ -97,6 +97,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     bus,
     live,
     items,
+    currentBuild: () => simc.current(),
     icons,
     combinations,
     clientDir: config.clientDir,

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, Navigate, useParams } from "react-router";
 import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
+import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { ResultsPage } from "../results/ResultsPage";
 import { GameDataBadge } from "../simc/GameData";
@@ -84,6 +85,12 @@ export function SimPage() {
               />
             </span>
           </h1>
+
+          {sim.data.importPtrClient && (
+            <div className="mt-4">
+              <PtrClientNotice sim={sim.data} />
+            </div>
+          )}
 
           <section className="mt-6 rounded-[10px] border border-line bg-panel/60 p-5">
             <p className="text-[12.5px] text-muted">{STATUS_LABEL[sim.data.status]}</p>

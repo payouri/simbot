@@ -1,0 +1,6 @@
+# Rootbeer - Frost - 2026-09-29 22:41 - EU/Draenor
+# SimC Addon 12.1.0-01
+# Requires SimulationCraft 1210-01+
+# WoW 12.1.0.69933
+
+deathknight="Rootbeer"

@@ -17,6 +17,7 @@ import { ChevronDown, Lock, Play } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { PassNote, UnknownBanner } from "../items/ImportItems";
+import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { formatEstimate } from "../queue/format";
 import { useSimcStatus } from "../simc/api";
 import { GameDataControl } from "../simc/GameData";
@@ -291,6 +292,7 @@ export function Command({
         </p>
       </div>
 
+      <PtrClientNotice sim={sim} />
       <UnknownBanner unknown={itemsView.unknown} />
       <PassNote pass={itemsView.pass} />
 

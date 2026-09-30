@@ -7,6 +7,7 @@ import {
   type ImportItemsResponse,
   queueResponseSchema,
   queueSimcJobRequestSchema,
+  type SimcBuild,
   type SimcJob,
   type SimcJobTarget,
   type SimcStatusResponse,
@@ -55,6 +56,8 @@ export type HttpDeps = {
   icons: { get: (name: string, quality: number) => Promise<Response> };
   /** Combination generation, validation and the time estimate. */
   combinations: CombinationService;
+  /** The Current SimC Build, or null with none: its game data versions flag PTR-client Imports. */
+  currentBuild: () => Promise<Pick<SimcBuild, "gameDataVersion" | "ptrGameDataVersion"> | null>;
   simc: {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */
@@ -171,6 +174,7 @@ export function createHttpHandler({
   clientDir,
   simc,
   items,
+  currentBuild,
   icons,
   combinations,
 }: HttpDeps) {
@@ -241,7 +245,7 @@ export function createHttpHandler({
     }
     if (pathname === "/api/imports") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-      return postImport(db, items, req);
+      return postImport(db, items, currentBuild, req);
     }
     const importParsedRoute = pathname.match(/^\/api\/imports\/([^/]+)\/parsed$/);
     if (importParsedRoute) {

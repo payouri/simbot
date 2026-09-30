@@ -191,4 +191,13 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE sims ADD COLUMN game_data_version TEXT;
     `,
   },
+  {
+    id: 12,
+    name: "import_ptr_client",
+    sql: `
+      -- Whether the Addon String's '# WoW' header looked like the PTR client's when it was
+      -- imported. A hint recorded once, never recomputed, and never read by the runner.
+      ALTER TABLE imports ADD COLUMN ptr_client INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];

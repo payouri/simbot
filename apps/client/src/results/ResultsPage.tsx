@@ -18,6 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { Link, useNavigate } from "react-router";
 import { qualityBorder } from "../items/ImportItems";
+import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { copySimToDraft } from "../quick-sim/api";
 import { ItemName, ItemTile, Tag } from "../setup/ItemTile";
 import { Sheet, type Side, useIsPhone } from "../setup/Sheet";
@@ -198,6 +199,7 @@ function Verdict({
             {provisional && <Tag tone="loss">Provisional</Tag>}
           </h1>
           <p className="max-w-[62ch] text-[13px] text-muted">{detail}</p>
+          <PtrClientNotice sim={sim} />
         </div>
       </div>
       <div className="flex flex-col items-end gap-1">

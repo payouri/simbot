@@ -386,3 +386,41 @@ export function equippedTalentsLine(text: string): string | null {
   }
   return null;
 }
+
+/**
+ * The WoW client version in the Addon String's `# WoW <version>.<build>` header comment, e.g.
+ * `12.1.5.70077`, or null when the header is absent or not four dot-separated numbers. Only a
+ * hint: it is a comment, and SimC itself ignores it.
+ */
+export function parseWowVersionHeader(text: string): string | null {
+  const match = /^[ \t]*#[ \t]*WoW[ \t]+(\d+(?:\.\d+){3})\b/im.exec(text);
+  return match?.[1] ?? null;
+}
+
+/** Compares dotted numeric versions part by part: negative, zero or positive like `a - b`. */
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
+/**
+ * Whether an Addon String looks exported from the PTR client of a SimC Build: its `# WoW` header
+ * equals the build's PTR version (when that differs from Live, else it would match every Live
+ * export), or is newer than its Live version. False without a header or a Live version. Never
+ * more than a hint: the caller must not let it change Game Data.
+ */
+export function isPtrClientExport(
+  text: string,
+  build: { gameDataVersion: string; ptrGameDataVersion: string | null } | null,
+): boolean {
+  const header = parseWowVersionHeader(text);
+  if (!header || !build) return false;
+  const { gameDataVersion: live, ptrGameDataVersion: ptr } = build;
+  if (ptr !== null && ptr !== live && compareVersions(header, ptr) === 0) return true;
+  return compareVersions(header, live) > 0;
+}

@@ -183,6 +183,8 @@ export const simSchema = z.object({
   kind: simKindSchema,
   status: simStatusSchema,
   importId: z.number().int(),
+  /** The Import's `ptrClient` flag, so a Sim can carry the notice without a second fetch. */
+  importPtrClient: z.boolean().default(false),
   characterId: z.number().int(),
   character: characterSnapshotSchema,
   settings: simSettingsSchema,
@@ -260,6 +262,12 @@ export const importSchema = z.object({
   characterId: z.number().int(),
   character: characterSchema,
   checksum: z.string(),
+  /**
+   * The Addon String's `# WoW` header matched the Current SimC Build's PTR version or was newer
+   * than its Live version when it was imported: it was probably exported from the PTR client.
+   * A hint only, it never changes Game Data.
+   */
+  ptrClient: z.boolean().default(false),
   createdAt: isoDate,
 });
 export type Import = z.infer<typeof importSchema>;

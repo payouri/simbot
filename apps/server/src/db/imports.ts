@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { type Import, type ItemIndex, itemIndexSchema } from "@simbot/shared";
 import {
   equippedTalentsLine,
+  isPtrClientExport,
   parseAddonString,
   parseConsumables,
   parseProfileHeader,
@@ -13,6 +14,7 @@ type ImportRow = {
   character_id: number;
   checksum: string;
   created_at: string;
+  ptr_client: number;
   region: string;
   realm: string;
   name: string;
@@ -20,7 +22,7 @@ type ImportRow = {
 };
 
 const IMPORT_SELECT = `
-  SELECT i.id, i.character_id, i.checksum, i.created_at, c.region, c.realm, c.name, c.class
+  SELECT i.id, i.character_id, i.checksum, i.created_at, i.ptr_client, c.region, c.realm, c.name, c.class
   FROM imports i JOIN characters c ON c.id = i.character_id`;
 
 const toImport = (row: ImportRow): Import => ({
@@ -34,6 +36,7 @@ const toImport = (row: ImportRow): Import => ({
     class: row.class,
   },
   checksum: row.checksum,
+  ptrClient: row.ptr_client === 1,
   createdAt: row.created_at,
 });
 
@@ -42,9 +45,15 @@ export const checksumOf = (text: string) => createHash("sha256").update(text).di
 /**
  * Stores an Addon String as an Import, matching (or creating) its Character on region, realm,
  * name and class. Pasting the same text for the same Character again returns the existing
- * Import. Throws `AddonStringError` when the text has no character header.
+ * Import. Throws `AddonStringError` when the text has no character header. `build` is the
+ * Current SimC Build's game data versions: they decide the Import's PTR-client flag, which is
+ * recorded with a new Import and kept as it was for an existing one.
  */
-export function createImport(db: Db, text: string): { import: Import; created: boolean } {
+export function createImport(
+  db: Db,
+  text: string,
+  build: Parameters<typeof isPtrClientExport>[1] = null,
+): { import: Import; created: boolean } {
   const header = parseProfileHeader(text);
   const checksum = checksumOf(text);
   return db.transaction(() => {
@@ -60,8 +69,8 @@ export function createImport(db: Db, text: string): { import: Import; created: b
       .get(header.region, header.realm, header.name, header.class);
     if (!character) throw new Error("character upsert failed");
     const result = db.run(
-      "INSERT OR IGNORE INTO imports (character_id, raw_text, checksum, created_at) VALUES (?, ?, ?, ?)",
-      [character.id, text, checksum, now],
+      "INSERT OR IGNORE INTO imports (character_id, raw_text, checksum, created_at, ptr_client) VALUES (?, ?, ?, ?, ?)",
+      [character.id, text, checksum, now, isPtrClientExport(text, build) ? 1 : 0],
     );
     const row = db
       .query<ImportRow, [number, string]>(

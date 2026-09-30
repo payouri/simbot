@@ -8,11 +8,13 @@ export {
   equippedTalentsLine,
   isClassKey,
   isEquipmentSlot,
+  isPtrClientExport,
   type ParsedAddonString,
   type ProfileHeader,
   parseAddonString,
   parseConsumables,
   parseProfileHeader,
+  parseWowVersionHeader,
   type TalentLoadout,
 } from "./addon-string";
 export { buildPaths, launchCommand } from "./build";

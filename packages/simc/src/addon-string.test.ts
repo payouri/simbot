@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { adler32, parseAddonString } from "./addon-string";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import {
+  adler32,
+  isPtrClientExport,
+  parseAddonString,
+  parseWowVersionHeader,
+} from "./addon-string";
 
 const fixture = `# Rootbeer - Frost - 2026-09-29 22:41 - EU/Draenor
 # SimC Addon 12.1.0-01
@@ -190,5 +197,49 @@ describe("Adler-32 checksum", () => {
 
     const result2 = adler32("");
     expect(result2).toBe("00000001");
+  });
+});
+
+// Hand-written, see fixtures/addon-string/README.md.
+const wowFixture = (name: string) =>
+  readFileSync(join(import.meta.dir, "fixtures/addon-string", name), "utf8");
+
+describe("WoW version header", () => {
+  test("reads the version and build from the `# WoW` comment", () => {
+    expect(parseWowVersionHeader(wowFixture("wow-header-live.txt"))).toBe("12.1.0.69933");
+    expect(parseWowVersionHeader(wowFixture("wow-header-ptr.txt"))).toBe("12.1.5.69952");
+    expect(parseWowVersionHeader('#WoW 12.1.0.1, Toc: 120100\r\nmage="A"')).toBe("12.1.0.1");
+  });
+
+  test("is null without the header, or when it is not a four-part version", () => {
+    expect(parseWowVersionHeader(fixture)).toBeNull();
+    expect(parseWowVersionHeader("# WoW 12.1.0\n")).toBeNull();
+    expect(parseWowVersionHeader("# WoW unknown\n")).toBeNull();
+    expect(parseWowVersionHeader('mage="A"\nnote=# WoW 12.1.0.1\n')).toBeNull();
+  });
+
+  const build = { gameDataVersion: "12.1.0.69933", ptrGameDataVersion: "12.1.5.69952" };
+
+  test("a header matching the PTR version or newer than Live is a PTR-client export", () => {
+    expect(isPtrClientExport(wowFixture("wow-header-ptr.txt"), build)).toBe(true);
+    expect(isPtrClientExport("# WoW 12.2.0.70500\n", build)).toBe(true);
+    expect(isPtrClientExport("# WoW 12.1.0.70000\n", build)).toBe(true);
+  });
+
+  test("a Live or older header is not, and neither is a missing header or build", () => {
+    expect(isPtrClientExport(wowFixture("wow-header-live.txt"), build)).toBe(false);
+    expect(isPtrClientExport("# WoW 12.0.9.60000\n", build)).toBe(false);
+    expect(isPtrClientExport("# WoW 12.1.0.9999\n", build)).toBe(false);
+    expect(isPtrClientExport(fixture, build)).toBe(false);
+    expect(isPtrClientExport(wowFixture("wow-header-ptr.txt"), null)).toBe(false);
+  });
+
+  test("a build with no PTR data of its own compares with Live only", () => {
+    const none = { gameDataVersion: "12.1.0.69933", ptrGameDataVersion: null };
+    const same = { gameDataVersion: "12.1.0.69933", ptrGameDataVersion: "12.1.0.69933" };
+    for (const b of [none, same]) {
+      expect(isPtrClientExport(wowFixture("wow-header-live.txt"), b)).toBe(false);
+      expect(isPtrClientExport(wowFixture("wow-header-ptr.txt"), b)).toBe(true);
+    }
   });
 });
