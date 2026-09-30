@@ -4,6 +4,7 @@ import { Link, Navigate, useParams } from "react-router";
 import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
 import { PtrClientNotice } from "../notice/PtrClientNotice";
+import { showsPtrClientNotice } from "../notice/showsPtrClientNotice";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { ResultsPage } from "../results/ResultsPage";
 import { GameDataBadge } from "../simc/GameData";
@@ -86,7 +87,7 @@ export function SimPage() {
             </span>
           </h1>
 
-          {sim.data.importPtrClient && (
+          {showsPtrClientNotice(sim.data) && (
             <div className="mt-4">
               <PtrClientNotice sim={sim.data} />
             </div>

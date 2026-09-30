@@ -1,12 +1,12 @@
 import { FlaskConical } from "lucide-react";
+import { type PtrClientNoticeSim, showsPtrClientNotice } from "./showsPtrClientNotice";
 
 /**
- * Shown on an Import, and on the Sims built from it, when its Addon String looks exported from
- * the PTR client. A hint only: the Game Data of a Sim is never changed by it.
- * (Once PTR Sims can be picked, #60, it shows on Live Sims only.)
+ * Shown on a Live Sim whose Addon String looks exported from the PTR client. A hint only: the
+ * Game Data of a Sim is never changed by it, and a PTR Sim already runs on PTR Game Data.
  */
-export function PtrClientNotice({ sim }: { sim: { importPtrClient: boolean } }) {
-  if (!sim.importPtrClient) return null;
+export function PtrClientNotice({ sim }: { sim: PtrClientNoticeSim }) {
+  if (!showsPtrClientNotice(sim)) return null;
   return (
     <p
       role="note"
