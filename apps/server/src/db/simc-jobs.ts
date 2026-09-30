@@ -4,6 +4,7 @@ import {
   type SimcJob,
   type SimcJobStatus,
   type SimcJobTarget,
+  type SimcUpdateQueueEntry,
   type SimcUpdateStep,
   simcJobTargetSchema,
   simcUpdateStepSchema,
@@ -45,6 +46,27 @@ export function getSimcJob(db: Db, id: number): SimcJob | null {
 export function latestOpenSimcJob(db: Db): SimcJob | null {
   const row = db.query<JobRow, []>(`${SELECT} ORDER BY id DESC LIMIT 1`).get();
   return row && row.status !== "done" ? toJob(row) : null;
+}
+
+/** SimC Update Jobs in the Queue (running or waiting), the running one first, then by id. */
+export function getSimcQueueEntries(db: Db): SimcUpdateQueueEntry[] {
+  return db
+    .query<JobRow & { started_at: string | null }, []>(
+      `SELECT id, status, target, step, resolved_tag, error, created_at, started_at
+       FROM jobs WHERE kind = 'simc_update' AND status IN ('queued', 'running')
+       ORDER BY status = 'running' DESC, id`,
+    )
+    .all()
+    .map((row) => ({
+      type: "simc_update" as const,
+      jobId: row.id,
+      status: row.status === "running" ? ("running" as const) : ("queued" as const),
+      target: simcJobTargetSchema.parse(JSON.parse(row.target)),
+      step: row.step ? simcUpdateStepSchema.parse(row.step) : null,
+      tag: row.resolved_tag,
+      queuedAt: row.created_at,
+      startedAt: row.started_at,
+    }));
 }
 
 /** Appends a `simc_update` Job, unless one is already queued or running (at most one). */

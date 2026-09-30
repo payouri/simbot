@@ -174,7 +174,7 @@ describe("Stop and Discard a queued Sim", () => {
       expect(simSchema.parse(await res.json())).toMatchObject({ status: "draft", queuedAt: null });
     }
     const queue = queueResponseSchema.parse(await (await h.call("GET", "/api/queue")).json());
-    expect(queue.entries.map((e) => e.simId)).toEqual([first.id]);
+    expect(queue.entries.map((e) => (e.type === "sim" ? e.simId : null))).toEqual([first.id]);
 
     release();
     await h.app.idle();

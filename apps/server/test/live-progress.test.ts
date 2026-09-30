@@ -168,11 +168,12 @@ describe("watching the Queue", () => {
     // SimC has printed its lines but not exited, so the first Sim is running.
     await live.waitFor((e) => isProgress(e) && e.done === 3726);
     const queue = queueResponseSchema.parse(await (await h.call("GET", "/api/queue")).json());
-    expect(queue.entries.map((e) => [e.simId, e.status])).toEqual([
+    expect(queue.entries.map((e) => [e.type === "sim" ? e.simId : null, e.status])).toEqual([
       [first.id, "running"],
       [second.id, "queued"],
     ]);
-    expect(queue.entries[0]?.character.name).toBe("Rootbeer");
+    const head = queue.entries[0];
+    expect(head?.type === "sim" ? head.character.name : null).toBe("Rootbeer");
     expect(live.events.filter(isProgress).every((p) => p.simId === first.id)).toBe(true);
 
     // A client that connects now gets the Queue and the last progress, and no replay.
@@ -180,7 +181,10 @@ describe("watching the Queue", () => {
     await late.waitFor((e) => e.type === "snapshot");
     late.close();
     const snapshot = snapshotEventSchema.parse(late.events[0]);
-    expect(snapshot.queue.map((e) => e.simId)).toEqual([first.id, second.id]);
+    expect(snapshot.queue.map((e) => (e.type === "sim" ? e.simId : null))).toEqual([
+      first.id,
+      second.id,
+    ]);
     expect(snapshot.running).toMatchObject({
       simId: first.id,
       stage: 1,

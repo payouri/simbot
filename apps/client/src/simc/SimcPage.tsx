@@ -3,12 +3,11 @@ import {
   MAX_KEEP_BUILDS,
   type SimcCheckSim,
   type SimcJob,
-  type SimcJobTarget,
   type SimcStatusResponse,
   type SimcUpdateStatus,
-  type SimcUpdateStep,
 } from "@simbot/shared";
 import { useCheckSimcNow, useQueueSimcJob, useSetKeepBuilds, useSimcStatus } from "./api";
+import { STEP_LABEL, targetLabel } from "./labels";
 
 const FIELDS = [
   ["Tag", "tag"],
@@ -51,20 +50,6 @@ function Build({ title, rows }: { title: string; rows: [string, string][] }) {
     </section>
   );
 }
-
-const STEP_LABEL: Record<SimcUpdateStep, string> = {
-  fetch: "Fetching the build",
-  check: "Running the Check Sim",
-  meta: "Building item data",
-  commit: "Switching over",
-};
-
-const targetLabel = (t: SimcJobTarget) =>
-  t.kind === "installed"
-    ? `Switch to ${t.tag}`
-    : t.kind === "seed"
-      ? "Install the shipped build"
-      : "Install the latest nightly";
 
 const dpsFormat = new Intl.NumberFormat("en", { maximumFractionDigits: 0 });
 

@@ -1,9 +1,10 @@
 import { z } from "zod";
 import { characterSnapshotSchema, simKindSchema } from "./sim";
-import { simcJobStatusSchema, simcUpdateStepSchema } from "./simc";
+import { simcJobStatusSchema, simcJobTargetSchema, simcUpdateStepSchema } from "./simc";
 
-/** One Job in the Queue: the running one, or one waiting its turn. */
-export const queueEntrySchema = z.object({
+/** A Sim Job in the Queue: the running one, or one waiting its turn. */
+export const simQueueEntrySchema = z.object({
+  type: z.literal("sim"),
   jobId: z.number().int(),
   simId: z.number().int(),
   kind: simKindSchema,
@@ -12,6 +13,28 @@ export const queueEntrySchema = z.object({
   queuedAt: z.string().nullable(),
   startedAt: z.string().nullable(),
 });
+export type SimQueueEntry = z.infer<typeof simQueueEntrySchema>;
+
+/** A SimC Update Job in the Queue. It holds the Queue while it runs, like a Sim. */
+export const simcUpdateQueueEntrySchema = z.object({
+  type: z.literal("simc_update"),
+  jobId: z.number().int(),
+  status: z.enum(["queued", "running"]),
+  target: simcJobTargetSchema,
+  /** The step running now; null while the Job waits, or before its first step. */
+  step: simcUpdateStepSchema.nullable(),
+  /** The tag the target resolved to, once the Job has started. */
+  tag: z.string().nullable(),
+  queuedAt: z.string().nullable(),
+  startedAt: z.string().nullable(),
+});
+export type SimcUpdateQueueEntry = z.infer<typeof simcUpdateQueueEntrySchema>;
+
+/** One Job in the Queue: a Sim or a SimC Update. */
+export const queueEntrySchema = z.discriminatedUnion("type", [
+  simQueueEntrySchema,
+  simcUpdateQueueEntrySchema,
+]);
 export type QueueEntry = z.infer<typeof queueEntrySchema>;
 
 /** `GET /api/queue`: the running Job first, then the waiting ones in the order they will run. */

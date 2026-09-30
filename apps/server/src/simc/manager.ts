@@ -287,6 +287,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
    */
   const runJob = async (jobId: number): Promise<void> => {
     if (!startSimcJob(db, jobId)) return;
+    events.emit({ type: "queue.changed" });
     const job = getSimcJob(db, jobId);
     if (!job) return;
     let step: SimcUpdateStep = "fetch";
@@ -395,12 +396,14 @@ export function createSimcManager(deps: SimcManagerDeps) {
       failSimcJob(db, jobId, step, message);
       publish("failed", message);
       events.emit({ type: "simc.status_changed" });
+      events.emit({ type: "queue.changed" });
       return;
     }
     await evict();
     finishSimcJob(db, jobId);
     publish("done");
     events.emit({ type: "simc.status_changed" });
+    events.emit({ type: "queue.changed" });
   };
 
   /**

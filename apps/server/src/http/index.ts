@@ -10,6 +10,7 @@ import {
   type SimcJob,
   type SimcJobTarget,
   type SimcStatusResponse,
+  type SimQueueEntry,
   type SnapshotEvent,
   simcJobSchema,
   simcSettingsRequestSchema,
@@ -17,7 +18,7 @@ import {
 } from "@simbot/shared";
 import type { CombinationService } from "../combinations";
 import type { Db } from "../db";
-import { getQueue } from "../db/sims";
+import { getQueue } from "../db/queue";
 import type { EventBus } from "../events";
 import type { LiveTracker } from "../live";
 import { getCharacters, patchCharacter, postMergeCharacter } from "./characters";
@@ -171,7 +172,10 @@ export function createHttpHandler({
 }: HttpDeps) {
   const snapshot = (): SnapshotEvent => {
     const queue = getQueue(db);
-    const running = queue.find((e) => e.status === "running");
+    // Live progress is only tracked for Sims; a running SimC Update shows its step in `queue`.
+    const running = queue.find(
+      (e): e is SimQueueEntry => e.type === "sim" && e.status === "running",
+    );
     const state = running ? live.get(running.simId) : null;
     return {
       type: "snapshot",

@@ -14,6 +14,8 @@ import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import {
   type AppEvent,
+  type QueueEntry,
+  queueResponseSchema,
   type SimcJob,
   type SimcStatusResponse,
   simcJobSchema,
@@ -21,6 +23,7 @@ import {
 } from "@simbot/shared";
 import { addonString, derivedScenario, fakeLaunch, installFakeBuild } from "../../test/harness";
 import { createApp } from "../app";
+import { getQueue } from "../db/queue";
 import { fakeRegistry, json2, LATEST_NIGHTLY } from "./registry-fixture";
 
 const OLD = "1210-2026-09-27-7ffaabf";
@@ -230,6 +233,68 @@ describe("one Job at a time", () => {
       ((await (await call("GET", `/api/sims/${id}`)).json()) as { simcTag: string }).simcTag;
     expect(await tag(a.id)).toBe(OLD);
     expect(await tag(b.id)).toBe(LATEST_NIGHTLY);
+  });
+});
+
+describe("the Queue lists SimC Update Jobs", () => {
+  const queueEntries = async () =>
+    queueResponseSchema.parse(await (await call("GET", "/api/queue")).json()).entries;
+
+  test("a queued Job shows in FIFO order between the Sims around it, and leaves when done", async () => {
+    bootWithOld();
+    const imp = await importText();
+    const draft = async () =>
+      (await (await call("POST", "/api/sims", { importId: imp.id })).json()) as { id: number };
+    const a = await draft();
+    const b = await draft();
+    await call("POST", `/api/sims/${a.id}/queue`);
+    await postJob({ kind: "nightly" });
+    await call("POST", `/api/sims/${b.id}/queue`);
+    const entries = await queueEntries();
+    expect(entries.map((e) => [e.type, e.type === "sim" ? e.simId : null])).toEqual([
+      ["sim", a.id],
+      ["simc_update", null],
+      ["sim", b.id],
+    ]);
+    expect(entries[1]).toMatchObject({ status: "queued", target: { kind: "nightly" }, step: null });
+    await app.idle();
+    expect(await queueEntries()).toEqual([]);
+  });
+
+  test("the running Job shows the step it is on and the tag it resolved to", async () => {
+    bootWithOld();
+    const seen: QueueEntry[][] = [];
+    app.bus.on((e) => {
+      if (e.type === "simc.update_status" && e.status === "running") seen.push(getQueue(app.db));
+    });
+    await applyJob({ kind: "nightly" });
+    const at = (step: string) =>
+      seen.find(([head]) => head?.type === "simc_update" && head.step === step);
+    expect(at("check")).toEqual([
+      expect.objectContaining({
+        type: "simc_update",
+        status: "running",
+        target: { kind: "nightly" },
+        step: "check",
+        tag: LATEST_NIGHTLY,
+      }),
+    ]);
+    expect(at("commit")).toBeDefined();
+  });
+
+  test("queue.changed fires when the Job is queued, starts and finishes", async () => {
+    bootWithOld();
+    await applyJob({ kind: "nightly" });
+    expect(events.filter((e) => e.type === "queue.changed")).toHaveLength(3);
+  });
+
+  test("a failed Job leaves the Queue and announces it", async () => {
+    bootWithOld((url) =>
+      url.includes("/manifests/") ? new Response("", { status: 404 }) : undefined,
+    );
+    await applyJob({ kind: "nightly" });
+    expect(await queueEntries()).toEqual([]);
+    expect(events.filter((e) => e.type === "queue.changed")).toHaveLength(3);
   });
 });
 

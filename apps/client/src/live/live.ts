@@ -113,8 +113,12 @@ export function LiveConnection() {
         case "sim.discarded":
           void client.invalidateQueries({ queryKey: ["sim", event.simId] });
           break;
-        case "simc.status_changed":
         case "simc.update_status":
+          // A SimC Update Job is in the Queue, so its step shows there too.
+          void client.invalidateQueries({ queryKey: QUEUE_KEY });
+          void client.invalidateQueries({ queryKey: SIMC_KEY });
+          break;
+        case "simc.status_changed":
           void client.invalidateQueries({ queryKey: SIMC_KEY });
           break;
       }

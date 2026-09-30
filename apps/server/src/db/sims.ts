@@ -8,11 +8,11 @@ import {
   defaultSimSettings,
   defaultTopGearSelection,
   normalizeSelection,
-  type QueueEntry,
   type Sim,
   type SimError,
   type SimKind,
   type SimLadderResponse,
+  type SimQueueEntry,
   type SimResultsResponse,
   type SimSettings,
   type SimStatus,
@@ -716,8 +716,8 @@ export function getSimResults(
   };
 }
 
-/** The running Job first, then the waiting ones in the order they will run. */
-export function getQueue(db: Db): QueueEntry[] {
+/** Sim Jobs in the Queue, the running one first, then the waiting ones in FIFO order. */
+export function getSimQueueEntries(db: Db): SimQueueEntry[] {
   const rows = db
     .query<
       {
@@ -739,6 +739,7 @@ export function getQueue(db: Db): QueueEntry[] {
     )
     .all();
   return rows.map((r) => ({
+    type: "sim" as const,
     jobId: r.job_id,
     simId: r.sim_id,
     kind: r.kind,
