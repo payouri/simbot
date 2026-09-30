@@ -32,4 +32,12 @@ describe("buildCheckSimInput", () => {
     expect(input).not.toMatch(/^(save|html|output|input)=/m);
     expect(input.match(/^ptr=1$/gm) ?? []).toHaveLength(g === "ptr" ? 1 : 0);
   });
+
+  test("contains Check Sim options and profileset override", () => {
+    const input = buildCheckSimInput("mage=Test\nregion=us\nserver=Area 52", "live");
+    expect(input).toContain("# simbot Check Sim");
+    expect(input).toContain("fight_style=Patchwerk");
+    expect(input).toContain("target_error=1");
+    expect(input).toContain(`profileset."${CHECK_SIM_PROFILESET}"+=gear_haste_rating=1`);
+  });
 });
