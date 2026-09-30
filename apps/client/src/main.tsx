@@ -6,6 +6,7 @@ import "./index.css";
 import { LiveConnection } from "./live/live";
 import { TopGearPrototypeRoute } from "./prototype/top-gear/route";
 import { QueuePage } from "./queue/QueuePage";
+import { HistoryPage } from "./quick-sim/HistoryPage";
 import { QuickSimPage } from "./quick-sim/QuickSimPage";
 import { SimPage } from "./quick-sim/SimPage";
 import { AppShell } from "./shell/AppShell";
@@ -16,6 +17,7 @@ const queryClient = new QueryClient();
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/quick-sim" replace /> },
   { path: "/quick-sim", element: <QuickSimPage /> },
+  { path: "/history", element: <HistoryPage /> },
   { path: "/sims/:id", element: <SimPage /> },
   { path: "/prototype/top-gear", element: <TopGearPrototypeRoute /> },
   {

@@ -52,6 +52,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
   });
   const handle = createHttpHandler({
     db,
+    dataDir: config.dataDir,
     bus,
     live,
     clientDir: config.clientDir,

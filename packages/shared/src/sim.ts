@@ -118,6 +118,10 @@ export const createSimRequestSchema = z.object({
 });
 export type CreateSimRequest = z.input<typeof createSimRequestSchema>;
 
+/** `POST /api/sims/:id/copy-to-draft`. Copies a Sim's input into a new Draft. */
+export const copySimToDraftRequestSchema = z.object({});
+export type CopySimToDraftRequest = z.infer<typeof copySimToDraftRequestSchema>;
+
 export const importSchema = z.object({
   id: z.number().int(),
   characterId: z.number().int(),
@@ -156,6 +160,21 @@ export const simResultsResponseSchema = z.object({
   results: z.array(stageResultSchema),
 });
 export type SimResultsResponse = z.infer<typeof simResultsResponseSchema>;
+
+export const simListItemSchema = z.object({
+  id: z.number().int(),
+  kind: simKindSchema,
+  status: simStatusSchema,
+  characterId: z.number().int(),
+  character: characterSnapshotSchema,
+  simcTag: z.string().nullable(),
+  createdAt: isoDate,
+  finishedAt: isoDate.nullable(),
+});
+export type SimListItem = z.infer<typeof simListItemSchema>;
+
+export const simListResponseSchema = z.array(simListItemSchema);
+export type SimListResponse = z.infer<typeof simListResponseSchema>;
 
 export const apiErrorSchema = z.object({
   error: z.string(),

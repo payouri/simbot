@@ -14,11 +14,20 @@ import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
 import type { LiveTracker } from "../live";
 import { getImportParsed, postImport } from "./imports";
-import { getResults, getSimById, postQueueSim, postSim } from "./sims";
+import {
+  deleteSim_Handler,
+  getResults,
+  getSimById,
+  getSims,
+  postCopySimToDraft,
+  postQueueSim,
+  postSim,
+} from "./sims";
 import { apiError, json } from "./util";
 
 export type HttpDeps = {
   db: Db;
+  dataDir: string;
   clientDir: string;
   bus: EventBus;
   live: LiveTracker;
@@ -99,7 +108,7 @@ function eventStream(
 }
 
 /** Builds the request handler: `/api/*` REST routes, everything else is the built client. */
-export function createHttpHandler({ db, bus, live, clientDir, simc }: HttpDeps) {
+export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: HttpDeps) {
   const snapshot = (): SnapshotEvent => {
     const queue = getQueue(db);
     const running = queue.find((e) => e.status === "running");
@@ -150,16 +159,51 @@ export function createHttpHandler({ db, bus, live, clientDir, simc }: HttpDeps) 
       return getImportParsed(db, Number(id));
     }
     if (pathname === "/api/sims") {
-      if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-      return postSim(db, req);
+      if (req.method === "POST") {
+        return postSim(db, req);
+      }
+      if (req.method === "GET") {
+        return getSims(db, req);
+      }
+      return json({ error: "method_not_allowed" }, 405);
     }
-    const simRoute = pathname.match(/^\/api\/sims\/([^/]+)(?:\/(queue|results))?$/);
+    const simRoute = pathname.match(
+      /^\/api\/sims\/([^/]+)(?:\/(queue|results|files|copy-to-draft)(?:\/(.+))?)?$/,
+    );
     if (simRoute) {
-      const [, id = "", action] = simRoute;
+      const [, id = "", action, fileName] = simRoute;
       if (action === "queue") {
         return req.method === "POST"
           ? postQueueSim(db, bus, id)
           : json({ error: "method_not_allowed" }, 405);
+      }
+      if (action === "copy-to-draft") {
+        return req.method === "POST"
+          ? postCopySimToDraft(db, id)
+          : json({ error: "method_not_allowed" }, 405);
+      }
+      if (action === "files" && fileName) {
+        if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+        // Download file from sims folder
+        const filePath = join("sims", id, fileName);
+        const fullPath = join(dataDir, filePath);
+
+        // Validate path is within sims directory
+        const realPath = fullPath;
+        if (!realPath.startsWith(join(dataDir, "sims", id))) {
+          return apiError(403, "forbidden");
+        }
+
+        try {
+          if (!existsSync(fullPath)) return apiError(404, "file_not_found");
+          const file = Bun.file(fullPath);
+          return new Response(file);
+        } catch {
+          return apiError(500, "internal_error");
+        }
+      }
+      if (req.method === "DELETE") {
+        return deleteSim_Handler(db, id, dataDir);
       }
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
       return action === "results" ? getResults(db, id) : getSimById(db, id);

@@ -2,7 +2,10 @@ import {
   apiErrorSchema,
   type CreateSimRequest,
   importSchema,
+  type SimListResponse,
   type SimResultsResponse,
+  type SimStatus,
+  simListResponseSchema,
   simResultsResponseSchema,
   simSchema,
 } from "@simbot/shared";
@@ -38,3 +41,17 @@ export const queueSim = (id: number) => request("POST", `/api/sims/${id}/queue`,
 export const getSim = (id: number) => request("GET", `/api/sims/${id}`, simSchema);
 export const getResults = (id: number): Promise<SimResultsResponse> =>
   request("GET", `/api/sims/${id}/results`, simResultsResponseSchema);
+export const listSims = (filters?: {
+  characterId?: number;
+  status?: SimStatus;
+}): Promise<SimListResponse> => {
+  const params = new URLSearchParams();
+  if (filters?.characterId) params.append("characterId", String(filters.characterId));
+  if (filters?.status) params.append("status", filters.status);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return request("GET", `/api/sims${query}`, simListResponseSchema);
+};
+export const deleteSim = (id: number) =>
+  request("DELETE", `/api/sims/${id}`, { parse: () => ({ success: true }) });
+export const copySimToDraft = (id: number) =>
+  request("POST", `/api/sims/${id}/copy-to-draft`, simSchema);

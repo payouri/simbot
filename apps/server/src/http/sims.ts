@@ -1,6 +1,15 @@
-import { createSimRequestSchema, simResultsResponseSchema, simSchema } from "@simbot/shared";
+import { rmSync } from "node:fs";
+import { join } from "node:path";
+import {
+  createSimRequestSchema,
+  type SimListItem,
+  simListResponseSchema,
+  simResultsResponseSchema,
+  simSchema,
+  simStatusSchema,
+} from "@simbot/shared";
 import type { Db } from "../db";
-import { createSim, getSim, getSimResults, queueSim } from "../db/sims";
+import { createSim, deleteSim, getSim, getSimResults, listSims, queueSim } from "../db/sims";
 import type { EventBus } from "../events";
 import { apiError, json, parseId, readBody } from "./util";
 
@@ -45,4 +54,71 @@ export function getResults(db: Db, rawId: string): Response {
   }
   const results = getSimResults(db, id);
   return results ? json(simResultsResponseSchema.parse(results)) : apiError(404, "sim_not_found");
+}
+
+/** `GET /api/sims?characterId&status`: List Sims with optional filters. */
+export function getSims(db: Db, req: Request): Response {
+  const url = new URL(req.url);
+  const characterId = url.searchParams.get("characterId");
+  const status = url.searchParams.get("status");
+
+  const filters: { characterId?: number; status?: string } = {};
+  if (characterId) {
+    const id = parseId(characterId);
+    if (id === null) return apiError(400, "invalid_character_id");
+    filters.characterId = id;
+  }
+  if (status) {
+    // Validate status is a valid SimStatus
+    const statusResult = simStatusSchema.safeParse(status);
+    if (!statusResult.success) return apiError(400, "invalid_status");
+    filters.status = status;
+  }
+
+  const sims = listSims(db, filters);
+  const items: SimListItem[] = sims.map((sim) => ({
+    id: sim.id,
+    kind: sim.kind,
+    status: sim.status,
+    characterId: sim.characterId,
+    character: sim.character,
+    simcTag: sim.simcTag,
+    createdAt: sim.createdAt,
+    finishedAt: sim.finishedAt,
+  }));
+  return json(simListResponseSchema.parse(items));
+}
+
+/** `DELETE /api/sims/:id`: Delete a Sim and its folder. */
+export function deleteSim_Handler(db: Db, rawId: string, dataDir: string): Response {
+  const id = parseId(rawId);
+  if (id === null) return apiError(404, "sim_not_found");
+  const deleted = deleteSim(db, id);
+  if (!deleted) return apiError(404, "sim_not_found");
+
+  // Delete the sim's folder
+  const simDir = join(dataDir, "sims", String(id));
+  try {
+    rmSync(simDir, { recursive: true, force: true });
+  } catch {
+    // Folder might not exist, which is fine
+  }
+
+  return json({ success: true }, 204);
+}
+
+/** `POST /api/sims/:id/copy-to-draft`: Copy a Sim's input into a new Draft. */
+export function postCopySimToDraft(db: Db, rawId: string): Response {
+  const id = parseId(rawId);
+  const sim = id === null ? null : getSim(db, id);
+  if (!sim) return apiError(404, "sim_not_found");
+
+  // Create a new Draft Sim with the same import and settings
+  const newSim = createSim(db, {
+    importId: sim.importId,
+    settings: sim.settings,
+  });
+
+  if (!newSim) return apiError(500, "internal_error");
+  return json(simSchema.parse(newSim), 201);
 }

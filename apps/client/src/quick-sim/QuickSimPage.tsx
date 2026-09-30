@@ -152,6 +152,9 @@ export function QuickSimPage() {
           >
             {run.isPending ? "Queuing…" : "Run Quick Sim"}
           </button>
+          <Link to="/history" className="text-[12.5px] text-muted hover:text-fg">
+            History
+          </Link>
           <Link to="/simc" className="text-[12.5px] text-muted hover:text-fg">
             SimC
           </Link>

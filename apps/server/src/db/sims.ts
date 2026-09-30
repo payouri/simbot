@@ -300,3 +300,42 @@ export function getQueue(db: Db): QueueEntry[] {
     startedAt: r.started_at,
   }));
 }
+
+export type SimListFilters = {
+  characterId?: number;
+  status?: string | SimStatus;
+};
+
+/**
+ * Lists Sims with optional filters by Character and status.
+ */
+export function listSims(db: Db, filters: SimListFilters): Sim[] {
+  const whereConditions: string[] = [];
+  const params: (number | string)[] = [];
+
+  if (filters.characterId !== undefined) {
+    whereConditions.push("character_id = ?");
+    params.push(filters.characterId);
+  }
+  if (filters.status !== undefined) {
+    whereConditions.push("status = ?");
+    params.push(filters.status as string);
+  }
+
+  const whereClause = whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : "";
+  const rows = db
+    .query<SimRow, (number | string)[]>(
+      `SELECT * FROM sims ${whereClause} ORDER BY finished_at DESC NULLS LAST, queued_at DESC NULLS LAST, created_at DESC`,
+    )
+    .all(...params);
+
+  return rows.map(toSim);
+}
+
+/**
+ * Deletes a Sim by ID. Returns true if the Sim existed and was deleted.
+ */
+export function deleteSim(db: Db, simId: number): boolean {
+  const result = db.run("DELETE FROM sims WHERE id = ?", [simId]);
+  return result.changes > 0;
+}
