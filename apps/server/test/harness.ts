@@ -64,6 +64,8 @@ export type FakeStageReply = {
   profilesets?: Record<string, [number, number]>;
   exit?: number;
   stderr?: string;
+  /** Write a report with no `profilesets` block at all. */
+  noProfilesets?: boolean;
   /** The launch waits for this file before writing its report (mid-Stage observation). */
   gate?: string;
 };
@@ -112,11 +114,13 @@ export function smartLaunch(
           sim: {
             options: { confidence_estimator: 2 },
             players: [{ collected_data: { dps: { mean, mean_std_dev: err / 2 } } }],
-            profilesets: {
-              results: sets
-                .map(([name, [m, e]]) => ({ name, mean: m, mean_error: e, iterations: 100 }))
-                .reverse(),
-            },
+            profilesets: r.noProfilesets
+              ? undefined
+              : {
+                  results: sets
+                    .map(([name, [m, e]]) => ({ name, mean: m, mean_error: e, iterations: 100 }))
+                    .reverse(),
+                },
           },
         }),
       );

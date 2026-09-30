@@ -250,11 +250,23 @@ describe("readStageReport", () => {
     expect(readFileSync(join(dir, "stderr.txt"), "utf8")).not.toMatch(/^Error/m);
   });
 
-  test("a missing profileset, a missing file and garbage are format errors", () => {
-    expect(() => readStageReport(report([]), [3])).toThrow(Json2FormatError);
+  test("a missing file, garbage, an errorless entry and a missing profilesets block are format errors", () => {
     expect(() => readStageReport(null, [])).toThrow(Json2FormatError);
     expect(() => readStageReport("{", [])).toThrow(Json2FormatError);
     expect(() => readStageReport(report([{ name: "3", mean: 1 }]), [3])).toThrow(Json2FormatError);
+    const noBlock = JSON.stringify({
+      sim: {
+        options: { confidence_estimator: 2 },
+        players: [{ collected_data: { dps: { mean: 1, mean_std_dev: 1 } } }],
+      },
+    });
+    expect(() => readStageReport(noBlock, [3])).toThrow(Json2FormatError);
+  });
+
+  test("a profileset missing from the report is returned, not fatal", () => {
+    const out = readStageReport(report([{ name: "5", mean: 95, mean_error: 4 }]), [3, 5]);
+    expect(out.missing).toEqual([3]);
+    expect([...out.profilesets.keys()]).toEqual([5]);
   });
 
   test("a report without profilesets is fine when none are expected", () => {

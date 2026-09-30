@@ -210,27 +210,37 @@ export type StageReport = {
    * Stage ran none or one of them does not report its count.
    */
   iterations: number | null;
+  /** Expected ids with no entry in the report: those profilesets failed. */
+  missing: number[];
 };
 
 /**
  * Reads a Stage's json2 text (`null` when SimC wrote no file): the base actor's DPS and, for
  * each id in `expected`, its entry of `profilesets.results[]` matched by name. A missing
- * entry means that profileset failed. Throws `Json2FormatError`.
+ * entry means that profileset failed and its id lands in `missing`. Throws `Json2FormatError` when
+ * the base actor, or the whole `profilesets` block while some are expected, is absent.
  */
 export function readStageReport(text: string | null, expected: readonly number[]): StageReport {
   const { sim } = readJson2(text, stageJson2Schema);
   const baseline = baselineDps(sim).summary;
+  if (expected.length > 0 && !sim.profilesets) {
+    throw new Json2FormatError("the report has no profilesets block");
+  }
   const byName = new Map((sim.profilesets?.results ?? []).map((r) => [r.name, r]));
   const profilesets = new Map<number, DpsSummary>();
   let iterations: number | null = expected.length > 0 ? 0 : null;
+  const missing: number[] = [];
   for (const id of expected) {
     const r = byName.get(profilesetName(id));
-    if (!r) throw new Json2FormatError(`profileset "${id}" missing from the report`);
+    if (!r) {
+      missing.push(id);
+      continue;
+    }
     profilesets.set(id, { mean: r.mean, meanError: r.mean_error });
     iterations =
       iterations !== null && r.iterations !== undefined ? iterations + r.iterations : null;
   }
-  return { baseline, profilesets, iterations };
+  return { baseline, profilesets, iterations, missing };
 }
 
 /** The Combination SimC refused in an exit-80 stderr (`Profileset '<id>'`), if it names one. */

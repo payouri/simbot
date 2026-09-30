@@ -380,12 +380,35 @@ describe("an invalid profileset", () => {
     expect(calls).toHaveLength(1);
   });
 
-  test("a profileset missing from a successful report is SimC output that changed", async () => {
-    start((call) => ({
-      profilesets: Object.fromEntries(
-        call.names.slice(1).map((n) => [n, [99_000, 100] as [number, number]]),
-      ),
-    }));
+  test("a profileset missing from a successful report drops that Combination only", async () => {
+    let dropped = "";
+    start((call) => {
+      if (call.call === 1) dropped = call.names[0] as string;
+      return {
+        profilesets: Object.fromEntries(
+          call.names
+            .filter((n) => call.call !== 1 || n !== dropped)
+            .map((n) => [n, [99_000, 100] as [number, number]]),
+        ),
+      };
+    });
+    const live = await h.subscribe();
+    const draft = await topGear([...HEADS, ...NECKS]);
+    await h.queue(draft.id);
+    await h.app.idle();
+    live.close();
+    expect((await h.sim(draft.id)).status).toBe("succeeded");
+    expect(calls[0]?.stage).toBe(1);
+    expect(calls[1]?.stage).toBe(2);
+    expect(calls[1]?.names).not.toContain(dropped);
+    expect(rowsOf(draft.id).some((r) => String(r.combination_id) === dropped)).toBe(false);
+    expect((await ladderOf(draft.id)).stages[0]).toMatchObject({ invalid: 1 });
+    const done = live.events.find((e) => e.type === "sim.stage_finished" && e.stage === 1);
+    expect(done).toMatchObject({ invalid: 1 });
+  });
+
+  test("a report without the profilesets block is SimC output that changed", async () => {
+    start(() => ({ noProfilesets: true }));
     const draft = await topGear([...HEADS, ...NECKS]);
     await h.queue(draft.id);
     await h.app.idle();

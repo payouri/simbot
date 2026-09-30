@@ -355,6 +355,16 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
           throw err;
         }
 
+        // A Combination missing from an otherwise valid report failed: drop it, keep the Stage.
+        for (const id of report.missing) {
+          invalidNow++;
+          markInvalid(db, id, stage);
+          emitLog(
+            "warn",
+            `Combination ${id} is missing from Stage ${stage}'s report and was dropped.`,
+          );
+        }
+        const missingSet = new Set(report.missing);
         const entries: CullEntry[] = [
           {
             id: baseline.id,
@@ -362,10 +372,12 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
             mean: report.baseline.mean,
             error: report.baseline.meanError,
           },
-          ...survivors.map((r) => {
-            const dps = report.profilesets.get(r.id) as { mean: number; meanError: number };
-            return { id: r.id, isBaseline: false, mean: dps.mean, error: dps.meanError };
-          }),
+          ...survivors
+            .filter((r) => !missingSet.has(r.id))
+            .map((r) => {
+              const dps = report.profilesets.get(r.id) as { mean: number; meanError: number };
+              return { id: r.id, isBaseline: false, mean: dps.mean, error: dps.meanError };
+            }),
         ];
         const { kept, culled } = isFinal
           ? { kept: entries.map((e) => e.id), culled: [] as number[] }
