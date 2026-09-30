@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { SimcBuild } from "@simbot/shared";
 import {
@@ -32,12 +32,15 @@ export type MetaDeps = {
 };
 
 /** Reads a build's item-meta and item-icons, or null unless both are present and valid. */
-export async function readBuildMeta(
-  dataDir: string,
+export const readBuildMeta = (dataDir: string, tag: string) =>
+  readMetaDir(metaDir(dataDir, tag), tag);
+
+/** Reads item-meta and item-icons from any directory (a data dir's `meta/<tag>/` or the seed's). */
+export async function readMetaDir(
+  dir: string,
   tag: string,
 ): Promise<{ meta: ItemMeta; icons: ItemIcons } | null> {
   try {
-    const dir = metaDir(dataDir, tag);
     const meta = itemMetaSchema.safeParse(
       JSON.parse(await readFile(join(dir, ITEM_META_FILE), "utf8")),
     );
@@ -49,6 +52,26 @@ export async function readBuildMeta(
     return { meta: meta.data, icons: icons.data };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Installs item data that is already built (the Seed SimC Build's baked meta) as `meta/<tag>/`,
+ * through `.partial/`. Throws unless `srcDir` holds a valid pair for `tag`.
+ */
+export async function installMetaFrom(dataDir: string, tag: string, srcDir: string) {
+  if (!(await readMetaDir(srcDir, tag)))
+    throw new Error(`no valid item data for ${tag} in ${srcDir}`);
+  const partial = join(metaRoot(dataDir), ".partial", tag);
+  await rm(partial, { recursive: true, force: true });
+  await mkdir(join(metaRoot(dataDir), ".partial"), { recursive: true });
+  try {
+    await cp(srcDir, partial, { recursive: true });
+    await rm(metaDir(dataDir, tag), { recursive: true, force: true });
+    await rename(partial, metaDir(dataDir, tag));
+  } catch (err) {
+    await rm(partial, { recursive: true, force: true });
+    throw err;
   }
 }
 

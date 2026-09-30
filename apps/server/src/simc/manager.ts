@@ -44,13 +44,15 @@ import {
   simcRoot,
   stageBuild,
 } from "./install";
-import { ensureBuildMeta, metaDir, metaRoot, readBuildMeta } from "./meta";
+import { ensureBuildMeta, installMetaFrom, metaDir, metaRoot, readBuildMeta } from "./meta";
 import { createRegistryClient, type RegistryDeps } from "./registry";
 import { runUpdateCheck } from "./updates";
 
 const CURRENT_KEY = "simc.current_tag";
 const UPDATE_KEY = "simc.update_check";
 const KEEP_KEY = "simc.keep";
+/** Set once the first-start update to the latest nightly has been queued; never queued again. */
+const FIRST_UPDATE_KEY = "simc.first_update_queued";
 
 /** A check younger than this is served from the store without touching the network. */
 export const CHECK_MAX_AGE_MS = 60 * 60 * 1000;
@@ -64,6 +66,8 @@ export type SimcManagerDeps = RegistryDeps & {
   seedTag?: () => string | null;
   /** Directory of the Seed SimC Build shipped in the app, laid out like an installed build. */
   seedDir?: () => string | null;
+  /** Directory holding the Seed SimC Build's baked item-meta and item-icons, if it has them. */
+  seedMetaDir?: () => string | null;
   /** argv that launches a SimC Build directory for the Check Sim. Tests pass the fake `simc`. */
   launch?: Launch;
   now?: () => Date;
@@ -78,6 +82,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
     log = console.error,
     seedTag = () => null,
     seedDir = () => null,
+    seedMetaDir = () => null,
   } = deps;
   const now = deps.now ?? (() => new Date());
   const registry = createRegistryClient(deps);
@@ -93,6 +98,10 @@ export function createSimcManager(deps: SimcManagerDeps) {
       "INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
       [key, value],
     );
+
+  const getSetting = (key: string) =>
+    db.query<{ value: string }, [string]>("SELECT value FROM settings WHERE key = ?").get(key)
+      ?.value ?? null;
 
   const setCurrentTag = (tag: string) => putSetting(CURRENT_KEY, tag);
 
@@ -230,6 +239,19 @@ export function createSimcManager(deps: SimcManagerDeps) {
       error: job.error,
     });
 
+  /** Installs the Seed SimC Build's baked item data when it has some. Never throws. */
+  const useSeedMeta = async (tag: string) => {
+    const src = seedMetaDir();
+    if (!src || tag !== seedTag()) return;
+    try {
+      await installMetaFrom(dataDir, tag, src);
+    } catch (err) {
+      log(
+        `simc: baked item data unusable, will fetch it: ${err instanceof Error ? err.message : err}`,
+      );
+    }
+  };
+
   /** Which tag a target means right now, and how to fill a staging directory with it. */
   const resolveTarget = async (
     target: SimcJobTarget,
@@ -300,9 +322,14 @@ export function createSimcManager(deps: SimcManagerDeps) {
       });
 
       enter("meta");
-      const hadMeta = (await readBuildMeta(dataDir, tag)) !== null;
+      let hadMeta = (await readBuildMeta(dataDir, tag)) !== null;
+      if (!hadMeta && job.target.kind === "seed") {
+        await useSeedMeta(tag);
+        hadMeta = (await readBuildMeta(dataDir, tag)) !== null;
+        metaBuiltHere = hadMeta;
+      }
       await ensureBuildMeta({ dataDir, build, fetch: deps.fetch, sleep: deps.sleep });
-      metaBuiltHere = !hadMeta;
+      metaBuiltHere ||= !hadMeta;
 
       enter("commit");
       if (staged) {
@@ -341,6 +368,45 @@ export function createSimcManager(deps: SimcManagerDeps) {
     events.emit({ type: "simc.status_changed" });
   };
 
+  /**
+   * Queues a SimC Update Job. Refused while another is queued or running, when an installed
+   * target isn't installed, and when a seed target has no Seed SimC Build.
+   */
+  const queueJob = async (
+    target: SimcJobTarget,
+  ): Promise<
+    { ok: true; job: SimcJob } | { ok: false; reason: "busy" | "not_installed" | "no_seed" }
+  > => {
+    if (target.kind === "installed" && !(await readInstalledBuild(dataDir, target.tag))) {
+      return { ok: false, reason: "not_installed" };
+    }
+    if (target.kind === "seed" && !(seedTag() && seedDir())) {
+      return { ok: false, reason: "no_seed" };
+    }
+    const queued = queueSimcJob(db, target);
+    if (!queued.ok) return queued;
+    emitJob(queued.job);
+    events.emit({ type: "simc.status_changed" });
+    events.emit({ type: "queue.changed" });
+    return queued;
+  };
+
+  /** Makes the Seed SimC Build the installed build, from the app's own copy: no network. */
+  const installSeed = async (): Promise<SimcBuild> => {
+    const tag = seedTag();
+    const dir = seedDir();
+    if (!tag || !dir) throw new Error("this app ships no Seed SimC Build");
+    const build = await stageBuild({ dataDir, tag, populate: populateFromSeed(dir) });
+    try {
+      await commitBuild(dataDir, tag);
+    } catch (err) {
+      await discardPartial(dataDir, tag);
+      throw err;
+    }
+    await useSeedMeta(tag);
+    return build;
+  };
+
   return {
     /** The Current SimC Build, or null when none is installed. */
     current,
@@ -358,28 +424,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
 
     runJob,
 
-    /**
-     * Queues a SimC Update Job. Refused while another is queued or running, when an installed
-     * target isn't installed, and when a seed target has no Seed SimC Build.
-     */
-    async queueJob(
-      target: SimcJobTarget,
-    ): Promise<
-      { ok: true; job: SimcJob } | { ok: false; reason: "busy" | "not_installed" | "no_seed" }
-    > {
-      if (target.kind === "installed" && !(await readInstalledBuild(dataDir, target.tag))) {
-        return { ok: false, reason: "not_installed" };
-      }
-      if (target.kind === "seed" && !(seedTag() && seedDir())) {
-        return { ok: false, reason: "no_seed" };
-      }
-      const queued = queueSimcJob(db, target);
-      if (!queued.ok) return queued;
-      emitJob(queued.job);
-      events.emit({ type: "simc.status_changed" });
-      events.emit({ type: "queue.changed" });
-      return queued;
-    },
+    queueJob,
 
     /** Sets how many builds to keep (at least 1) and evicts down to it right away. */
     async setKeep(keep: number): Promise<void> {
@@ -423,10 +468,30 @@ export function createSimcManager(deps: SimcManagerDeps) {
         install = { state: "installing", error: null };
         events.emit({ type: "simc.status_changed" });
         try {
-          const [latest] = await registry.listNightlyTags();
-          if (!latest) throw new Error("no SimC nightly tags found on Docker Hub");
-          current = await installBuild({ dataDir, tag: latest, registry });
+          let seeded = false;
+          if (seedTag() && seedDir()) {
+            try {
+              current = await installSeed();
+              seeded = true;
+            } catch (err) {
+              log(
+                `simc: could not install the Seed SimC Build: ${err instanceof Error ? err.message : err}`,
+              );
+            }
+          }
+          if (!current) {
+            const [latest] = await registry.listNightlyTags();
+            if (!latest) throw new Error("no SimC nightly tags found on Docker Hub");
+            current = await installBuild({ dataDir, tag: latest, registry });
+          }
           setCurrentTag(current.tag);
+          // Exactly one update to the latest nightly, ever: the flag outlives a failed Job, so
+          // later starts stay quiet and the failure is shown for the user to retry.
+          const firstStart = seeded && !getSetting(FIRST_UPDATE_KEY);
+          if (firstStart) {
+            putSetting(FIRST_UPDATE_KEY, "1");
+            await queueJob({ kind: "nightly" });
+          }
           install = { state: "idle", error: null };
           events.emit({ type: "simc.status_changed" });
         } catch (err) {

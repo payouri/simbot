@@ -1,0 +1,15 @@
+# One service, one volume, no Docker socket. Files in /data are owned by SIMBOT_UID:SIMBOT_GID
+# (default 1000:1000); set them in the environment or a .env file to match your host user.
+services:
+  simbot:
+    image: yourikane/simbot:${SIMBOT_VERSION:-latest}
+    build: .
+    user: "${SIMBOT_UID:-1000}:${SIMBOT_GID:-1000}"
+    ports:
+      - "${SIMBOT_PORT:-3000}:3000"
+    volumes:
+      - data:/data
+    restart: unless-stopped
+
+volumes:
+  data:

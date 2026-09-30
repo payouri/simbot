@@ -21,6 +21,8 @@ export type AppDeps = {
   seedTag?: () => string | null;
   /** Directory of the Seed SimC Build shipped in the app, laid out like an installed build. */
   seedDir?: () => string | null;
+  /** Directory holding the Seed SimC Build's baked item-meta and item-icons. */
+  seedMetaDir?: () => string | null;
   now?: () => Date;
   /** Dev flag: SimC's non-progress stdout also goes out as `sim.log` at `debug`. */
   debugLogs?: boolean;
@@ -46,6 +48,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     events: bus,
     seedTag: deps.seedTag,
     seedDir: deps.seedDir,
+    seedMetaDir: deps.seedMetaDir,
     launch: deps.launch,
     now: deps.now,
   });

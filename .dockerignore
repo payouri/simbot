@@ -1,0 +1,10 @@
+.git
+.claude
+.impeccable
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+data
+docs
+Dockerfile
+compose.yaml
