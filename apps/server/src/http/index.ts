@@ -57,7 +57,10 @@ export type HttpDeps = {
   /** Combination generation, validation and the time estimate. */
   combinations: CombinationService;
   /** The Current SimC Build, or null with none: its game data versions flag PTR-client Imports. */
-  currentBuild: () => Promise<Pick<SimcBuild, "gameDataVersion" | "ptrGameDataVersion"> | null>;
+  currentBuild: () => Promise<Pick<
+    SimcBuild,
+    "gameDataVersion" | "ptrGameDataVersion" | "ptrCheckError"
+  > | null>;
   simc: {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */

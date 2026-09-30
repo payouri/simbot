@@ -48,6 +48,8 @@ export async function runCheckSim(opts: {
   /** The latest Import's Addon String, if there is one. */
   addonString: string | null;
   launch?: Launch;
+  /** `ptr` runs the PTR pass (`ptr=1`). Defaults to Live. */
+  gameData?: "live" | "ptr";
 }): Promise<{
   dps: DpsSummary;
   source: "import" | "profile";
@@ -63,7 +65,7 @@ export async function runCheckSim(opts: {
   try {
     const inputPath = join(work, "check.simc");
     const json2Path = join(work, "check.json");
-    await writeFile(inputPath, buildCheckSimInput(profile));
+    await writeFile(inputPath, buildCheckSimInput(profile, opts.gameData));
     let proc: Bun.Subprocess<"ignore", "pipe", "pipe">;
     const started = performance.now();
     try {

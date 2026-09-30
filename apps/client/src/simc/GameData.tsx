@@ -46,7 +46,9 @@ export function GameDataControl({
     ? "No SimC Build is installed"
     : ptrAvailable(build)
       ? null
-      : `No PTR data in SimC Build ${build.tag}`;
+      : build.ptrCheckError
+        ? `PTR failed its Check Sim on ${build.tag}`
+        : `No PTR data in SimC Build ${build.tag}`;
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0 text-[11.5px] text-faint">
       <legend className="mb-1.5 p-0">Game Data</legend>

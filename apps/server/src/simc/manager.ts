@@ -3,6 +3,7 @@ import { mkdir, rm } from "node:fs/promises";
 import { join } from "node:path";
 import {
   DEFAULT_KEEP_BUILDS,
+  ptrAvailable,
   type SimcBuild,
   type SimcInstallState,
   type SimcJob,
@@ -21,9 +22,11 @@ import {
   hasCheckSim,
   latestImport,
   latestOpenSimcJob,
+  ptrCheckErrors,
   queueSimcJob,
   requeueInterruptedSimcJobs,
   saveCheckSim,
+  savePtrCheck,
   setSimcJobStep,
   setSimcJobTag,
   startSimcJob,
@@ -131,16 +134,23 @@ export function createSimcManager(deps: SimcManagerDeps) {
     return build && stored?.currentTag === build.tag ? stored : null;
   };
 
+  /** A build with why its PTR Check Sim pass failed, when it did. */
+  const withPtrCheck = (b: SimcBuild, failed = ptrCheckErrors(db)): SimcBuild => ({
+    ...b,
+    ptrCheckError: failed.get(b.tag) ?? null,
+  });
+
   const current = async () => {
     const tag = currentTag();
-    return tag ? await readInstalledBuild(dataDir, tag) : null;
+    const build = tag ? await readInstalledBuild(dataDir, tag) : null;
+    return build && withPtrCheck(build);
   };
 
   const ptrEnabled = () => getSetting(PTR_ENABLED_KEY) === "1";
 
-  /** A build as the status shows it: without its PTR version while PTR Sims are off. */
+  /** A build as the status shows it: without its PTR version or failure while PTR Sims are off. */
   const shown = (b: SimcBuild, withPtr: boolean): SimcBuild =>
-    withPtr ? b : { ...b, ptrGameDataVersion: null };
+    withPtr ? b : { ...b, ptrGameDataVersion: null, ptrCheckError: null };
 
   /**
    * The offered target's PTR data change against the current build, when both PTR versions are
@@ -168,6 +178,8 @@ export function createSimcManager(deps: SimcManagerDeps) {
     update: SimcUpdateStatus | null,
   ): Promise<SimcStatusResponse> => {
     const withPtr = ptrEnabled();
+    const failed = ptrCheckErrors(db);
+    const installed = await listInstalledBuilds(dataDir);
     return {
       current: build && shown(build, withPtr),
       install,
@@ -175,7 +187,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
         ...update,
         ptrChange: withPtr ? await ptrChangeOf(build, update) : null,
       },
-      installed: (await listInstalledBuilds(dataDir)).map((b) => shown(b, withPtr)),
+      installed: installed.map((b) => shown(withPtrCheck(b, failed), withPtr)),
       keep: keepCount(),
       ptrEnabled: withPtr,
       job: latestOpenSimcJob(db),
@@ -373,12 +385,32 @@ export function createSimcManager(deps: SimcManagerDeps) {
           return null;
         });
       }
+      const checkDir = staged ? partialDir(dataDir, tag) : buildDir(dataDir, tag);
       const { dps, durationMs, iterations } = await runCheckSim({
-        dir: staged ? partialDir(dataDir, tag) : buildDir(dataDir, tag),
+        dir: checkDir,
         tmpRoot,
         addonString: imp?.text ?? null,
         launch: deps.launch,
       });
+      // The PTR pass runs only with PTR Sims on and PTR data that differs from Live. However it
+      // ends it never rejects the build: a failure is recorded and only PTR is lost on it.
+      let ptrPass: { error: string | null } | null = null;
+      if (ptrEnabled() && ptrAvailable(build)) {
+        ptrPass = await runCheckSim({
+          dir: checkDir,
+          tmpRoot,
+          addonString: imp?.text ?? null,
+          launch: deps.launch,
+          gameData: "ptr",
+        }).then(
+          () => ({ error: null }),
+          (err) => {
+            const error = err instanceof Error ? err.message : String(err);
+            log(`simc: PTR check sim of ${tag} failed: ${error}`);
+            return { error: error || "PTR Check Sim failed" };
+          },
+        );
+      }
 
       enter("meta");
       let hadMeta = (await readBuildMeta(dataDir, tag)) !== null;
@@ -399,6 +431,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
       const before = currentTag();
       db.transaction(() => {
         setCurrentTag(build.tag);
+        if (ptrPass) savePtrCheck(db, build.tag, ptrPass.error);
         if (imp) {
           if (baseline && before && before !== build.tag) {
             saveCheckSim(db, {

@@ -21,15 +21,25 @@ export type SimcBuildInfo = z.infer<typeof simcBuildInfoSchema>;
 /** An installed SimC Build: its nightly tag plus what it reports about itself. */
 export const simcBuildSchema = simcBuildInfoSchema.extend({
   tag: z.string().min(1),
+  /**
+   * Why the PTR pass of this build's Check Sim failed, e.g. a non-zero exit; null when it passed,
+   * never ran, or while PTR Sims are off. Recorded against the tag, apart from the Live Check
+   * Sim, and never a reason to reject the build: only PTR is unavailable on it.
+   */
+  ptrCheckError: z.string().min(1).nullable().optional(),
 });
 export type SimcBuild = z.infer<typeof simcBuildSchema>;
 
 /**
- * Whether a build has a PTR to sim on: its PTR game data differs from Live. (The Check Sim
- * pass adds "and it did not fail" later.)
+ * Whether a build has a PTR to sim on: its PTR game data differs from Live and its PTR Check Sim
+ * pass did not fail.
  */
-export const ptrAvailable = (b: Pick<SimcBuildInfo, "gameDataVersion" | "ptrGameDataVersion">) =>
-  b.ptrGameDataVersion !== null && b.ptrGameDataVersion !== b.gameDataVersion;
+export const ptrAvailable = (
+  b: Pick<SimcBuildInfo, "gameDataVersion" | "ptrGameDataVersion"> & {
+    ptrCheckError?: string | null;
+  },
+) =>
+  b.ptrGameDataVersion !== null && b.ptrGameDataVersion !== b.gameDataVersion && !b.ptrCheckError;
 
 /** Progress of the boot-time fetch of the latest nightly. */
 export const simcInstallStateSchema = z.object({

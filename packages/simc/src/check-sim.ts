@@ -12,7 +12,7 @@ export const CHECK_SIM_TARGET_ERROR = 1;
  * short fixed fight, the 1% target error, and one profileset override so the build's profileset
  * path is exercised too.
  */
-export function buildCheckSimInput(profile: string): string {
+export function buildCheckSimInput(profile: string, gameData: "live" | "ptr" = "live"): string {
   const head = profile.endsWith("\n") ? profile : `${profile}\n`;
   return `${head}${[
     "",
@@ -21,6 +21,8 @@ export function buildCheckSimInput(profile: string): string {
     "max_time=60",
     "desired_targets=1",
     `target_error=${CHECK_SIM_TARGET_ERROR}`,
+    // Live is SimC's default and is never spelled out; only the PTR pass selects the PTR data.
+    ...(gameData === "ptr" ? ["ptr=1"] : []),
     `profileset."${CHECK_SIM_PROFILESET}"+=gear_haste_rating=1`,
   ].join("\n")}\n`;
 }

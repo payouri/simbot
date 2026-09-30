@@ -27,7 +27,21 @@ const FIELDS = [
 
 /** The PTR line of a build: its version and what it is for, or why there is none. */
 const ptrLabel = (b: SimcBuild) =>
-  ptrAvailable(b) ? (b.ptrGameDataVersion ?? "") : "No PTR available";
+  ptrAvailable(b)
+    ? (b.ptrGameDataVersion ?? "")
+    : b.ptrCheckError
+      ? "PTR failed its Check Sim"
+      : "No PTR available";
+
+/** Why the PTR pass of a build's Check Sim failed, shown where the build's PTR line is. */
+function PtrCheckFailure({ build }: { build: SimcBuild }) {
+  if (!build.ptrCheckError) return null;
+  return (
+    <span role="note" className="block text-[12px] text-loss">
+      PTR failed its Check Sim on {build.tag}: {build.ptrCheckError}
+    </span>
+  );
+}
 
 const SUMMARY: Record<SimcUpdateStatus["state"], (u: SimcUpdateStatus) => string> = {
   up_to_date: () => "SimC is up to date.",
@@ -199,6 +213,7 @@ function Installed({ status }: { status: SimcStatusResponse }) {
                     Live {b.gameDataVersion} · PTR {ptrLabel(b)}
                   </span>
                 )}
+                {status.ptrEnabled && <PtrCheckFailure build={b} />}
               </span>
               {isCurrent ? (
                 <span className="shrink-0 text-[12.5px] text-muted">Current</span>
@@ -391,6 +406,17 @@ export function SimcPage() {
           </p>
           <p className="mt-2 text-[12.5px] text-muted">
             It is retried the next time the app starts.
+          </p>
+        </section>
+      )}
+      {status?.ptrEnabled && status.current?.ptrCheckError && (
+        <section role="status" className="rounded-xl border border-loss/35 bg-loss-wash p-5">
+          <h2 className="text-[14px] font-semibold">PTR unavailable</h2>
+          <p className="mt-3">
+            PTR failed its Check Sim on {status.current.tag}: {status.current.ptrCheckError}
+          </p>
+          <p className="mt-2 text-[12.5px] text-muted">
+            Live is unaffected. PTR Sims are disabled on this SimC Build.
           </p>
         </section>
       )}

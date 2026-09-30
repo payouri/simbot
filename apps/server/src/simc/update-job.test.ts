@@ -14,6 +14,7 @@ import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
 import {
   type AppEvent,
+  ptrAvailable,
   type QueueEntry,
   queueResponseSchema,
   type SimcJob,
@@ -193,6 +194,85 @@ describe("applying a nightly", () => {
     const ran = JSON.parse(await Bun.file(report).text());
     expect(ran.input).toContain("mage=x");
     expect((await status()).checkSim).toBeNull();
+  });
+});
+
+describe("the PTR pass of the Check Sim", () => {
+  const setPtr = (ptrEnabled: boolean) => call("PATCH", "/api/simc/settings", { ptrEnabled });
+
+  /** Boots with the Check Sim inputs recorded; the PTR pass (`ptr=1`) replays `ptrScenario`. */
+  function bootPtr(ptrScenario: string) {
+    const inputs: string[] = [];
+    const launch = (dir: string, args: readonly string[]) => {
+      const input = readFileSync(args[0] as string, "utf8");
+      inputs.push(input);
+      return fakeLaunch(() => (input.includes("ptr=1") ? ptrScenario : scenario))(dir, args);
+    };
+    bootWithOld(undefined, { launch });
+    return inputs;
+  }
+
+  test("setting on: a second pass runs with ptr=1, and a passing one leaves PTR available", async () => {
+    const inputs = bootPtr(checkScenario({ mean: 90_000 }));
+    await setPtr(true);
+    await importText();
+    const body = await applyJob({ kind: "nightly" });
+
+    expect(inputs).toHaveLength(3); // the baseline on the old build, Live, then PTR
+    expect(inputs.filter((i) => i.includes("ptr=1"))).toHaveLength(1);
+    expect(inputs.at(-1)).toContain("ptr=1");
+    expect(body.current?.tag).toBe(LATEST_NIGHTLY);
+    expect(body.current?.ptrCheckError).toBeNull();
+    expect(ptrAvailable(body.current as NonNullable<typeof body.current>)).toBe(true);
+  });
+
+  test.each([
+    ["exits non-zero", { exit: 1 }],
+    ["prints output that is not understood", { profileset: false }],
+  ])(
+    "a PTR pass that %s never rejects the build: it is recorded and PTR is unavailable",
+    async (_, opts) => {
+      const inputs = bootPtr(checkScenario({ mean: 50_000, ...opts }));
+      await setPtr(true);
+      await importText();
+      const body = await applyJob({ kind: "nightly" });
+
+      expect(inputs.some((i) => i.includes("ptr=1"))).toBe(true);
+      expect(body.job).toBeNull();
+      expect(body.current?.tag).toBe(LATEST_NIGHTLY);
+      expect(body.current?.ptrCheckError).toBeTruthy();
+      expect(body.installed.find((b) => b.tag === LATEST_NIGHTLY)?.ptrCheckError).toBeTruthy();
+      expect(ptrAvailable(body.current as NonNullable<typeof body.current>)).toBe(false);
+      // The Live comparison is the Live pass alone: the failed PTR pass left no mark on it.
+      expect(body.checkSim).toMatchObject({ tag: LATEST_NIGHTLY, dps: { mean: 100_000 } });
+      expect(body.checkSim?.previous?.tag).toBe(OLD);
+      // The failure lives in its own table, keyed by the tag.
+      const rows = app.db
+        .query<{ build_tag: string }, []>("SELECT build_tag FROM ptr_check_results")
+        .all();
+      expect(rows.map((r) => r.build_tag)).toEqual([LATEST_NIGHTLY]);
+    },
+  );
+
+  test("the failure is only shown while PTR Sims are on", async () => {
+    bootPtr(checkScenario({ exit: 1 }));
+    await setPtr(true);
+    await applyJob({ kind: "nightly" });
+    expect((await status()).current?.ptrCheckError).toBeTruthy();
+    await setPtr(false);
+    expect((await status()).current?.ptrCheckError).toBeNull();
+    expect((await status()).installed.every((b) => b.ptrCheckError === null)).toBe(true);
+  });
+
+  test("setting off: no PTR pass runs and nothing is recorded", async () => {
+    const inputs = bootPtr(checkScenario({ exit: 1 }));
+    await importText();
+    const body = await applyJob({ kind: "nightly" });
+
+    expect(inputs.length).toBeGreaterThan(0);
+    expect(inputs.some((i) => i.includes("ptr=1"))).toBe(false);
+    expect(body.current?.tag).toBe(LATEST_NIGHTLY);
+    expect(app.db.query("SELECT 1 FROM ptr_check_results").all()).toEqual([]);
   });
 });
 

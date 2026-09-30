@@ -255,3 +255,21 @@ export function getCheckSim(db: Db, tag: string): SimcCheckSim | null {
       : null,
   };
 }
+
+/** Records the PTR pass of `tag`'s Check Sim: `error` null when it passed, else why it failed. */
+export function savePtrCheck(db: Db, tag: string, error: string | null) {
+  db.run(
+    "INSERT OR REPLACE INTO ptr_check_results (build_tag, error, created_at) VALUES (?, ?, ?)",
+    [tag, error, new Date().toISOString()],
+  );
+}
+
+/** Why the PTR pass failed for each build tag that has a failed one. */
+export function ptrCheckErrors(db: Db): Map<string, string> {
+  const rows = db
+    .query<{ build_tag: string; error: string }, []>(
+      "SELECT build_tag, error FROM ptr_check_results WHERE error IS NOT NULL",
+    )
+    .all();
+  return new Map(rows.map((r) => [r.build_tag, r.error]));
+}

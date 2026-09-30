@@ -200,4 +200,19 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE imports ADD COLUMN ptr_client INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    id: 13,
+    name: "ptr_check_results",
+    sql: `
+      -- The PTR pass of a SimC Build's Check Sim, one row per build tag, apart from
+      -- check_sim_results so the Live comparison against the previous build is untouched.
+      -- error is null when the pass succeeded; otherwise why it failed. A failed pass never
+      -- rejects the build: it only makes PTR unavailable on it.
+      CREATE TABLE ptr_check_results (
+        build_tag  TEXT PRIMARY KEY,
+        error      TEXT,
+        created_at TEXT NOT NULL
+      ) STRICT;
+    `,
+  },
 ];

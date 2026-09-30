@@ -44,7 +44,7 @@ _Avoid_: cancel (ambiguous between Stop and Discard)
 A new commit on SimC's active branch that is newer than the SimC the app runs. Detected and surfaced, applied only when the user chooses; applying it installs the newest available **SimC Build**, which may lag the commit by up to a day. An update is only *installable* once such a newer SimC Build exists; until then the app only reports how many commits it is behind.
 
 **Check Sim**:
-A short sim of the user's latest Import (or, with none, a sample profile shipped with the build) run on a SimC Build before it becomes the Current SimC Build; if it fails or its output isn't understood, the build is rejected and the Current SimC Build stays as it was.
+A short sim of the user's latest Import (or, with none, a sample profile shipped with the build) run on a SimC Build before it becomes the Current SimC Build; if it fails or its output isn't understood, the build is rejected and the Current SimC Build stays as it was. With PTR Sims on, a second pass runs with `ptr=1`; a failing PTR pass never rejects the build, it only makes PTR unavailable on it.
 
 **SimC Build**:
 One installable, self-contained copy of SimC, identified by its nightly tag (version, date, commit). The app may hold several; exactly one is the **Current SimC Build** that sims run on.
