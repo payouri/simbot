@@ -57,6 +57,7 @@ export {
   toSimProgress,
 } from "./progress";
 export {
+  ANALYZE_ERROR_INTERVAL,
   buildInput,
   classifyExit,
   PRECISION_TARGET_ERROR,

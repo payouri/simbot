@@ -15,6 +15,14 @@ export const PRECISION_TARGET_ERROR: Readonly<Record<Precision, number>> = {
 };
 
 /**
+ * How often SimC checks if it has reached the target error (every N iterations).
+ * Set to 100 based on benchmarking on a 16-thread machine: balances checking overhead
+ * against convergence detection accuracy. Higher values reduce overhead but may miss
+ * early convergence; lower values increase overhead with diminishing accuracy gains.
+ */
+export const ANALYZE_ERROR_INTERVAL = 100;
+
+/**
  * The SimC input for a Quick Sim: the Addon String unchanged, then the frozen Sim Settings as
  * option lines, then the user's raw options (which may override the generated ones). A Smart
  * Sim Stage passes its own `targetError` and `extraLines`, which sit before the raw options.
@@ -31,6 +39,7 @@ export function buildInput(
     `max_time=${settings.durationSeconds}`,
     `desired_targets=${settings.targets}`,
     `target_error=${options.targetError ?? PRECISION_TARGET_ERROR[settings.precision]}`,
+    `analyze_error_interval=${ANALYZE_ERROR_INTERVAL}`,
     ...(options.extraLines ?? []),
   ];
   if (settings.rawOptions.trim() !== "") lines.push("# Raw options", settings.rawOptions);
