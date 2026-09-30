@@ -94,8 +94,15 @@ function serveClient(clientDir: string, pathname: string): Response {
 }
 
 /**
+ * How often the SSE stream sends a comment while no event goes out. Bun closes a connection
+ * that has been idle for 10 s (`Bun.serve`'s default `idleTimeout`), which cut the stream and
+ * made the browser log ERR_INCOMPLETE_CHUNKED_ENCODING and reconnect every ten seconds.
+ */
+const HEARTBEAT_MS = 5_000;
+
+/**
  * The global SSE stream: a `snapshot` on connect, then every client-facing EventBus event,
- * framed as `event: <type>` + JSON `data`.
+ * framed as `event: <type>` + JSON `data`, with a comment every `HEARTBEAT_MS` to keep it open.
  */
 function eventStream(
   events: EventBus,
@@ -104,13 +111,18 @@ function eventStream(
 ): Response {
   const encoder = new TextEncoder();
   let unsubscribe = () => {};
+  let heartbeat: ReturnType<typeof setInterval> | undefined;
+  const stop = () => {
+    clearInterval(heartbeat);
+    unsubscribe();
+  };
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       const send = (chunk: string) => {
         try {
           controller.enqueue(encoder.encode(chunk));
         } catch {
-          unsubscribe();
+          stop();
         }
       };
       const sendEvent = (event: unknown) => {
@@ -124,8 +136,9 @@ function eventStream(
       // Synchronous from snapshot to subscribe, so no event falls between them.
       sendEvent(snapshot());
       unsubscribe = events.on(sendEvent);
+      heartbeat = setInterval(() => send(": heartbeat\n\n"), HEARTBEAT_MS);
       signal.addEventListener("abort", () => {
-        unsubscribe();
+        stop();
         try {
           controller.close();
         } catch {
@@ -133,7 +146,7 @@ function eventStream(
         }
       });
     },
-    cancel: () => unsubscribe(),
+    cancel: stop,
   });
   return new Response(stream, {
     headers: {

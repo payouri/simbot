@@ -79,7 +79,8 @@ function CharacterRow({
         <div>
           <div className="text-[14px]">{label(character)}</div>
           <div className="num text-[12px] text-muted">
-            {character.importCount} Imports, {character.simCount} Sims
+            {character.importCount} {character.importCount === 1 ? "Import" : "Imports"},{" "}
+            {character.simCount} {character.simCount === 1 ? "Sim" : "Sims"}
           </div>
         </div>
         <button

@@ -71,7 +71,7 @@ export function HistoryPage() {
     return date.toLocaleString("en-US", {
       month: "short",
       day: "numeric",
-      year: "2-digit",
+      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -107,7 +107,7 @@ export function HistoryPage() {
         </label>
       </div>
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
         <button
           type="button"
           onClick={() => setSelectedStatus("all")}
@@ -169,7 +169,7 @@ export function HistoryPage() {
                     {STATUS_LABEL[sim.status]}
                   </td>
                   <td className="px-3 py-3 text-muted">{sim.simcTag || "—"}</td>
-                  <td className="px-3 py-3 text-muted">
+                  <td className="whitespace-nowrap px-3 py-3 text-muted">
                     {formatDate(sim.finishedAt || sim.createdAt)}
                   </td>
                   <td className="px-3 py-3">

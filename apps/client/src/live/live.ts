@@ -78,12 +78,16 @@ export function useRunningSim(simId?: number): RunningSim | null {
 
 const EVENT_TYPES = appEventSchema.options.map((o) => o.shape.type.value);
 
-/** Holds the one `GET /api/events` connection for the app and keeps the caches in step with it. */
+/**
+ * Holds the one `GET /api/events` connection for the app and keeps the caches in step with it.
+ * The connection closes when the page is hidden into the back/forward cache and reopens (with a
+ * fresh snapshot) when it comes back: a cached page's open stream would otherwise hold one of
+ * the browser's six connections to the server, and a few full-page navigations stall the next.
+ */
 export function LiveConnection() {
   const client = useQueryClient();
   useEffect(() => {
     if (typeof EventSource === "undefined") return;
-    const source = new EventSource("/api/events");
     const onMessage = (message: MessageEvent<string>) => {
       let parsed: ReturnType<typeof appEventSchema.safeParse>;
       try {
@@ -115,10 +119,27 @@ export function LiveConnection() {
           break;
       }
     };
-    for (const type of EVENT_TYPES) source.addEventListener(type, onMessage as EventListener);
-    return () => {
-      source.close();
+    let source: EventSource | null = null;
+    const open = () => {
+      source?.close();
+      source = new EventSource("/api/events");
+      for (const type of EVENT_TYPES) source.addEventListener(type, onMessage as EventListener);
+    };
+    const close = () => {
+      source?.close();
+      source = null;
       setRunning(null);
+    };
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) open();
+    };
+    open();
+    window.addEventListener("pagehide", close);
+    window.addEventListener("pageshow", onPageShow);
+    return () => {
+      window.removeEventListener("pagehide", close);
+      window.removeEventListener("pageshow", onPageShow);
+      close();
     };
   }, [client]);
   return null;

@@ -116,27 +116,30 @@ function Results({ sim, data }: { sim: Sim; data: SimResultsResponse }) {
     );
   }
   return (
-    <Group
-      orientation="horizontal"
-      className="h-[calc(100dvh-88px)] min-h-[520px]"
-      defaultLayout={layout.defaultLayout}
-      onLayoutChanged={layout.onLayoutChanged}
-    >
-      <Panel id="doll" defaultSize="58" minSize={560} className="overflow-y-auto">
-        <div className="flex flex-col gap-6 pr-4 pb-16">
-          {header}
-          {doll}
-          {stages}
-          <SimcLine tag={data.simcTag} />
-        </div>
-      </Panel>
-      <Separator className="group relative w-[9px] shrink-0 cursor-col-resize outline-none">
-        <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line transition-colors duration-150 group-hover:bg-action group-focus-visible:bg-action group-data-[separator=active]:bg-action" />
-      </Separator>
-      <Panel id="ranking" defaultSize="42" minSize={420} className="flex min-h-0 flex-col">
-        {ranking}
-      </Panel>
-    </Group>
+    // The Group sets its own inline `height: 100%`, which beats a height class on it: the height
+    // comes from this wrapper, or the ranking panel grows to its content and nothing is virtual.
+    <div className="h-[calc(100dvh-88px)] min-h-[520px]">
+      <Group
+        orientation="horizontal"
+        defaultLayout={layout.defaultLayout}
+        onLayoutChanged={layout.onLayoutChanged}
+      >
+        <Panel id="doll" defaultSize="58" minSize={560} className="overflow-y-auto">
+          <div className="flex flex-col gap-6 pr-4 pb-16">
+            {header}
+            {doll}
+            {stages}
+            <SimcLine tag={data.simcTag} />
+          </div>
+        </Panel>
+        <Separator className="group relative w-[9px] shrink-0 cursor-col-resize outline-none">
+          <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-line transition-colors duration-150 group-hover:bg-action group-focus-visible:bg-action group-data-[separator=active]:bg-action" />
+        </Separator>
+        <Panel id="ranking" defaultSize="42" minSize={420} className="flex min-h-0 flex-col">
+          {ranking}
+        </Panel>
+      </Group>
+    </div>
   );
 }
 
@@ -488,7 +491,10 @@ function Ranking({
     return () => window.removeEventListener("keydown", onKey);
   }, [selected, rows.length, onSelect, virtual]);
 
-  const zeroAt = `${((0 - min) / (max - min || 1)) * 100}%`;
+  const zeroFraction = (0 - min) / (max - min || 1);
+  const zeroAt = `${zeroFraction * 100}%`;
+  // The end labels own the ends: a "0" this close to one would print on top of it.
+  const zeroClear = zeroFraction > 0.15 && zeroFraction < 0.85;
   const maxIcons = phone ? 4 : 7;
   const reachedShallow = rows.some((r) => r.stage < stageCount);
 
@@ -534,9 +540,11 @@ function Ranking({
           <span />
           <span className="num relative h-3">
             <span className="absolute left-0">{fmtPct(min, 1)}</span>
-            <span className="absolute -translate-x-1/2" style={{ left: zeroAt }}>
-              0
-            </span>
+            {zeroClear && (
+              <span className="absolute -translate-x-1/2" style={{ left: zeroAt }}>
+                0
+              </span>
+            )}
             <span className="absolute right-0">{fmtPct(max, 1)}</span>
           </span>
           <span className="text-right">vs equipped</span>

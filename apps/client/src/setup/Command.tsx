@@ -294,7 +294,7 @@ export function Command({
         <dt className="text-faint">SimC</dt>
         <dd>
           <Link to="/simc" title={chip.title} className="num text-muted hover:text-fg">
-            {chip.label}
+            {chip.state ? `${chip.name} · ${chip.state}` : chip.name}
           </Link>
         </dd>
         <dt className="text-faint">Talents</dt>
