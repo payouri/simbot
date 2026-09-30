@@ -91,7 +91,9 @@ function Results({ sim, data }: { sim: Sim; data: SimResultsResponse }) {
     />
   );
   const doll = row && <Dressed model={model} row={row} phone={phone} />;
-  const stages = row && <StageTable model={model} row={row} stageCount={data.stageCount} />;
+  const stages = row && (
+    <StageTable model={model} row={row} stageCount={data.stageCount} simId={sim.id} />
+  );
   const ranking = (
     <Ranking
       model={model}
@@ -351,10 +353,12 @@ function StageTable({
   model,
   row,
   stageCount,
+  simId,
 }: {
   model: ResultsModel;
   row: RankedRow;
   stageCount: number;
+  simId: number;
 }) {
   const own = model.stageResults.get(row.combinationId) ?? [];
   const base = new Map(
@@ -381,7 +385,7 @@ function StageTable({
         <table className="w-full min-w-[480px] text-[12.5px]">
           <thead className="border-b border-line bg-panel">
             <tr>
-              {["Stage", "Mean DPS", "Error", "Δ vs equipped", ""].map((h) => (
+              {["Stage", "Mean DPS", "Error", "Δ vs equipped", "Download"].map((h) => (
                 <th key={h} className={th}>
                   {h}
                 </th>
@@ -402,13 +406,33 @@ function StageTable({
                       : "–"}
                   </td>
                   <td className="px-2.5 py-1.5 text-right">
-                    {s.stage === stageCount ? (
-                      <span className="text-faint">final</span>
-                    ) : s.survived ? (
-                      <span className="text-faint">kept</span>
-                    ) : (
-                      <span className="text-loss">culled</span>
-                    )}
+                    <div className="flex flex-col gap-1 items-end">
+                      {s.stage === stageCount ? (
+                        <span className="text-faint">final</span>
+                      ) : s.survived ? (
+                        <span className="text-faint">kept</span>
+                      ) : (
+                        <span className="text-loss">culled</span>
+                      )}
+                      <div className="flex gap-1">
+                        <a
+                          href={`/api/sims/${simId}/files/stage-${s.stage}.simc`}
+                          download={`stage-${s.stage}.simc`}
+                          className="text-[11.5px] text-action hover:underline"
+                          title="Download SimC input"
+                        >
+                          simc
+                        </a>
+                        <a
+                          href={`/api/sims/${simId}/files/stage-${s.stage}.json.gz`}
+                          download={`stage-${s.stage}.json.gz`}
+                          className="text-[11.5px] text-action hover:underline"
+                          title="Download json2 output"
+                        >
+                          json
+                        </a>
+                      </div>
+                    </div>
                   </td>
                 </tr>
               );

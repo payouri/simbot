@@ -127,13 +127,33 @@ export function SimPage() {
               </p>
             )}
             {dps && (
-              <p className="num mt-2 text-[26px] font-semibold leading-none tracking-tight">
-                {dpsFormat.format(dps.mean)}
-                <span className="ml-2 text-[16px] font-normal text-muted">
-                  ± {dpsFormat.format(dps.meanError)}
-                </span>
-                <span className="ml-2 text-[12.5px] font-normal text-faint">DPS</span>
-              </p>
+              <div className="flex flex-col gap-3">
+                <p className="num text-[26px] font-semibold leading-none tracking-tight">
+                  {dpsFormat.format(dps.mean)}
+                  <span className="ml-2 text-[16px] font-normal text-muted">
+                    ± {dpsFormat.format(dps.meanError)}
+                  </span>
+                  <span className="ml-2 text-[12.5px] font-normal text-faint">DPS</span>
+                </p>
+                <div className="flex gap-2">
+                  <a
+                    href={`/api/sims/${id}/files/stage-1.simc`}
+                    download="stage-1.simc"
+                    className="text-[12.5px] text-action hover:underline"
+                    title="Download SimC input"
+                  >
+                    Download SimC input
+                  </a>
+                  <a
+                    href={`/api/sims/${id}/files/stage-1.json.gz`}
+                    download="stage-1.json.gz"
+                    className="text-[12.5px] text-action hover:underline"
+                    title="Download json2 output"
+                  >
+                    Download json2 output
+                  </a>
+                </div>
+              </div>
             )}
             {results.isError && <p className="mt-2 text-loss">Could not load the result.</p>}
             {sim.data.status === "failed" && sim.data.error && (
