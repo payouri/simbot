@@ -1,8 +1,14 @@
-import { type ImportItem, PAPERDOLL_LABEL, type PaperdollSlot } from "@simbot/shared";
+import {
+  type GameData,
+  type ImportItem,
+  PAPERDOLL_LABEL,
+  type PaperdollSlot,
+} from "@simbot/shared";
 import clsx from "clsx";
 import { Check, Lock, LockOpen, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { statLabel, statLine } from "../items/ImportItems";
+import { LiveItemStatsNote } from "../simc/GameData";
 import { ItemName, ItemTile, Tag } from "./ItemTile";
 import { includedCount, type SlotItems } from "./model";
 
@@ -137,6 +143,7 @@ export function Tray({
   included,
   locked,
   phone,
+  gameData,
   onToggleItem,
   onSetAll,
   onToggleLock,
@@ -147,6 +154,7 @@ export function Tray({
   included: number[];
   locked: boolean;
   phone: boolean;
+  gameData: GameData;
   onToggleItem: (index: number) => void;
   onSetAll: (on: boolean) => void;
   onToggleLock: () => void;
@@ -224,6 +232,10 @@ export function Tray({
           Locked: Top Gear keeps what is equipped here. Unlock to choose candidates.
         </p>
       )}
+      <LiveItemStatsNote
+        gameData={gameData}
+        className="border-b border-line px-3.5 py-2 text-[12px] text-faint"
+      />
       <ul className="flex max-h-[520px] flex-col overflow-y-auto p-1.5">
         {group.equipped.map((it) => (
           <TrayRow key={it.index} item={it} state="equipped" delta={null} />

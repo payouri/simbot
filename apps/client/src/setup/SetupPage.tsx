@@ -127,6 +127,7 @@ function Setup({ sim }: { sim: Sim }) {
       included={input.selection.included}
       locked={input.selection.lockedSlots.includes(open)}
       phone={phone}
+      gameData={input.settings.gameData}
       onToggleItem={(index) => select(toggleItem(input.selection, index))}
       onSetAll={(on) => select(setCandidates(input.selection, groups[open].candidates, on))}
       onToggleLock={() => select(toggleLock(input.selection, open))}

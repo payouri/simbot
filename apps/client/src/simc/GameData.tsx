@@ -25,6 +25,25 @@ export function GameDataBadge({
 }
 
 /**
+ * On a PTR Sim the item stats and levels on screen are Live item data (PTR item data is not read
+ * yet), while SimC itself sims with the PTR data. Says so, and renders nothing for a Live Sim.
+ */
+export function LiveItemStatsNote({
+  gameData,
+  className,
+}: {
+  gameData: GameData;
+  className?: string;
+}) {
+  if (gameData !== "ptr") return null;
+  return (
+    <p role="note" className={className}>
+      Item stats shown are Live. This Sim runs on PTR game data.
+    </p>
+  );
+}
+
+/**
  * The Game Data choice of a Draft. Hidden while PTR Sims are off, unless the Draft is already
  * PTR (a copy of a PTR Sim), so it can still be switched back. PTR is shown but disabled, with
  * the reason, when the Current SimC Build has no PTR data that differs from Live.

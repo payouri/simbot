@@ -22,7 +22,7 @@ import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { copySimToDraft } from "../quick-sim/api";
 import { ItemName, ItemTile, Tag } from "../setup/ItemTile";
 import { Sheet, type Side, useIsPhone } from "../setup/Sheet";
-import { CopyToPtrDraft, GameDataBadge } from "../simc/GameData";
+import { CopyToPtrDraft, GameDataBadge, LiveItemStatsNote } from "../simc/GameData";
 import { useSimResults } from "./api";
 import { DeltaBar, fmtDps, fmtPct, fmtSigned } from "./DeltaBar";
 import { layoutStorage, RESULTS_LAYOUT_ID } from "./layout";
@@ -199,6 +199,7 @@ function Verdict({
             {provisional && <Tag tone="loss">Provisional</Tag>}
           </h1>
           <p className="max-w-[62ch] text-[13px] text-muted">{detail}</p>
+          <LiveItemStatsNote gameData={sim.settings.gameData} className="text-[12px] text-faint" />
           <PtrClientNotice sim={sim} />
         </div>
       </div>

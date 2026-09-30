@@ -630,3 +630,42 @@ test("a Discard after Stage 1 drops every Stage Result and file", async () => {
   expect(rowsOf(draft.id)).toEqual([]);
   expect(existsSync(join(h.dataDir, "sims", String(draft.id)))).toBe(false);
 });
+
+describe("a PTR Smart Sim", () => {
+  const run = async (gameData: "live" | "ptr") => {
+    start(bandReply);
+    await h.call("PATCH", "/api/simc/settings", { ptrEnabled: true });
+    await h.app.idle();
+    const draft = await topGear([...HEADS, ...NECKS, ...SHOULDERS, ...CHESTS]);
+    const put = await h.call("PATCH", `/api/sims/${draft.id}`, { settings: { gameData } });
+    expect(put.status).toBe(200);
+    await h.queue(draft.id);
+    await h.app.idle();
+    return draft;
+  };
+
+  test("every Stage input has ptr=1, and Culling and Stage Results work as on Live", async () => {
+    const draft = await run("ptr");
+    const sim = await h.sim(draft.id);
+    expect(sim.status).toBe("succeeded");
+    expect(sim.settings.gameData).toBe("ptr");
+    expect(sim.gameDataVersion).not.toBeNull();
+
+    expect(calls.map((c) => c.stage)).toEqual([1, 2, 3]);
+    for (const call of calls) expect(call.input).toMatch(/^ptr=1$/m);
+    // The kept Stage inputs carry it too.
+    for (const stage of [1, 2, 3]) {
+      expect(readFileSync(h.simFile(draft.id, `stage-${stage}.simc`), "utf8")).toMatch(/^ptr=1$/m);
+    }
+
+    // The same cull as the Live run.
+    expect([1, 2, 3].map((s) => stageRows(draft.id, s).length)).toEqual([81, 12, 12]);
+    expect(stageRows(draft.id, 1).filter((r) => r.survived === 1)).toHaveLength(12);
+  });
+
+  test("a Live Top Gear never has ptr=1 in a Stage", async () => {
+    await run("live");
+    expect(calls).toHaveLength(3);
+    for (const call of calls) expect(call.input).not.toMatch(/^\s*ptr\s*=/m);
+  });
+});
