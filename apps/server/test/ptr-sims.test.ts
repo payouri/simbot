@@ -113,6 +113,23 @@ describe("refusing PTR while PTR Sims are off", () => {
     expect((await h.sim(live.id)).settings.gameData).toBe("live");
   });
 
+  test("a frozen Live Sim answers not_a_draft, not ptr_disabled, and a missing source 404s", async () => {
+    await start(false);
+    const imp = await h.importText();
+    const live = await h.createSim(imp.id);
+    await h.queue(live.id);
+    const patched = await h.call("PATCH", `/api/sims/${live.id}`, {
+      settings: { gameData: "ptr" },
+    });
+    expect(patched.status).toBe(409);
+    expect(apiErrorSchema.parse(await patched.json()).error).toBe("not_a_draft");
+    const missing = await h.call("POST", "/api/sims", {
+      copyFromSimId: 9999,
+      settings: { gameData: "ptr" },
+    });
+    expect(missing.status).toBe(404);
+  });
+
   test("a PTR Draft made while it was on can still be saved and queued once it is off", async () => {
     await start();
     const imp = await h.importText();

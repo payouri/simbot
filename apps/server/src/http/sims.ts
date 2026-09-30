@@ -3,6 +3,7 @@ import { join } from "node:path";
 import {
   combinationPreviewSchema,
   createSimRequestSchema,
+  type GameData,
   isTopGear,
   MAX_COMBINATIONS,
   patchSimRequestSchema,
@@ -43,6 +44,13 @@ const ptrDisabled = () =>
     message: "PTR Sims are off. Turn them on from the SimC page to sim on PTR Game Data.",
   });
 
+/** The one rule: a Draft may switch to PTR Game Data from another only with PTR Sims on. */
+const ptrSwitchRefused = (
+  from: GameData,
+  to: GameData | undefined,
+  ptrEnabled: HttpDeps["simc"]["ptrEnabled"],
+) => to === "ptr" && from !== "ptr" && !ptrEnabled();
+
 /** `POST /api/sims`: a Draft from an Import (`importId`) or a copy of a Sim (`copyFromSimId`). */
 export async function postSim(
   db: Db,
@@ -55,13 +63,14 @@ export async function postSim(
   if (copyFromSimId !== undefined) {
     // A copy of a PTR Sim stays PTR whatever the setting; only a switch from Live needs it on.
     const source = getSim(db, copyFromSimId);
-    if (source && settings?.gameData === "ptr" && source.settings.gameData !== "ptr") {
-      if (!ptrEnabled()) return ptrDisabled();
+    if (!source) return apiError(404, "sim_not_found");
+    if (ptrSwitchRefused(source.settings.gameData, settings?.gameData, ptrEnabled)) {
+      return ptrDisabled();
     }
-    const copy = copySim(db, copyFromSimId, { kind, settings });
+    const copy = copySim(db, source, { kind, settings });
     return copy ? json(simSchema.parse(copy), 201) : apiError(404, "sim_not_found");
   }
-  if (settings?.gameData === "ptr" && !ptrEnabled()) return ptrDisabled();
+  if (ptrSwitchRefused("live", settings?.gameData, ptrEnabled)) return ptrDisabled();
   const sim = importId === undefined ? null : createSim(db, { importId, kind, settings });
   if (!sim) return apiError(404, "import_not_found");
   return json(simSchema.parse(sim), 201);
@@ -93,12 +102,7 @@ export async function patchSim(
       message: "A Sim's input is frozen once it leaves Draft.",
     });
   }
-  if (
-    settings?.gameData === "ptr" &&
-    current.settings.gameData !== "ptr" &&
-    current.status === "draft" &&
-    !ptrEnabled()
-  ) {
+  if (ptrSwitchRefused(current.settings.gameData, settings?.gameData, ptrEnabled)) {
     return ptrDisabled();
   }
   if (topGearSelection) {

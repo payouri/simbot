@@ -121,10 +121,10 @@ export function createSim(
  */
 export function copySim(
   db: Db,
-  sourceId: number,
+  sourceOrId: Sim | number,
   input: { kind?: SimKind; settings?: SimSettingsPatch } = {},
 ): Sim | null {
-  const source = getSim(db, sourceId);
+  const source = typeof sourceOrId === "number" ? getSim(db, sourceOrId) : sourceOrId;
   if (!source) return null;
   const kind = input.kind ?? source.kind;
   return insertDraft(db, {
