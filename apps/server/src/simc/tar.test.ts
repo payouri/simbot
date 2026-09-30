@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync, gzipSync } from "node:zlib";
@@ -44,4 +44,27 @@ test("rejects a truncated archive", async () => {
   const layer = buildLayer([{ path: "a.txt", content: "x".repeat(2000) }]);
   const tar = gunzipSync(layer).slice(0, 700);
   await expect(extractLayer(gzipSync(tar), dir, (p) => p)).rejects.toThrow(/truncated/);
+});
+
+test("refuses writes through a chain of symlinks that leaves the destination", async () => {
+  const root = join(dir, "root");
+  // `l` really points at root/x, so `m`'s `../../outside` lands in dir/outside, not the root.
+  const layer = buildLayer([
+    { path: "x/f", content: "x" },
+    { path: "a1/a2/f", content: "x" },
+    { path: "a1/a2/l", symlink: "../../x" },
+    { path: "a1/a2/l/m", symlink: "../../outside" },
+    { path: "a1/a2/l/m/pwned", content: "PWNED" },
+  ]);
+  mkdirSync(join(dir, "outside"));
+  await expect(extractLayer(layer, root, (p) => p)).rejects.toThrow(/build directory/);
+  expect(existsSync(join(dir, "outside", "pwned"))).toBe(false);
+});
+
+test("refuses writes through a dangling symlink", async () => {
+  const layer = buildLayer([
+    { path: "d/l", symlink: "../nowhere" },
+    { path: "d/l/f", content: "x" },
+  ]);
+  await expect(extractLayer(layer, dir, (p) => p)).rejects.toThrow(/dangling symlink/);
 });

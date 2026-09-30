@@ -1,5 +1,5 @@
-import { chmod, mkdir, rm, symlink, writeFile } from "node:fs/promises";
-import { dirname, isAbsolute, normalize, resolve, sep } from "node:path";
+import { chmod, lstat, mkdir, realpath, rm, symlink, writeFile } from "node:fs/promises";
+import { basename, dirname, isAbsolute, join, normalize, resolve, sep } from "node:path";
 import { gunzipSync } from "node:zlib";
 
 type TarEntry = {
@@ -74,6 +74,25 @@ export function* readTar(tar: Uint8Array): Generator<TarEntry> {
   }
 }
 
+/** `path` with every symlink already on disk resolved; missing trailing parts are kept as-is. */
+async function realParent(path: string): Promise<string> {
+  try {
+    return await realpath(path);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT" || dirname(path) === path) throw error;
+    // A dangling symlink also reports ENOENT; writing under it would follow it blindly.
+    if (
+      await lstat(path).then(
+        () => true,
+        () => false,
+      )
+    ) {
+      throw new Error(`refusing to extract through a dangling symlink: ${path}`);
+    }
+    return join(await realParent(dirname(path)), basename(path));
+  }
+}
+
 /**
  * Extracts the entries of one gzipped layer into `destDir`. `select` maps an archive path
  * (`app/SimulationCraft/simc`) to a path relative to `destDir`, or null to skip the entry.
@@ -84,7 +103,8 @@ export async function extractLayer(
   destDir: string,
   select: (archivePath: string) => string | null,
 ): Promise<void> {
-  const root = resolve(destDir);
+  await mkdir(destDir, { recursive: true });
+  const root = await realpath(destDir);
   for (const entry of readTar(gunzipSync(gz))) {
     const rel = select(entry.path.replace(/^\.?\/+/, ""));
     if (rel === null || (entry.type !== "file" && entry.type !== "symlink")) continue;
@@ -92,18 +112,24 @@ export async function extractLayer(
     if (isAbsolute(rel) || !target.startsWith(root + sep)) {
       throw new Error(`refusing to extract outside the build directory: ${entry.path}`);
     }
-    await mkdir(dirname(target), { recursive: true });
-    await rm(target, { force: true });
+    // Earlier entries may have planted symlinks: resolve them on disk, not just lexically.
+    const parent = await realParent(dirname(target));
+    if (parent !== root && !parent.startsWith(root + sep)) {
+      throw new Error(`refusing to extract outside the build directory: ${entry.path}`);
+    }
+    await mkdir(parent, { recursive: true });
+    const real = join(parent, basename(target));
+    await rm(real, { force: true });
     if (entry.type === "symlink") {
       // Layer links are relative to their own directory; keep them inside the build.
-      const resolved = resolve(dirname(target), entry.linkname);
+      const resolved = resolve(parent, entry.linkname);
       if (isAbsolute(entry.linkname) || !resolved.startsWith(root + sep)) {
         throw new Error(`refusing symlink that leaves the build directory: ${entry.path}`);
       }
-      await symlink(entry.linkname, target);
+      await symlink(entry.linkname, real);
     } else {
-      await writeFile(target, entry.data);
-      await chmod(target, entry.mode & 0o777);
+      await writeFile(real, entry.data);
+      await chmod(real, entry.mode & 0o777);
     }
   }
 }
