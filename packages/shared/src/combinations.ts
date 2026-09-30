@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { topGearSelectionSchema } from "./paperdoll";
-import { simSettingsSchema } from "./sim";
+import { simSettingsPatchSchema } from "./sim";
 
 /** A Top Gear over this many Combinations (after pruning) is refused, at preview and at queue. */
 export const MAX_COMBINATIONS = 50_000;
@@ -40,7 +40,7 @@ export type CombinationIssue = z.infer<typeof combinationIssueSchema>;
  */
 export const previewCombinationsRequestSchema = z.object({
   topGearSelection: topGearSelectionSchema.optional(),
-  settings: simSettingsSchema.partial().optional(),
+  settings: simSettingsPatchSchema.optional(),
 });
 export type PreviewCombinationsRequest = z.infer<typeof previewCombinationsRequestSchema>;
 

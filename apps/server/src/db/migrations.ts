@@ -181,4 +181,14 @@ export const migrations: readonly Migration[] = [
       ) STRICT;
     `,
   },
+  {
+    id: 11,
+    name: "sim_game_data_version",
+    sql: `
+      -- The game data version a Sim ran on (the Live or the PTR one of its SimC Build, by its
+      -- Game Data), recorded at Job start next to simc_tag. Null until then and for Sims that
+      -- ran before it was recorded. Game Data itself lives in the settings JSON ("live" when absent).
+      ALTER TABLE sims ADD COLUMN game_data_version TEXT;
+    `,
+  },
 ];

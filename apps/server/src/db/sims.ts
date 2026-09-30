@@ -15,6 +15,7 @@ import {
   type SimQueueEntry,
   type SimResultsResponse,
   type SimSettings,
+  type SimSettingsPatch,
   type SimStatus,
   simErrorSchema,
   simSettingsSchema,
@@ -36,6 +37,7 @@ type SimRow = {
   settings: string;
   top_gear_selection: string | null;
   simc_tag: string | null;
+  game_data_version: string | null;
   error: string | null;
   created_at: string;
   queued_at: string | null;
@@ -55,6 +57,7 @@ const toSim = (row: SimRow): Sim => ({
     ? topGearSelectionSchema.parse(JSON.parse(row.top_gear_selection))
     : null,
   simcTag: row.simc_tag,
+  gameDataVersion: row.game_data_version,
   error: row.error ? simErrorSchema.parse(JSON.parse(row.error)) : null,
   createdAt: row.created_at,
   queuedAt: row.queued_at,
@@ -74,7 +77,7 @@ export function getSim(db: Db, id: number): Sim | null {
  */
 export function createSim(
   db: Db,
-  input: { importId: number; kind?: SimKind; settings?: Partial<SimSettings> },
+  input: { importId: number; kind?: SimKind; settings?: SimSettingsPatch },
 ): Sim | null {
   const imp = db
     .query<{ character_id: number }, [number]>("SELECT character_id FROM imports WHERE id = ?")
@@ -113,7 +116,7 @@ export function createSim(
 export function copySim(
   db: Db,
   sourceId: number,
-  input: { kind?: SimKind; settings?: Partial<SimSettings> } = {},
+  input: { kind?: SimKind; settings?: SimSettingsPatch } = {},
 ): Sim | null {
   const source = getSim(db, sourceId);
   if (!source) return null;
@@ -178,7 +181,7 @@ export type UpdateDraftResult =
 export function updateDraft(
   db: Db,
   id: number,
-  patch: { settings?: Partial<SimSettings>; topGearSelection?: TopGearSelection },
+  patch: { settings?: SimSettingsPatch; topGearSelection?: TopGearSelection },
 ): UpdateDraftResult {
   return db.transaction((): UpdateDraftResult => {
     const current = getSim(db, id);
@@ -214,7 +217,10 @@ function transition(
   from: SimStatus,
   to: SimStatus,
   patch: Partial<
-    Record<"simc_tag" | "error" | "queued_at" | "started_at" | "finished_at", string | null>
+    Record<
+      "simc_tag" | "game_data_version" | "error" | "queued_at" | "started_at" | "finished_at",
+      string | null
+    >
   >,
 ): boolean {
   if (!canTransition(from, to)) throw new Error(`illegal Sim transition ${from} -> ${to}`);
@@ -295,12 +301,22 @@ export function nextQueuedJob(db: Db): QueuedJob | null {
   return row ? { id: row.id, kind: row.kind, simId: row.sim_id } : null;
 }
 
-/** `queued → running`, recording the SimC Build tag (null when there was none to resolve). */
-export function startSim(db: Db, jobId: number, simId: number, simcTag: string | null): boolean {
+/**
+ * `queued → running`, recording the SimC Build tag and the game data version the Sim runs on
+ * (null when there was no build to resolve, or no version for the Sim's Game Data on it).
+ */
+export function startSim(
+  db: Db,
+  jobId: number,
+  simId: number,
+  simcTag: string | null,
+  gameDataVersion: string | null = null,
+): boolean {
   return db.transaction(() => {
     const now = new Date().toISOString();
     const patch: Record<string, string> = { started_at: now };
     if (simcTag) patch.simc_tag = simcTag;
+    if (gameDataVersion) patch.game_data_version = gameDataVersion;
     if (!transition(db, simId, "queued", "running", patch)) return false;
     db.run("UPDATE jobs SET status = 'running', started_at = ? WHERE id = ?", [now, jobId]);
     return true;
@@ -577,6 +593,7 @@ function resetToDraft(db: Db, simId: number, from: "queued" | "running") {
   if (
     !transition(db, simId, from, "draft", {
       simc_tag: null,
+      game_data_version: null,
       error: null,
       queued_at: null,
       started_at: null,
@@ -702,7 +719,7 @@ export function getSimResults(
   simId: number,
 ): Pick<
   SimResultsResponse,
-  "simId" | "simcTag" | "stageCount" | "results" | "combinations"
+  "simId" | "simcTag" | "gameData" | "gameDataVersion" | "stageCount" | "results" | "combinations"
 > | null {
   const sim = getSim(db, simId);
   if (!sim) return null;
@@ -727,6 +744,8 @@ export function getSimResults(
   return {
     simId,
     simcTag: sim.simcTag,
+    gameData: sim.settings.gameData,
+    gameDataVersion: sim.gameDataVersion,
     stageCount: stageLadder(sim.settings.precision, combinations.length).length,
     results: rows.map((r) => ({
       combinationId: r.combination_id,

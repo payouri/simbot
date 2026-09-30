@@ -5,6 +5,7 @@ import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { ResultsPage } from "../results/ResultsPage";
+import { GameDataBadge } from "../simc/GameData";
 import { getResults, getSim, stopSim } from "./api";
 import { RunLog, StageLadder } from "./Ladder";
 
@@ -75,6 +76,12 @@ export function SimPage() {
             {sim.data.character.name}
             <span className="ml-2 text-[12.5px] font-normal text-muted">
               {sim.data.character.spec} {sim.data.character.class}, {sim.data.character.realm}
+            </span>
+            <span className="ml-2 align-middle">
+              <GameDataBadge
+                gameData={sim.data.settings.gameData}
+                version={sim.data.gameDataVersion}
+              />
             </span>
           </h1>
 
@@ -172,6 +179,13 @@ export function SimPage() {
             {sim.data.simcTag && (
               <p className="mt-3 text-[11.5px] text-faint">
                 Simmed with SimC <span className="num">{sim.data.simcTag}</span>
+                {sim.data.gameDataVersion && (
+                  <>
+                    {" "}
+                    on {sim.data.settings.gameData === "ptr" ? "PTR" : "Live"} game data{" "}
+                    <span className="num">{sim.data.gameDataVersion}</span>
+                  </>
+                )}
               </p>
             )}
           </section>

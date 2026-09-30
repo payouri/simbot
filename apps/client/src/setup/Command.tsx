@@ -19,6 +19,7 @@ import { Link } from "react-router";
 import { PassNote, UnknownBanner } from "../items/ImportItems";
 import { formatEstimate } from "../queue/format";
 import { useSimcStatus } from "../simc/api";
+import { GameDataControl } from "../simc/GameData";
 import { chipView } from "../simc/SimcChip";
 import type { SaveState } from "./autosave";
 import {
@@ -142,6 +143,11 @@ function SettingsForm({
           </div>
         </div>
       </div>
+      <GameDataControl
+        value={settings.gameData}
+        onChange={(gameData) => set({ gameData })}
+        seg={seg}
+      />
       <label className="flex flex-col gap-1.5">
         <span className="text-faint">Raw SimC options, one per line, applied last</span>
         <textarea
@@ -388,6 +394,7 @@ export function Command({
               <span className="num">{settings.targets}</span>{" "}
               {settings.targets === 1 ? "target" : "targets"} ·{" "}
               {PRECISION_LABEL[settings.precision]} precision
+              {settings.gameData === "ptr" && " · PTR"}
               {settings.rawOptions.trim() !== "" && " · raw options"}
             </span>
             <ChevronDown

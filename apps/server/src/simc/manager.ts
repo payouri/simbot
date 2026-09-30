@@ -507,6 +507,9 @@ export function createSimcManager(deps: SimcManagerDeps) {
       events.emit({ type: "simc.status_changed" });
     },
 
+    /** Whether PTR Sims are on. */
+    ptrEnabled,
+
     /** Turns PTR Sims on or off. It changes only what is shown and what can be started. */
     setPtrEnabled(enabled: boolean): void {
       putSetting(PTR_ENABLED_KEY, enabled ? "1" : "0");

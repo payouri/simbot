@@ -109,6 +109,20 @@ describe("Quick Sim input and result", () => {
     expect(input.trimEnd().endsWith("iterations=10")).toBe(true);
   });
 
+  test("buildInput selects the PTR data with ptr=1 for a PTR Sim and never for Live", () => {
+    const text = 'warrior="A"\nlevel=90\n';
+    expect(buildInput(text, { ...settings, gameData: "ptr" })).toMatch(/^ptr=1$/m);
+    expect(buildInput(text, { ...settings, gameData: "live" })).not.toContain("ptr");
+  });
+
+  test("buildInput drops a ptr line of the Addon String, so only Game Data selects PTR", () => {
+    const text = 'warrior="A"\nptr=1\nlevel=90\n';
+    const live = buildInput(text, { ...settings, gameData: "live" });
+    expect(live).not.toMatch(/ptr/);
+    expect(live).toContain("level=90");
+    expect(buildInput(text, { ...settings, gameData: "ptr" }).match(/^ptr=1$/gm)).toHaveLength(1);
+  });
+
   test("buildInput drops file-writing options of the Addon String", () => {
     const text =
       'mage="A"\nhtml=/data/db.sqlite\nsave=/home/u/.bashrc\nXML=1\nlevel=80\nspec=frost';

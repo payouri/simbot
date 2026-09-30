@@ -21,6 +21,7 @@ import { qualityBorder } from "../items/ImportItems";
 import { copySimToDraft } from "../quick-sim/api";
 import { ItemName, ItemTile, Tag } from "../setup/ItemTile";
 import { Sheet, type Side, useIsPhone } from "../setup/Sheet";
+import { GameDataBadge } from "../simc/GameData";
 import { useSimResults } from "./api";
 import { DeltaBar, fmtDps, fmtPct, fmtSigned } from "./DeltaBar";
 import { layoutStorage, RESULTS_LAYOUT_ID } from "./layout";
@@ -193,6 +194,7 @@ function Verdict({
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="flex flex-wrap items-center gap-2 text-[20px] leading-tight font-semibold tracking-[-0.01em] text-balance">
             {headline}
+            <GameDataBadge gameData={sim.settings.gameData} version={sim.gameDataVersion} />
             {provisional && <Tag tone="loss">Provisional</Tag>}
           </h1>
           <p className="max-w-[62ch] text-[13px] text-muted">{detail}</p>

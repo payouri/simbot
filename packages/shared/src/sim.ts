@@ -43,22 +43,56 @@ export type FightStyle = z.infer<typeof fightStyleSchema>;
 export const precisionSchema = z.enum(["low", "medium", "high"]);
 export type Precision = z.infer<typeof precisionSchema>;
 
-/** The parameters a Sim ran with. Frozen on the Sim so later default changes never alter it. */
-export const simSettingsSchema = z.object({
+/** Which game data inside a SimC Build a Sim runs on: Live, or the PTR's (`ptr=1`). */
+export const gameDataSchema = z.enum(["live", "ptr"]);
+export type GameData = z.infer<typeof gameDataSchema>;
+
+/**
+ * Whether raw SimC options set `ptr`. Game Data owns that option, so a line for it is refused:
+ * raw options and Game Data could otherwise disagree.
+ */
+export const hasPtrOption = (rawOptions: string) => /(^|\s)ptr\s*=/i.test(rawOptions);
+
+const simSettingsFields = {
   fightStyle: fightStyleSchema,
   durationSeconds: z.number().int().min(10).max(1800),
   targets: z.number().int().min(1).max(20),
   precision: precisionSchema,
+  gameData: gameDataSchema,
   /** Extra SimC option lines, appended verbatim after the generated ones. */
   rawOptions: z.string().max(4000),
+};
+
+/**
+ * The parameters a Sim ran with, as stored and served. Frozen on the Sim so later default changes
+ * never alter it. `gameData` is `live` when absent, which is how Sims stored before it existed read.
+ */
+export const simSettingsSchema = z.object({
+  ...simSettingsFields,
+  gameData: gameDataSchema.default("live"),
 });
 export type SimSettings = z.infer<typeof simSettingsSchema>;
+
+/**
+ * Sim Settings as a request sends them: any subset, nothing defaulted (an omitted field keeps
+ * the Draft's value), and no `ptr=` line in the raw options.
+ */
+export const simSettingsPatchSchema = z
+  .object({
+    ...simSettingsFields,
+    rawOptions: simSettingsFields.rawOptions.refine((v) => !hasPtrOption(v), {
+      message: "Raw options cannot set ptr. Pick the Game Data instead.",
+    }),
+  })
+  .partial();
+export type SimSettingsPatch = z.infer<typeof simSettingsPatchSchema>;
 
 export const defaultSimSettings: SimSettings = {
   fightStyle: "Patchwerk",
   durationSeconds: 300,
   targets: 1,
   precision: "medium",
+  gameData: "live",
   rawOptions: "",
 };
 
@@ -128,6 +162,7 @@ export const simErrorKindSchema = z.enum([
   "output_format_changed",
   "interrupted",
   "invalid_combinations",
+  "ptr_unavailable",
   "internal",
 ]);
 export type SimErrorKind = z.infer<typeof simErrorKindSchema>;
@@ -155,6 +190,11 @@ export const simSchema = z.object({
   topGearSelection: topGearSelectionSchema.nullable(),
   /** The SimC Build tag, recorded when the Job starts. */
   simcTag: z.string().nullable(),
+  /**
+   * The game data version the Sim ran on (the Live or the PTR one of that build, by its Game
+   * Data), recorded with `simcTag` when the Job starts. Null until then.
+   */
+  gameDataVersion: z.string().nullable().default(null),
   error: simErrorSchema.nullable(),
   createdAt: isoDate,
   queuedAt: isoDate.nullable(),
@@ -180,7 +220,7 @@ export const createSimRequestSchema = z
     importId: z.number().int().optional(),
     copyFromSimId: z.number().int().optional(),
     kind: simKindSchema.optional(),
-    settings: simSettingsSchema.partial().optional(),
+    settings: simSettingsPatchSchema.optional(),
   })
   .refine((v) => (v.importId === undefined) !== (v.copyFromSimId === undefined), {
     message: "Give exactly one of importId, copyFromSimId.",
@@ -195,7 +235,7 @@ export type CreateSimRequest = z.input<typeof createSimRequestSchema>;
 export const patchSimRequestSchema = z
   .object({
     characterId: z.number().int(),
-    settings: simSettingsSchema.partial(),
+    settings: simSettingsPatchSchema,
     topGearSelection: topGearSelectionSchema,
   })
   .partial()
@@ -267,6 +307,9 @@ export type ResultCombination = z.infer<typeof resultCombinationSchema>;
 export const simResultsResponseSchema = z.object({
   simId: z.number().int(),
   simcTag: z.string().nullable(),
+  /** What the Sim ran on, for the Game Data badge. */
+  gameData: gameDataSchema.default("live"),
+  gameDataVersion: z.string().nullable().default(null),
   status: z.enum(["succeeded", "cancelled"]),
   /** How many Stages the ladder plans; a stopped Sim may have finished fewer. */
   stageCount: z.number().int(),
@@ -286,6 +329,7 @@ export const simListItemSchema = z.object({
   characterId: z.number().int(),
   character: characterSnapshotSchema,
   simcTag: z.string().nullable(),
+  gameData: gameDataSchema.default("live"),
   createdAt: isoDate,
   finishedAt: isoDate.nullable(),
 });

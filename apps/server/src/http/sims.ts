@@ -37,15 +37,31 @@ import { settleSim } from "../settle";
 import type { HttpDeps } from ".";
 import { apiError, json, parseId, readBody } from "./util";
 
+/** 409: a Draft that would newly run on PTR Game Data while PTR Sims are off. */
+const ptrDisabled = () =>
+  apiError(409, "ptr_disabled", {
+    message: "PTR Sims are off. Turn them on from the SimC page to sim on PTR Game Data.",
+  });
+
 /** `POST /api/sims`: a Draft from an Import (`importId`) or a copy of a Sim (`copyFromSimId`). */
-export async function postSim(db: Db, req: Request): Promise<Response> {
+export async function postSim(
+  db: Db,
+  ptrEnabled: HttpDeps["simc"]["ptrEnabled"],
+  req: Request,
+): Promise<Response> {
   const body = await readBody(req, createSimRequestSchema);
   if (!body.ok) return body.res;
   const { importId, copyFromSimId, kind, settings } = body.data;
   if (copyFromSimId !== undefined) {
+    // A copy of a PTR Sim stays PTR whatever the setting; only a switch from Live needs it on.
+    const source = getSim(db, copyFromSimId);
+    if (source && settings?.gameData === "ptr" && source.settings.gameData !== "ptr") {
+      if (!ptrEnabled()) return ptrDisabled();
+    }
     const copy = copySim(db, copyFromSimId, { kind, settings });
     return copy ? json(simSchema.parse(copy), 201) : apiError(404, "sim_not_found");
   }
+  if (settings?.gameData === "ptr" && !ptrEnabled()) return ptrDisabled();
   const sim = importId === undefined ? null : createSim(db, { importId, kind, settings });
   if (!sim) return apiError(404, "import_not_found");
   return json(simSchema.parse(sim), 201);
@@ -60,6 +76,7 @@ export async function postSim(db: Db, req: Request): Promise<Response> {
 export async function patchSim(
   db: Db,
   items: HttpDeps["items"],
+  ptrEnabled: HttpDeps["simc"]["ptrEnabled"],
   req: Request,
   rawId: string,
 ): Promise<Response> {
@@ -75,6 +92,14 @@ export async function patchSim(
     return apiError(409, "not_a_draft", {
       message: "A Sim's input is frozen once it leaves Draft.",
     });
+  }
+  if (
+    settings?.gameData === "ptr" &&
+    current.settings.gameData !== "ptr" &&
+    current.status === "draft" &&
+    !ptrEnabled()
+  ) {
+    return ptrDisabled();
   }
   if (topGearSelection) {
     const issues = selectionIssues(
@@ -321,6 +346,7 @@ export function getSims(db: Db, req: Request): Response {
     characterId: sim.characterId,
     character: sim.character,
     simcTag: sim.simcTag,
+    gameData: sim.settings.gameData,
     createdAt: sim.createdAt,
     finishedAt: sim.finishedAt,
   }));

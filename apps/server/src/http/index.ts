@@ -69,6 +69,8 @@ export type HttpDeps = {
     setKeep: (keep: number) => Promise<void>;
     /** Turns PTR Sims on or off. */
     setPtrEnabled: (enabled: boolean) => void;
+    /** Whether PTR Sims are on. */
+    ptrEnabled: () => boolean;
   };
 };
 
@@ -275,7 +277,7 @@ export function createHttpHandler({
     }
     if (pathname === "/api/sims") {
       if (req.method === "POST") {
-        return postSim(db, req);
+        return postSim(db, simc.ptrEnabled, req);
       }
       if (req.method === "GET") {
         return getSims(db, req);
@@ -332,7 +334,7 @@ export function createHttpHandler({
         }
       }
       if (!action) {
-        if (req.method === "PATCH") return patchSim(db, items, req, id);
+        if (req.method === "PATCH") return patchSim(db, items, simc.ptrEnabled, req, id);
         if (req.method === "DELETE") return deleteSim_Handler(db, id, dataDir);
         if (req.method === "GET") return getSimById(db, id);
         return json({ error: "method_not_allowed" }, 405);

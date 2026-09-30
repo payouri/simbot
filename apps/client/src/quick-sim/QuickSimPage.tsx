@@ -9,6 +9,7 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { GameDataControl } from "../simc/GameData";
 import { createImport, createSim, queueSim } from "./api";
 
 const PRECISION_LABEL: Record<Precision, string> = {
@@ -16,6 +17,11 @@ const PRECISION_LABEL: Record<Precision, string> = {
   medium: "Medium",
   high: "High",
 };
+
+const seg = (on: boolean) =>
+  `rounded-[5px] px-2.5 py-1 text-[12.5px] ${
+    on ? "bg-raised text-fg ring-1 ring-line-strong" : "text-muted hover:text-fg"
+  }`;
 
 const inputClass =
   "h-7 rounded-[5px] border border-line bg-panel px-2 font-mono text-[12.5px] text-fg focus:border-action";
@@ -108,6 +114,11 @@ export function QuickSimPage() {
               ))}
             </div>
           </div>
+          <GameDataControl
+            value={settings.gameData}
+            onChange={(gameData) => patch({ gameData })}
+            seg={seg}
+          />
           <label className="flex flex-col gap-1.5 text-[11.5px] text-faint">
             Duration (seconds)
             <input

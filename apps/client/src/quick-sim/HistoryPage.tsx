@@ -2,6 +2,7 @@ import type { SimListItem, SimStatus } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
+import { GameDataBadge } from "../simc/GameData";
 import { copySimToDraft, deleteSim, listCharacters, listSims } from "./api";
 
 const STATUS_LABEL: Record<SimStatus, string> = {
@@ -160,7 +161,10 @@ export function HistoryPage() {
               {sims.data.map((sim: SimListItem) => (
                 <tr key={sim.id} className="border-b border-line/50 hover:bg-raised/30">
                   <td className="px-3 py-3">
-                    <div className="font-semibold text-fg">{sim.character.name}</div>
+                    <div className="flex items-center gap-2 font-semibold text-fg">
+                      {sim.character.name}
+                      <GameDataBadge gameData={sim.gameData} />
+                    </div>
                     <div className="text-[11.5px] text-muted">
                       {sim.character.class} {sim.character.spec ? `(${sim.character.spec})` : ""}
                     </div>

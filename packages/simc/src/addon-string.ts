@@ -70,6 +70,17 @@ export function stripUnsafeOptions(addonString: string): string {
     .join("");
 }
 
+/**
+ * The Addon String without the lines that set `ptr`. An export from the PTR client may carry
+ * `ptr=1`; Game Data alone decides which data a Sim runs on, so a Live Sim never inherits it.
+ */
+export function stripPtrOption(addonString: string): string {
+  return addonString
+    .split(/(?<=\r\n|\n|\r)/)
+    .filter((line) => !/(^|\s)ptr\s*=/i.test(line))
+    .join("");
+}
+
 export type ProfileHeader = {
   region: string;
   realm: string;

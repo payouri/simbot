@@ -1,5 +1,5 @@
 import type { DpsSummary, Precision, SimError, SimSettings } from "@simbot/shared";
-import { stripUnsafeOptions } from "./addon-string";
+import { stripPtrOption, stripUnsafeOptions } from "./addon-string";
 import { baselineDps, quickSimJson2Schema, readJson2 } from "./json2";
 
 /** Final-Stage `target_error` (percent of DPS) per precision preset. */
@@ -46,10 +46,12 @@ export function buildInput(
     `desired_targets=${settings.targets}`,
     `target_error=${options.targetError ?? PRECISION_TARGET_ERROR[settings.precision]}`,
     `analyze_error_interval=${ANALYZE_ERROR_INTERVAL}`,
+    // Live is SimC's default and is never spelled out; only a PTR Sim selects the PTR data.
+    ...(settings.gameData === "ptr" ? ["ptr=1"] : []),
     ...(options.extraLines ?? []),
   ];
   if (settings.rawOptions.trim() !== "") lines.push("# Raw options", settings.rawOptions);
-  const safe = stripUnsafeOptions(addonString);
+  const safe = stripPtrOption(stripUnsafeOptions(addonString));
   const head = safe.endsWith("\n") ? safe : `${safe}\n`;
   return `${head}${lines.join("\n")}\n`;
 }

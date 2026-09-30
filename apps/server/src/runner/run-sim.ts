@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import {
   isTopGear,
+  ptrAvailable,
   type SimcBuild,
   type SimError,
   type SimLogLevel,
@@ -225,7 +226,14 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
   try {
     // The SimC Build is resolved now, not at queue time, and recorded on the Sim.
     const build = await deps.currentBuild();
-    if (!startSim(db, job.id, sim.id, build?.tag ?? null)) {
+    const isPtr = sim.settings.gameData === "ptr";
+    // The version of the Sim's own game data, so a PTR result stays explainable once the PTR moves on.
+    const gameDataVersion = build
+      ? isPtr
+        ? build.ptrGameDataVersion
+        : build.gameDataVersion
+      : null;
+    if (!startSim(db, job.id, sim.id, build?.tag ?? null, gameDataVersion)) {
       abandonJob(db, job.id);
       return;
     }
@@ -233,6 +241,14 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     bus.emit({ type: "queue.changed" });
     if (!build) {
       return fail({ kind: "no_simc_build", message: "No SimC Build is installed." });
+    }
+
+    // Never a silent fallback to Live: a PTR Sim with no PTR to run on fails here.
+    if (isPtr && !ptrAvailable(build)) {
+      return fail({
+        kind: "ptr_unavailable",
+        message: `No PTR data in SimC Build ${build.tag}: its PTR game data is the same as Live, so this PTR Sim was not run.`,
+      });
     }
 
     if (isTopGear(sim) && deps.revalidate && getFrozenSimcTag(db, sim.id) !== build.tag) {
