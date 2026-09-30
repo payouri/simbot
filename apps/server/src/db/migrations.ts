@@ -123,4 +123,12 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE imports ADD COLUMN item_index TEXT;
     `,
   },
+  {
+    id: 6,
+    name: "top_gear_selection",
+    sql: `
+      -- The Top Gear Selection a Draft autosaves, as JSON. Null for a Sim that never had one.
+      ALTER TABLE sims ADD COLUMN top_gear_selection TEXT;
+    `,
+  },
 ];

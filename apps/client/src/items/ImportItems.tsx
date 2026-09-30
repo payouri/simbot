@@ -24,8 +24,9 @@ const QUALITY_BORDER_VAR = [
   "--q-legendary",
   "--q-legendary",
 ];
-const qualityText = (q: number | null) => `var(${QUALITY_VAR[q ?? 1] ?? "--fg-muted"})`;
-const qualityBorder = (q: number | null) => `var(${QUALITY_BORDER_VAR[q ?? 1] ?? "--line-strong"})`;
+export const qualityText = (q: number | null) => `var(${QUALITY_VAR[q ?? 1] ?? "--fg-muted"})`;
+export const qualityBorder = (q: number | null) =>
+  `var(${QUALITY_BORDER_VAR[q ?? 1] ?? "--line-strong"})`;
 
 const STAT_LABEL: Record<string, string> = {
   strint: "Str/Int",
@@ -48,10 +49,10 @@ const STAT_LABEL: Record<string, string> = {
 };
 /** Stat lines of an item: secondaries and primaries, stamina last. */
 const STAT_ORDER = ["strint", "stragi", "stragiint", "strength", "agility", "intellect"];
-const statLabel = (key: string) =>
+export const statLabel = (key: string) =>
   STAT_LABEL[key] ?? key.replace(/_rating$/, "").replaceAll("_", " ");
 
-function statLine(stats: ItemStats): { key: string; value: number }[] {
+export function statLine(stats: ItemStats): { key: string; value: number }[] {
   return Object.entries(stats)
     .filter(([, v]) => v > 0)
     .map(([key, value]) => ({ key, value }))
@@ -85,7 +86,7 @@ const slotRank = (slot: string) => {
   return at < 0 ? SLOT_ORDER.length : at;
 };
 
-function wowheadData(item: ImportItem): string | undefined {
+export function wowheadData(item: ImportItem): string | undefined {
   if (item.itemId === null || item.status === "unknown") return undefined;
   const bonus = item.bonusIds.length ? `&bonus=${item.bonusIds.join(":")}` : "";
   return `item=${item.itemId}${bonus}${item.ilvl ? `&ilvl=${item.ilvl}` : ""}`;
@@ -230,7 +231,7 @@ function UnknownDetail({ unknown }: { unknown: UnknownReport }) {
 }
 
 /** Warns about Unknown Items; points at the SimC page when a newer SimC Build can be installed. */
-function UnknownBanner({ unknown }: { unknown: UnknownReport }) {
+export function UnknownBanner({ unknown }: { unknown: UnknownReport }) {
   const simc = useSimcStatus();
   const installable = simc.data?.update?.state === "installable";
   const count = unknown.items.length;
@@ -259,7 +260,7 @@ function UnknownBanner({ unknown }: { unknown: UnknownReport }) {
   );
 }
 
-function PassNote({ pass }: { pass: ImportItemsResponse["pass"] }) {
+export function PassNote({ pass }: { pass: ImportItemsResponse["pass"] }) {
   if (pass.status === "ok") return null;
   return (
     <p className="mt-3 text-[12.5px] text-muted">

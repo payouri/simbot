@@ -2,12 +2,10 @@ import {
   characterListResponseSchema,
   characterSchema,
   mergeCharacterRequestSchema,
-  moveSimRequestSchema,
-  simSchema,
   updateCharacterRequestSchema,
 } from "@simbot/shared";
 import type { Db } from "../db";
-import { listCharacters, mergeCharacters, moveSim, updateCharacter } from "../db/characters";
+import { listCharacters, mergeCharacters, updateCharacter } from "../db/characters";
 import { apiError, json, parseId, readBody } from "./util";
 
 /** `GET /api/characters`. */
@@ -44,15 +42,4 @@ export async function postMergeCharacter(db: Db, req: Request, rawId: string): P
   return result.reason === "same_character"
     ? apiError(400, "same_character", { message: "A Character cannot be merged into itself." })
     : apiError(404, "character_not_found");
-}
-
-/** `PATCH /api/sims/:id`: move a Sim to another Character. */
-export async function patchSim(db: Db, req: Request, rawId: string): Promise<Response> {
-  const id = parseId(rawId);
-  if (id === null) return apiError(404, "sim_not_found");
-  const body = await readBody(req, moveSimRequestSchema);
-  if (!body.ok) return body.res;
-  const result = moveSim(db, id, body.data.characterId);
-  if (result.ok) return json(simSchema.parse(result.sim));
-  return apiError(404, result.reason);
 }

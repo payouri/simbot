@@ -10,6 +10,7 @@ import { QueuePage } from "./queue/QueuePage";
 import { HistoryPage } from "./quick-sim/HistoryPage";
 import { QuickSimPage } from "./quick-sim/QuickSimPage";
 import { SimPage } from "./quick-sim/SimPage";
+import { SetupPage } from "./setup/SetupPage";
 import { AppShell } from "./shell/AppShell";
 import { SimcPage } from "./simc/SimcPage";
 
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
   { path: "/quick-sim", element: <QuickSimPage /> },
   { path: "/history", element: <HistoryPage /> },
   { path: "/sims/:id", element: <SimPage /> },
+  { path: "/sims/:id/setup", element: <SetupPage /> },
   { path: "/prototype/top-gear", element: <TopGearPrototypeRoute /> },
   {
     element: <AppShell />,

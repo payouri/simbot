@@ -5,11 +5,13 @@ export {
   adler32,
   type CandidateItem,
   type EquippedItem,
+  equippedTalentsLine,
   isClassKey,
   isEquipmentSlot,
   type ParsedAddonString,
   type ProfileHeader,
   parseAddonString,
+  parseConsumables,
   parseProfileHeader,
   type TalentLoadout,
 } from "./addon-string";

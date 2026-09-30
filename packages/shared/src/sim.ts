@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { topGearSelectionSchema } from "./paperdoll";
 
 /**
  * Life cycle of a Sim. Stop ends a running Sim as `cancelled`; Discard sends a queued or running
@@ -25,7 +26,7 @@ export const simTransitions: Readonly<Record<SimStatus, readonly SimStatus[]>> =
 
 export const canTransition = (from: SimStatus, to: SimStatus) => simTransitions[from].includes(to);
 
-export const simKindSchema = z.enum(["quick"]);
+export const simKindSchema = z.enum(["quick", "top_gear"]);
 export type SimKind = z.infer<typeof simKindSchema>;
 
 export const fightStyleSchema = z.enum([
@@ -107,10 +108,6 @@ export const characterConflictSchema = z.object({
 });
 export type CharacterConflict = z.infer<typeof characterConflictSchema>;
 
-/** `PATCH /api/sims/:id`. Moves a Sim to another Character; its Character Snapshot is untouched. */
-export const moveSimRequestSchema = z.object({ characterId: z.number().int() });
-export type MoveSimRequest = z.infer<typeof moveSimRequestSchema>;
-
 /** Character-dependent traits frozen on a Sim. */
 export const characterSnapshotSchema = z.object({
   name: z.string(),
@@ -152,6 +149,8 @@ export const simSchema = z.object({
   characterId: z.number().int(),
   character: characterSnapshotSchema,
   settings: simSettingsSchema,
+  /** The setup a Draft autosaves; null only for a Sim created before the setup existed. */
+  topGearSelection: topGearSelectionSchema.nullable(),
   /** The SimC Build tag, recorded when the Job starts. */
   simcTag: z.string().nullable(),
   error: simErrorSchema.nullable(),
@@ -162,13 +161,39 @@ export const simSchema = z.object({
 });
 export type Sim = z.infer<typeof simSchema>;
 
-/** `POST /api/sims`. Omitted settings take the defaults; a Quick Sim is the only kind for now. */
-export const createSimRequestSchema = z.object({
-  importId: z.number().int(),
-  kind: simKindSchema.default("quick"),
-  settings: simSettingsSchema.partial().optional(),
-});
+/**
+ * `POST /api/sims`: a Draft from an Import (`importId`) or as a copy of another Sim's input
+ * (`copyFromSimId`); exactly one. Omitted settings take the defaults (a copy: the source's).
+ * `kind` defaults to a Quick Sim for an Import and to the source's kind for a copy.
+ */
+export const createSimRequestSchema = z
+  .object({
+    importId: z.number().int().optional(),
+    copyFromSimId: z.number().int().optional(),
+    kind: simKindSchema.optional(),
+    settings: simSettingsSchema.partial().optional(),
+  })
+  .refine((v) => (v.importId === undefined) !== (v.copyFromSimId === undefined), {
+    message: "Give exactly one of importId, copyFromSimId.",
+  });
 export type CreateSimRequest = z.input<typeof createSimRequestSchema>;
+
+/**
+ * `PATCH /api/sims/:id`. `characterId` moves the Sim to another Character (its Character
+ * Snapshot is untouched) and works in any state. `settings` (any subset) and `topGearSelection`
+ * (replaced whole) change the input, which only a Draft allows.
+ */
+export const patchSimRequestSchema = z
+  .object({
+    characterId: z.number().int(),
+    settings: simSettingsSchema.partial(),
+    topGearSelection: topGearSelectionSchema,
+  })
+  .partial()
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: "Give at least one of characterId, settings, topGearSelection.",
+  });
+export type PatchSimRequest = z.infer<typeof patchSimRequestSchema>;
 
 /**
  * `POST /api/sims/:id/stop`. `keep: true` is Stop (a running Sim becomes `cancelled`, keeping

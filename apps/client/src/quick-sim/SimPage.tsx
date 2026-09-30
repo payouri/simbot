@@ -1,6 +1,6 @@
 import type { SimStatus } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useParams } from "react-router";
+import { Link, Navigate, useParams } from "react-router";
 import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
@@ -45,6 +45,9 @@ export function SimPage() {
     },
   });
   const dps = results.data?.results.find((r) => r.isBaseline)?.dps;
+
+  // A Draft is edited in the setup; Discard sends a Sim back here as a Draft.
+  if (sim.data?.status === "draft") return <Navigate to={`/sims/${id}/setup`} replace />;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 md:px-6">

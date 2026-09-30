@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { type Import, type ItemIndex, itemIndexSchema } from "@simbot/shared";
-import { parseAddonString, parseProfileHeader } from "@simbot/simc";
+import {
+  equippedTalentsLine,
+  parseAddonString,
+  parseConsumables,
+  parseProfileHeader,
+} from "@simbot/simc";
 import type { Db } from ".";
 
 type ImportRow = {
@@ -90,11 +95,16 @@ export function getParsedImport(db: Db, id: number) {
   if (!text) return null;
 
   const parsed = parseAddonString(text);
+  const equipped = equippedTalentsLine(text);
   return {
     character: parsed.character,
     equippedItems: parsed.equippedItems,
     candidateItems: parsed.candidateItems,
-    talentLoadouts: parsed.talentLoadouts,
+    talentLoadouts: parsed.talentLoadouts.map((l) => ({
+      ...l,
+      equipped: l.rawLine.trim() === equipped,
+    })),
+    consumables: parseConsumables(text),
     additionalInfo: parsed.additionalInfo,
     checksumVerification: parsed.checksumVerification,
     report: parsed.report,
@@ -117,4 +127,13 @@ export function getItemIndex(db: Db, id: number): ItemIndex | null {
 
 export function saveItemIndex(db: Db, id: number, index: ItemIndex): void {
   db.run("UPDATE imports SET item_index = ? WHERE id = ?", [JSON.stringify(index), id]);
+}
+
+/** Position, in the Import's Talent Loadout list, of the loadout the character has on. */
+export function equippedLoadoutIndex(db: Db, id: number): number | null {
+  const text = getImportText(db, id);
+  if (!text) return null;
+  const equipped = equippedTalentsLine(text);
+  const at = parseAddonString(text).talentLoadouts.findIndex((l) => l.rawLine.trim() === equipped);
+  return equipped === null || at < 0 ? null : at;
 }

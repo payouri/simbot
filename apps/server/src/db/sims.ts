@@ -4,28 +4,34 @@ import {
   characterSnapshotSchema,
   type DpsSummary,
   defaultSimSettings,
+  defaultTopGearSelection,
+  normalizeSelection,
   type QueueEntry,
   type Sim,
   type SimError,
+  type SimKind,
   type SimResultsResponse,
   type SimSettings,
   type SimStatus,
   simErrorSchema,
   simSettingsSchema,
+  type TopGearSelection,
+  topGearSelectionSchema,
 } from "@simbot/shared";
 import { parseProfileHeader } from "@simbot/simc";
 import type { Db } from ".";
 import { getCharacter } from "./characters";
-import { getImportText } from "./imports";
+import { equippedLoadoutIndex, getImportText } from "./imports";
 
 type SimRow = {
   id: number;
-  kind: "quick";
+  kind: SimKind;
   status: SimStatus;
   import_id: number;
   character_id: number;
   character_snapshot: string;
   settings: string;
+  top_gear_selection: string | null;
   simc_tag: string | null;
   error: string | null;
   created_at: string;
@@ -42,6 +48,9 @@ const toSim = (row: SimRow): Sim => ({
   characterId: row.character_id,
   character: characterSnapshotSchema.parse(JSON.parse(row.character_snapshot)),
   settings: simSettingsSchema.parse(JSON.parse(row.settings)),
+  topGearSelection: row.top_gear_selection
+    ? topGearSelectionSchema.parse(JSON.parse(row.top_gear_selection))
+    : null,
   simcTag: row.simc_tag,
   error: row.error ? simErrorSchema.parse(JSON.parse(row.error)) : null,
   createdAt: row.created_at,
@@ -56,12 +65,12 @@ export function getSim(db: Db, id: number): Sim | null {
 }
 
 /**
- * Creates a Quick Sim Draft from an Import. Omitted settings take the defaults; the merged
- * settings and the Character Snapshot are frozen on the Sim. Null when the Import is unknown.
+ * Creates a Draft from an Import. Omitted settings take the defaults; the merged settings and
+ * the Character Snapshot are frozen on the Sim, and it starts with the default Top Gear Selection. Null when the Import is unknown.
  */
 export function createSim(
   db: Db,
-  input: { importId: number; settings?: Partial<SimSettings> },
+  input: { importId: number; kind?: SimKind; settings?: Partial<SimSettings> },
 ): Sim | null {
   const imp = db
     .query<{ character_id: number }, [number]>("SELECT character_id FROM imports WHERE id = ?")
@@ -80,21 +89,102 @@ export function createSim(
     race: header.race,
     level: header.level,
   };
+  const kind = input.kind ?? "quick";
   const settings = simSettingsSchema.parse({ ...defaultSimSettings, ...input.settings });
+  const selection =
+    kind === "top_gear" ? defaultTopGearSelection(equippedLoadoutIndex(db, input.importId)) : null;
+  return insertDraft(db, {
+    kind,
+    importId: input.importId,
+    characterId: imp.character_id,
+    snapshot,
+    settings,
+    selection,
+  });
+}
+
+/**
+ * Creates a Draft as a copy of another Sim's input: same Import, Character, Character Snapshot,
+ * settings (unless overridden) and Top Gear Selection. Null when the source Sim is unknown.
+ */
+export function copySim(
+  db: Db,
+  sourceId: number,
+  input: { kind?: SimKind; settings?: Partial<SimSettings> } = {},
+): Sim | null {
+  const source = getSim(db, sourceId);
+  if (!source) return null;
+  const kind = input.kind ?? source.kind;
+  return insertDraft(db, {
+    kind,
+    importId: source.importId,
+    characterId: source.characterId,
+    snapshot: source.character,
+    settings: simSettingsSchema.parse({ ...source.settings, ...input.settings }),
+    selection:
+      source.topGearSelection ?? defaultTopGearSelection(equippedLoadoutIndex(db, source.importId)),
+  });
+}
+
+function insertDraft(
+  db: Db,
+  d: {
+    kind: SimKind;
+    importId: number;
+    characterId: number;
+    snapshot: CharacterSnapshot;
+    settings: SimSettings;
+    selection: TopGearSelection | null;
+  },
+): Sim {
   const result = db.run(
-    `INSERT INTO sims (kind, status, import_id, character_id, character_snapshot, settings, created_at)
-     VALUES ('quick', 'draft', ?, ?, ?, ?, ?)`,
+    `INSERT INTO sims (kind, status, import_id, character_id, character_snapshot, settings,
+                       top_gear_selection, created_at)
+     VALUES (?, 'draft', ?, ?, ?, ?, ?, ?)`,
     [
-      input.importId,
-      imp.character_id,
-      JSON.stringify(snapshot),
-      JSON.stringify(settings),
+      d.kind,
+      d.importId,
+      d.characterId,
+      JSON.stringify(d.snapshot),
+      JSON.stringify(d.settings),
+      d.selection ? JSON.stringify(normalizeSelection(d.selection)) : null,
       new Date().toISOString(),
     ],
   );
   const sim = getSim(db, Number(result.lastInsertRowid));
   if (!sim) throw new Error("sim insert failed");
   return sim;
+}
+
+export type UpdateDraftResult =
+  | { ok: true; sim: Sim }
+  | { ok: false; reason: "not_found" | "not_a_draft" };
+
+/**
+ * Saves a Draft's Sim Settings (merged over the stored ones) and Top Gear Selection (replaced
+ * whole). The row must still be a Draft when written, so a Sim queued in between is left alone.
+ */
+export function updateDraft(
+  db: Db,
+  id: number,
+  patch: { settings?: Partial<SimSettings>; topGearSelection?: TopGearSelection },
+): UpdateDraftResult {
+  return db.transaction((): UpdateDraftResult => {
+    const current = getSim(db, id);
+    if (!current) return { ok: false, reason: "not_found" };
+    if (current.status !== "draft") return { ok: false, reason: "not_a_draft" };
+    const settings = simSettingsSchema.parse({ ...current.settings, ...patch.settings });
+    const selection = patch.topGearSelection
+      ? normalizeSelection(patch.topGearSelection)
+      : current.topGearSelection;
+    db.run(
+      "UPDATE sims SET settings = ?, top_gear_selection = ? WHERE id = ? AND status = 'draft'",
+      [JSON.stringify(settings), selection ? JSON.stringify(selection) : null, id],
+    );
+    const sim = getSim(db, id);
+    if (!sim) throw new Error("sim vanished");
+    return { ok: true, sim };
+  })();
 }
 
 /**
@@ -388,7 +478,7 @@ export function getQueue(db: Db): QueueEntry[] {
         job_id: number;
         sim_id: number;
         job_status: "queued" | "running";
-        kind: "quick";
+        kind: SimKind;
         character_snapshot: string;
         queued_at: string | null;
         started_at: string | null;

@@ -19,13 +19,14 @@ import type { Db } from "../db";
 import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
 import type { LiveTracker } from "../live";
-import { getCharacters, patchCharacter, patchSim, postMergeCharacter } from "./characters";
+import { getCharacters, patchCharacter, postMergeCharacter } from "./characters";
 import { getIcon, getImportItems, getImportParsed, postImport } from "./imports";
 import {
   deleteSim_Handler,
   getResults,
   getSimById,
   getSims,
+  patchSim,
   postCopySimToDraft,
   postQueueSim,
   postSim,
@@ -288,7 +289,7 @@ export function createHttpHandler({
           return apiError(500, "internal_error");
         }
       }
-      if (req.method === "PATCH" && !action) return patchSim(db, req, id);
+      if (req.method === "PATCH" && !action) return patchSim(db, items, req, id);
       if (req.method === "DELETE") {
         return deleteSim_Handler(db, id, dataDir);
       }

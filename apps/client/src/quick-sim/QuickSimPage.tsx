@@ -36,6 +36,16 @@ export function QuickSimPage() {
     onSuccess: (sim) => navigate(`/sims/${sim.id}`),
   });
 
+  const setup = useMutation({
+    mutationFn: async () => {
+      const imp = await createImport(text);
+      return createSim({ importId: imp.id, kind: "top_gear", settings });
+    },
+    onSuccess: (draft) => navigate(`/sims/${draft.id}/setup`),
+  });
+  const error = run.error ?? setup.error;
+  const busy = run.isPending || setup.isPending;
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 md:px-6">
       <h1 className="text-[24px] font-semibold tracking-tight">Quick Sim</h1>
@@ -58,7 +68,7 @@ export function QuickSimPage() {
           rows={12}
           placeholder={'# Name - Spec - 2026-09-29 22:41 - EU/Realm\n\ndeathknight="Name"\n…'}
           className={`w-full resize-y rounded-[10px] border bg-sunk px-4 py-3.5 font-mono text-[12.5px] text-fg focus:border-action ${
-            run.isError ? "border-loss/60" : "border-line"
+            error ? "border-loss/60" : "border-line"
           }`}
         />
 
@@ -135,22 +145,30 @@ export function QuickSimPage() {
           />
         </details>
 
-        {run.isError && (
+        {error && (
           <p
             role="alert"
             className="rounded-lg border border-loss/35 bg-loss-wash p-3 text-[12.5px]"
           >
-            {run.error.message}
+            {error.message}
           </p>
         )}
 
         <div className="flex items-center gap-4">
           <button
             type="submit"
-            disabled={text.trim() === "" || run.isPending}
+            disabled={text.trim() === "" || busy}
             className="h-9 rounded-[7px] bg-action px-5 text-[14px] font-semibold text-action-ink transition-colors duration-150 hover:bg-action-strong disabled:bg-raised disabled:text-faint"
           >
             {run.isPending ? "Queuing…" : "Run Quick Sim"}
+          </button>
+          <button
+            type="button"
+            disabled={text.trim() === "" || busy}
+            onClick={() => setup.mutate()}
+            className="h-9 rounded-[7px] border border-line-strong px-4 text-[13px] font-medium hover:bg-raised disabled:text-faint"
+          >
+            {setup.isPending ? "Reading…" : "Set up Top Gear"}
           </button>
           <Link to="/history" className="text-[12.5px] text-muted hover:text-fg">
             History

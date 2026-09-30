@@ -309,3 +309,33 @@ export function parseAddonString(text: string): ParsedAddonString {
     },
   };
 }
+
+/** SimC options that describe consumables in a profile. */
+const CONSUMABLE_KEYS = ["flask", "food", "potion", "augmentation", "temporary_enchant"];
+
+/**
+ * The consumables a profile has on: the `flask=`, `food=`, `potion=`, `augmentation=` and
+ * `temporary_enchant=` lines outside comments. A value of `disabled` or an empty one is dropped.
+ */
+export function parseConsumables(text: string): Record<string, string> {
+  const found: Record<string, string> = {};
+  for (const line of text.split(/\r?\n/)) {
+    if (line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq < 1) continue;
+    const key = line.slice(0, eq).trim();
+    const value = unquote(line.slice(eq + 1));
+    if (CONSUMABLE_KEYS.includes(key) && value !== "" && value !== "disabled") {
+      found[key] ??= value;
+    }
+  }
+  return found;
+}
+
+/** The `talents=` line the character has on (the profile's, not a saved loadout's comment). */
+export function equippedTalentsLine(text: string): string | null {
+  for (const line of text.split(/\r?\n/)) {
+    if (line.startsWith("talents=")) return line.trim();
+  }
+  return null;
+}

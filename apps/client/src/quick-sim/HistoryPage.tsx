@@ -45,7 +45,7 @@ export function HistoryPage() {
   const copyMutation = useMutation({
     mutationFn: (id: number) => copySimToDraft(id),
     onSuccess: (newSim) => {
-      navigate(`/sims/${newSim.id}`);
+      navigate(`/sims/${newSim.id}/setup`);
     },
   });
 
