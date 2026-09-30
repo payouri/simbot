@@ -1,6 +1,6 @@
 import { readCsvColumns } from "./csv";
 import { type IncBonus, parseItemBonuses, parseItemData, parseItemEffects } from "./inc";
-import type { HandType, ItemMeta, MetaBonus, MetaGem, MetaItem } from "./schema";
+import type { HandType, ItemMeta, LimitCategory, MetaBonus, MetaGem, MetaItem } from "./schema";
 
 /**
  * Item classes that go into item-meta and item-icons: weapons and armour, which is everything
@@ -50,6 +50,8 @@ export type ItemMetaSources = {
   /** DB2 `ItemSparse` (needs `ID`, `LimitCategory`) and `ItemLimitCategory` at its game build. */
   itemSparseCsv: string;
   itemLimitCategoryCsv: string;
+  /** DB2 `ItemLimitCategoryCondition` (`AddQuantity`, `PlayerConditionID`, `ParentItemLimitCategoryID`). */
+  itemLimitCategoryConditionCsv: string;
 };
 
 export type BuildIdentity = { tag: string; gitRevision: string; gameDataVersion: string };
@@ -145,6 +147,20 @@ export function buildItemMeta(build: BuildIdentity, src: ItemMetaSources): ItemM
       flags: Number(flags),
     };
   }
+  const conditionRows = readCsvColumns(src.itemLimitCategoryConditionCsv, [
+    "AddQuantity",
+    "PlayerConditionID",
+    "ParentItemLimitCategoryID",
+  ]);
+  for (const [addQuantity, playerConditionId, parent] of conditionRows) {
+    const category = limitCategories[parent as string];
+    if (!category) continue; // a condition on a category that does not exist limits nothing
+    category.conditions ??= [];
+    category.conditions.push({
+      addQuantity: Number(addQuantity),
+      playerConditionId: Number(playerConditionId),
+    });
+  }
 
   return {
     schemaVersion: 1,
@@ -157,6 +173,14 @@ export function buildItemMeta(build: BuildIdentity, src: ItemMetaSources): ItemM
     gems,
   };
 }
+
+/**
+ * How many items of a category can be equipped at once in the best case: its quantity plus
+ * whatever each condition adds. Whether the player meets a condition is unknown here, so pruning
+ * with this never drops a Combination the game allows.
+ */
+export const maxQuantityOf = (category: LimitCategory): number =>
+  category.quantity + (category.conditions ?? []).reduce((sum, c) => sum + c.addQuantity, 0);
 
 /**
  * The appearance modifier a set of bonus ids selects: across all of them, the type 7 entry

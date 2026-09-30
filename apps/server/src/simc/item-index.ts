@@ -29,7 +29,7 @@ import {
 import type { Db } from "../db";
 import { getImportText, getItemIndex, saveItemIndex } from "../db/imports";
 import type { Launch } from "./check-sim";
-import { readBuildMeta } from "./meta";
+import { isStaleMeta, readBuildMeta } from "./meta";
 
 /** A wedged SimC must not hold an Import request forever. A real pass takes well under 1 s. */
 const PASS_TIMEOUT_MS = 60_000;
@@ -149,7 +149,9 @@ export function createItemIndexer(deps: ItemIndexerDeps) {
   const inflight = new Map<number, Promise<ItemIndex | null>>();
 
   const metaFor = async (tag: string) => {
-    if (!metaCache.get(tag)) metaCache.set(tag, await readBuildMeta(dataDir, tag));
+    const cached = metaCache.get(tag);
+    // Stale data is re-read until the boot's rebuild replaces it.
+    if (!cached || isStaleMeta(cached)) metaCache.set(tag, await readBuildMeta(dataDir, tag));
     return metaCache.get(tag) ?? null;
   };
 
@@ -275,7 +277,8 @@ export function createItemIndexer(deps: ItemIndexerDeps) {
         quality: meta && shown ? qualityOf(meta, i.bonusIds, shown.quality) : null,
         icon:
           data && meta && shown && i.itemId !== null
-            ? (iconFor(data.icons, i.itemId, appearanceModFor(meta, i.bonusIds)) ?? null)
+            ? (iconFor(data.icons, i.itemId, appearanceModFor(meta, i.bonusIds), i.bonusIds) ??
+              null)
             : null,
         selectable: i.source !== "equipped" && i.status === "ok",
       };

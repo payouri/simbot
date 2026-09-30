@@ -1,5 +1,6 @@
 import { isEquippable } from "./build-meta";
 import { readCsvColumns } from "./csv";
+import { parseItemBonuses } from "./inc";
 import type { ItemIcons } from "./schema";
 
 export type ItemIconSources = {
@@ -8,6 +9,8 @@ export type ItemIconSources = {
   itemModifiedAppearanceCsv: string;
   itemAppearanceCsv: string;
   manifestInterfaceDataCsv: string;
+  /** `item_bonus.inc` at the build's git_revision, for bonus type 28 icon overrides. */
+  itemBonusInc: string;
 };
 
 export type IconBuildIdentity = { tag: string; gameDataVersion: string };
@@ -32,6 +35,7 @@ export class IconCoverageError extends Error {
   }
 }
 
+const BONUS_ICON = 28;
 const ICON_DIR = "interface\\icons\\";
 
 /** `Interface\Icons\INV_Chest Samurai.blp` -> `inv_chest_samurai`; null outside the icon dir. */
@@ -56,6 +60,14 @@ export function buildItemIcons(build: IconBuildIdentity, src: ItemIconSources): 
   ])) {
     const icon = iconNameOf(path as string, name as string);
     if (icon) iconByFile.set(Number(id), icon);
+  }
+
+  // Bonus type 28: value_1 is the icon's FileDataID. Across a bonus id's rows the first wins.
+  const bonusIcons: Record<string, string> = {};
+  for (const row of [...parseItemBonuses(src.itemBonusInc)].sort((a, b) => a.index - b.index)) {
+    if (row.type !== BONUS_ICON) continue;
+    const icon = iconByFile.get(row.value1);
+    if (icon) bonusIcons[row.bonusId] ??= icon;
   }
 
   const appearanceIcon = new Map<number, number>();
@@ -118,18 +130,27 @@ export function buildItemIcons(build: IconBuildIdentity, src: ItemIconSources): 
       gameDataVersion: build.gameDataVersion,
       items,
       appearanceMods,
+      bonusIcons,
     },
     equippable,
     resolved,
   };
 }
 
-/** The icon for an item, honouring its appearance modifier when the icon depends on it. */
+/**
+ * The icon for an item: a bonus icon override (type 28) if one of `bonusIds` has one, else the
+ * per-appearance icon when it depends on the appearance modifier, else the item's own.
+ */
 export function iconFor(
   icons: ItemIcons,
   itemId: number,
   appearanceMod?: number,
+  bonusIds: readonly number[] = [],
 ): string | undefined {
+  for (const id of bonusIds) {
+    const override = icons.bonusIcons?.[id];
+    if (override) return override;
+  }
   const perMod = appearanceMod === undefined ? undefined : icons.appearanceMods[itemId];
   return perMod?.[appearanceMod as number] ?? icons.items[itemId];
 }

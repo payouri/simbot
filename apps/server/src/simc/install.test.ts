@@ -15,6 +15,7 @@ import { join } from "node:path";
 import { simcStatusResponseSchema } from "@simbot/shared";
 import { itemIconsSchema, itemMetaSchema } from "@simbot/simc";
 import { createApp } from "../app";
+import { isStaleMeta, readBuildMeta } from "./meta";
 import { fakeRegistry, fixture, json2, LATEST_NIGHTLY } from "./registry-fixture";
 
 let root: string;
@@ -266,7 +267,7 @@ describe("item-meta and item-icons", () => {
       );
     }
     const wago = calls.filter((u) => u.includes("wago.tools"));
-    expect(wago).toHaveLength(6);
+    expect(wago).toHaveLength(7);
     for (const url of wago) expect(url).toEndWith("/csv?build=12.1.0.69933");
   });
 
@@ -305,6 +306,36 @@ describe("item-meta and item-icons", () => {
     await boot(again).boot();
     expect(metaCalls(again.calls).length).toBeGreaterThan(0);
     expect(itemMetaSchema.safeParse(readMeta("item-meta.json")).success).toBe(true);
+  });
+
+  test("item data built before icon overrides were read is rebuilt", async () => {
+    await boot(fakeRegistry()).boot();
+    const file = join(metaDirFor(), "item-icons.json");
+    const icons = JSON.parse(readFileSync(file, "utf8"));
+    icons.bonusIcons = undefined;
+    writeFileSync(file, JSON.stringify(icons));
+    app?.close();
+    const again = fakeRegistry();
+    await boot(again).boot();
+    expect(metaCalls(again.calls).length).toBeGreaterThan(0);
+    expect(readMeta("item-icons.json").bonusIcons).toBeDefined();
+  });
+
+  test("stale item data stays readable when its rebuild fails", async () => {
+    await boot(fakeRegistry()).boot();
+    const file = join(metaDirFor(), "item-icons.json");
+    const icons = JSON.parse(readFileSync(file, "utf8"));
+    icons.bonusIcons = undefined;
+    writeFileSync(file, JSON.stringify(icons));
+    app?.close();
+    const failing = fakeRegistry((url) =>
+      url.includes("wago.tools") ? new Response("", { status: 400 }) : undefined,
+    );
+    await boot(failing).boot();
+    expect(logs.join("\n")).toContain("could not build item-meta and item-icons");
+    const kept = await readBuildMeta(dataDir, LATEST_NIGHTLY);
+    expect(kept?.icons.items[270175]).toBe("inv_121_trinket_raid_ulatek_heart");
+    expect(kept && isStaleMeta(kept)).toBe(true);
   });
 
   test("transient failures on the network sources are retried", async () => {

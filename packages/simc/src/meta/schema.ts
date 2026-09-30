@@ -57,6 +57,15 @@ export const limitCategorySchema = z.object({
   /** How many items of the category may be equipped at once. */
   quantity: z.number().int(),
   flags: z.number().int(),
+  /**
+   * ItemLimitCategoryCondition rows: `addQuantity` more items of the category may be equipped
+   * while the player meets `playerConditionId`. The condition is game state we cannot read, so
+   * the usable maximum is `quantity` plus every `addQuantity` (see `maxQuantityOf`).
+   * Absent when the category has no condition, and in files built before conditions were read.
+   */
+  conditions: z
+    .array(z.object({ addQuantity: z.number().int(), playerConditionId: z.number().int() }))
+    .optional(),
 });
 export type LimitCategory = z.infer<typeof limitCategorySchema>;
 
@@ -90,5 +99,10 @@ export const itemIconsSchema = z.object({
    * item id -> ItemAppearanceModifierID -> icon name. Overrides `items` when present.
    */
   appearanceMods: z.record(z.string(), z.record(z.string(), z.string())),
+  /**
+   * Bonus id -> icon name, for bonuses of type 28 that replace the item's icon. Beats `items`
+   * and `appearanceMods`. Absent in files built before overrides were read: none applies.
+   */
+  bonusIcons: z.record(z.string(), z.string()).optional(),
 });
 export type ItemIcons = z.infer<typeof itemIconsSchema>;

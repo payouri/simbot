@@ -51,7 +51,7 @@ const meta: ItemMeta = {
   gems: { [DIAMOND]: { limitCategory: 698 }, [CITRINE]: { uniqueEquipped: true } },
 };
 
-function service(items: ImportItem[]) {
+function service(items: ImportItem[], itemMeta: ItemMeta = meta) {
   const db = new Database(":memory:");
   migrate(db);
   const view: ImportItemsResponse = {
@@ -63,7 +63,7 @@ function service(items: ImportItem[]) {
   };
   return createCombinationService({
     db,
-    items: { view: async () => view, meta: async () => meta },
+    items: { view: async () => view, meta: async () => itemMeta },
     currentBuild: async () => null,
   });
 }
@@ -89,6 +89,33 @@ describe("gem limits from item-meta", () => {
     // {1,2} worn; {1,4} and {2,4} would wear two Thalassian Diamonds.
     expect(p?.count).toBe(1);
     expect(p?.issues.map((i) => i.candidate)).toEqual([3]);
+  });
+
+  test("a condition that adds quantity to the category keeps the second gem", async () => {
+    // The player condition is unknowable here, so pruning allows the category's best case.
+    const conditional: ItemMeta = {
+      ...meta,
+      limitCategories: {
+        698: {
+          name: "Thalassian Diamond",
+          quantity: 1,
+          flags: 1,
+          conditions: [{ addQuantity: 1, playerConditionId: 42484 }],
+        },
+      },
+    };
+    const svc = service(
+      [
+        item(0, "head", "equipped", 1, DIAMOND),
+        item(1, "finger1", "equipped", 2),
+        item(2, "finger2", "equipped", 3),
+        item(3, "finger1", "bags", 4, DIAMOND),
+      ],
+      conditional,
+    );
+    const p = await svc.preview(sim([3]));
+    expect(p?.count).toBe(3);
+    expect(p?.issues).toEqual([]);
   });
 
   test("a unique-equipped gem is worn at most once", async () => {

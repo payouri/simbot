@@ -31,6 +31,14 @@ export type MetaDeps = {
   sleep?: (ms: number) => Promise<void>;
 };
 
+/**
+ * Item data built before bonus icon overrides and limit conditions were read: its icons lack
+ * `bonusIcons`. Both files are built together, so this one marker covers the pair. It is still
+ * usable (no override applies, no condition is known), so readers keep it while
+ * `ensureBuildMeta` rebuilds it, and keep it when the rebuild fails.
+ */
+export const isStaleMeta = (data: { icons: ItemIcons }) => data.icons.bonusIcons === undefined;
+
 /** Reads a build's item-meta and item-icons, or null unless both are present and valid. */
 export const readBuildMeta = (dataDir: string, tag: string) =>
   readMetaDir(metaDir(dataDir, tag), tag);
@@ -99,13 +107,15 @@ function createTextFetcher({ fetch, sleep = Bun.sleep }: MetaDeps) {
 /**
  * Builds `item-meta.json` and `item-icons.json` for `build` into `<dataDir>/meta/<tag>/`,
  * through `.partial/` so a failure leaves nothing behind. Does nothing when both files are
- * already there and valid. Throws on any failure: callers decide whether that is fatal.
+ * already there, valid and not stale. A stale pair stays in place until its rebuild succeeds.
+ * Throws on any failure: callers decide whether that is fatal.
  */
 export async function ensureBuildMeta(
   opts: { dataDir: string; build: SimcBuild } & MetaDeps,
 ): Promise<{ built: false } | { built: true; equippable: number; resolved: number }> {
   const { dataDir, build } = opts;
-  if (await readBuildMeta(dataDir, build.tag)) return { built: false };
+  const existing = await readBuildMeta(dataDir, build.tag);
+  if (existing && !isStaleMeta(existing)) return { built: false };
 
   const get = createTextFetcher(opts);
   const { gitRevision, gameDataVersion, tag } = build;
@@ -122,6 +132,7 @@ export async function ensureBuildMeta(
   const itemModifiedAppearanceCsv = await db2("ItemModifiedAppearance");
   const itemAppearanceCsv = await db2("ItemAppearance");
   const manifestInterfaceDataCsv = await db2("ManifestInterfaceData");
+  const itemLimitCategoryConditionCsv = await db2("ItemLimitCategoryCondition");
 
   const meta = buildItemMeta(
     { tag, gitRevision, gameDataVersion },
@@ -131,11 +142,18 @@ export async function ensureBuildMeta(
       itemBonusInc: itemBonusInc as string,
       itemSparseCsv,
       itemLimitCategoryCsv,
+      itemLimitCategoryConditionCsv,
     },
   );
   const { icons, equippable, resolved } = buildItemIcons(
     { tag, gameDataVersion },
-    { itemCsv, itemModifiedAppearanceCsv, itemAppearanceCsv, manifestInterfaceDataCsv },
+    {
+      itemCsv,
+      itemModifiedAppearanceCsv,
+      itemAppearanceCsv,
+      manifestInterfaceDataCsv,
+      itemBonusInc: itemBonusInc as string,
+    },
   );
 
   const final = metaDir(dataDir, tag);

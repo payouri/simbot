@@ -25,6 +25,7 @@ import {
   generateCombinations,
   type ItemMeta,
   isSoftWarning,
+  maxQuantityOf,
   parseItemLine,
   preselect,
   weaponRulesFor,
@@ -161,7 +162,7 @@ export function createCombinationService(deps: CombinationServiceDeps) {
       });
     }
     const categoryLimits = new Map(
-      Object.entries(meta?.limitCategories ?? {}).map(([id, c]) => [Number(id), c.quantity]),
+      Object.entries(meta?.limitCategories ?? {}).map(([id, c]) => [Number(id), maxQuantityOf(c)]),
     );
     const input: GenerateInput = {
       items: gear,

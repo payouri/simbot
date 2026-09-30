@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildItemIcons, IconCoverageError, iconFor, iconNameOf } from "./build-icons";
-import { appearanceModFor, buildItemMeta } from "./build-meta";
+import { appearanceModFor, buildItemMeta, maxQuantityOf } from "./build-meta";
 import { readCsvColumns } from "./csv";
 import { IncFormatError, parseItemBonuses, parseItemData, parseItemEffects } from "./inc";
-import { itemIconsSchema, itemMetaSchema } from "./schema";
+import { itemIconsSchema, itemMetaSchema, type LimitCategory } from "./schema";
 import { compareWithJson2, sampleItemIds, sampleProfile, tokenizeName } from "./verify";
 
 /**
@@ -25,12 +25,14 @@ const metaSources = {
   itemBonusInc: fx("item_bonus.inc"),
   itemSparseCsv: fx("ItemSparse.csv"),
   itemLimitCategoryCsv: fx("ItemLimitCategory.csv"),
+  itemLimitCategoryConditionCsv: fx("ItemLimitCategoryCondition.csv"),
 };
 const iconSources = {
   itemCsv: fx("Item.csv"),
   itemModifiedAppearanceCsv: fx("ItemModifiedAppearance.csv"),
   itemAppearanceCsv: fx("ItemAppearance.csv"),
   manifestInterfaceDataCsv: fx("ManifestInterfaceData.csv"),
+  itemBonusInc: fx("item_bonus.inc"),
 };
 
 describe("readCsvColumns", () => {
@@ -156,6 +158,35 @@ describe("buildItemMeta", () => {
     expect(meta.limitCategories[512]).toEqual({ name: "Embellished", quantity: 2, flags: 1 });
   });
 
+  test("carries ItemLimitCategoryCondition rows on their parent category", () => {
+    expect(meta.limitCategories[353]).toEqual({
+      name: "Test Item Limit Category Crafted",
+      quantity: 3,
+      flags: 1,
+      conditions: [
+        { addQuantity: 1, playerConditionId: 38916 },
+        { addQuantity: 1, playerConditionId: 20106 },
+      ],
+    });
+    expect(meta.limitCategories[357]?.conditions).toEqual([
+      { addQuantity: 1, playerConditionId: 42484 },
+    ]);
+    // A category without a condition carries none.
+    expect(meta.limitCategories[512]?.conditions).toBeUndefined();
+  });
+
+  test("maxQuantityOf is the quantity plus what every condition adds", () => {
+    expect(maxQuantityOf(meta.limitCategories[353] as LimitCategory)).toBe(5);
+    expect(maxQuantityOf(meta.limitCategories[357] as LimitCategory)).toBe(2);
+    expect(maxQuantityOf(meta.limitCategories[512] as LimitCategory)).toBe(2);
+  });
+
+  test("a condition on an unknown category is dropped", () => {
+    const orphan = "ID,AddQuantity,PlayerConditionID,ParentItemLimitCategoryID\n9,1,1,99999\n";
+    const built = buildItemMeta(build, { ...metaSources, itemLimitCategoryConditionCsv: orphan });
+    expect(built.limitCategories[99999]).toBeUndefined();
+  });
+
   test("keeps only equippable armour and weapons", () => {
     expect(meta.items[187552]).toBeDefined(); // an armour piece with an on-use effect
     expect(meta.items[265714]).toBeUndefined(); // armour class, no inventory slot
@@ -234,6 +265,24 @@ describe("buildItemIcons", () => {
     // No modifier, or one the item has no icon for, gives the default.
     expect(iconFor(icons, 236772)).toBe(icons.items[236772]);
     expect(iconFor(icons, 236772, 9999)).toBe(icons.items[236772]);
+  });
+
+  test("reads bonus type 28 icon overrides as icon names", () => {
+    expect(icons.bonusIcons).toEqual({
+      6609: "inv_helm_goggles_shadowlandstradeskill_d_01_green",
+      8855: "ability_creature_disease_04",
+      8857: "inv_10_inscription3_darkmoondeckbox_bronze",
+    });
+  });
+
+  test("an item carrying a bonus override shows the overridden icon", () => {
+    expect(iconFor(icons, 270175, undefined, [6609])).toBe(
+      "inv_helm_goggles_shadowlandstradeskill_d_01_green",
+    );
+    // The override beats a per-appearance icon too.
+    expect(iconFor(icons, 236772, 3, [1234, 8855])).toBe("ability_creature_disease_04");
+    // Bonuses without an override leave the icon alone.
+    expect(iconFor(icons, 270175, undefined, [1234])).toBe(icons.items[270175]);
   });
 
   test("keeps items whose modifiers share one icon out of the per-modifier map", () => {

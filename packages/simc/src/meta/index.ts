@@ -7,6 +7,7 @@ export {
   EQUIPPABLE_ITEM_CLASSES,
   handTypeOf,
   isEquippable,
+  maxQuantityOf,
 } from "./build-meta";
 export { IncFormatError } from "./inc";
 export * from "./schema";
