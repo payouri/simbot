@@ -7,6 +7,12 @@ import type { StageResult } from "./sim";
  */
 export const NOISE_SIGMA = 2;
 
+/** Tone of a build-to-build DPS delta: noise unless it clears both builds' combined error. */
+export function deltaTone(diff: number, errorA: number, errorB: number): "gain" | "loss" | "noise" {
+  if (Math.abs(diff) <= NOISE_SIGMA * Math.hypot(errorA, errorB)) return "noise";
+  return diff > 0 ? "gain" : "loss";
+}
+
 /** How a row reads against the equipped set. `noise`: cannot be told apart from #1 or from 0. */
 export type RowTone = "base" | "gain" | "loss" | "noise";
 

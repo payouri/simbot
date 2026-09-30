@@ -1,4 +1,5 @@
 import {
+  deltaTone,
   MAX_KEEP_BUILDS,
   type SimcCheckSim,
   type SimcJob,
@@ -105,11 +106,15 @@ function JobPanel({ job }: { job: SimcJob }) {
   );
 }
 
+const TONE_CLASS = { gain: "text-gain", loss: "text-loss", noise: "text-noise" } as const;
+
 /** Check Sim DPS of the Current SimC Build, as a delta against the previous build when known. */
 function CheckSimDelta({ check }: { check: SimcCheckSim }) {
   const prev = check.previous;
   const diff = prev ? check.dps.mean - prev.dps.mean : null;
   const pct = prev && diff !== null && prev.dps.mean > 0 ? (diff / prev.dps.mean) * 100 : null;
+  const tone =
+    prev && diff !== null ? deltaTone(diff, check.dps.meanError, prev.dps.meanError) : "noise";
   return (
     <section className="rounded-xl border border-line bg-panel p-5">
       <h2 className="text-[14px] font-semibold">Check Sim</h2>
@@ -117,7 +122,7 @@ function CheckSimDelta({ check }: { check: SimcCheckSim }) {
         {dpsFormat.format(check.dps.mean)} DPS ± {dpsFormat.format(check.dps.meanError)}
       </p>
       {prev && diff !== null ? (
-        <p className={`mt-1 num text-[13px] ${diff >= 0 ? "text-gain" : "text-loss"}`}>
+        <p className={`mt-1 num text-[13px] ${TONE_CLASS[tone]}`}>
           {diff >= 0 ? "+" : "−"}
           {dpsFormat.format(Math.abs(diff))} DPS
           {pct !== null && ` (${diff >= 0 ? "+" : "−"}${Math.abs(pct).toFixed(2)}%)`}

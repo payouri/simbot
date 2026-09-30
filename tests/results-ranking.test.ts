@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   changedSlots,
+  deltaTone,
   type ImportItem,
   moveSelection,
   NOISE_SIGMA,
@@ -208,5 +209,17 @@ describe("moveSelection", () => {
     expect(moveSelection(9, 10, "j")).toBe(9);
     expect(moveSelection(4, 10, "x")).toBe(4);
     expect(moveSelection(4, 0, "j")).toBe(0);
+  });
+});
+
+describe("deltaTone", () => {
+  test("a delta inside the combined error is noise, including zero", () => {
+    expect(deltaTone(10, 400, 400)).toBe("noise");
+    expect(deltaTone(-10, 400, 400)).toBe("noise");
+    expect(deltaTone(0, 0, 0)).toBe("noise");
+  });
+  test("a delta clearing the combined error is gain or loss", () => {
+    expect(deltaTone(2000, 400, 400)).toBe("gain");
+    expect(deltaTone(-2000, 400, 400)).toBe("loss");
   });
 });
