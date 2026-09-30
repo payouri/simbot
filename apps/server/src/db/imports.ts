@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { Import } from "@simbot/shared";
-import { parseProfileHeader } from "@simbot/simc";
+import { parseAddonString, parseProfileHeader } from "@simbot/simc";
 import type { Db } from ".";
 
 type ImportRow = {
@@ -79,4 +79,24 @@ export function getImportText(db: Db, id: number): string | null {
     db.query<{ raw_text: string }, [number]>("SELECT raw_text FROM imports WHERE id = ?").get(id)
       ?.raw_text ?? null
   );
+}
+
+/**
+ * Parse the Addon String of an import and return the parsed data with verification results.
+ * Returns null if the import doesn't exist.
+ */
+export function getParsedImport(db: Db, id: number) {
+  const text = getImportText(db, id);
+  if (!text) return null;
+
+  const parsed = parseAddonString(text);
+  return {
+    character: parsed.character,
+    equippedItems: parsed.equippedItems,
+    candidateItems: parsed.candidateItems,
+    talentLoadouts: parsed.talentLoadouts,
+    additionalInfo: parsed.additionalInfo,
+    checksumVerification: parsed.checksumVerification,
+    report: parsed.report,
+  };
 }

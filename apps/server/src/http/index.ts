@@ -13,7 +13,7 @@ import type { Db } from "../db";
 import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
 import type { LiveTracker } from "../live";
-import { postImport } from "./imports";
+import { getImportParsed, postImport } from "./imports";
 import { getResults, getSimById, postQueueSim, postSim } from "./sims";
 import { apiError, json } from "./util";
 
@@ -142,6 +142,12 @@ export function createHttpHandler({ db, bus, live, clientDir, simc }: HttpDeps) 
     if (pathname === "/api/imports") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
       return postImport(db, req);
+    }
+    const importParsedRoute = pathname.match(/^\/api\/imports\/([^/]+)\/parsed$/);
+    if (importParsedRoute) {
+      const [, id] = importParsedRoute;
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return getImportParsed(db, Number(id));
     }
     if (pathname === "/api/sims") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
