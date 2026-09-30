@@ -10,6 +10,7 @@ const STATUS_LABEL: Record<SimStatus, string> = {
   running: "Running",
   succeeded: "Succeeded",
   failed: "Failed",
+  cancelled: "Stopped",
 };
 
 const STATUS_COLOR: Record<SimStatus, string> = {
@@ -18,6 +19,7 @@ const STATUS_COLOR: Record<SimStatus, string> = {
   running: "text-info",
   succeeded: "text-win",
   failed: "text-loss",
+  cancelled: "text-muted",
 };
 
 /** History of all Sims, filterable by Character and status. */
@@ -92,20 +94,22 @@ export function HistoryPage() {
         >
           All
         </button>
-        {(["draft", "queued", "running", "succeeded", "failed"] as SimStatus[]).map((status) => (
-          <button
-            type="button"
-            key={status}
-            onClick={() => setSelectedStatus(status)}
-            className={`rounded-[5px] px-3 py-2 text-[12.5px] ${
-              selectedStatus === status
-                ? "bg-raised text-fg ring-1 ring-line-strong"
-                : "text-muted hover:text-fg"
-            }`}
-          >
-            {STATUS_LABEL[status]}
-          </button>
-        ))}
+        {(["draft", "queued", "running", "succeeded", "failed", "cancelled"] as SimStatus[]).map(
+          (status) => (
+            <button
+              type="button"
+              key={status}
+              onClick={() => setSelectedStatus(status)}
+              className={`rounded-[5px] px-3 py-2 text-[12.5px] ${
+                selectedStatus === status
+                  ? "bg-raised text-fg ring-1 ring-line-strong"
+                  : "text-muted hover:text-fg"
+              }`}
+            >
+              {STATUS_LABEL[status]}
+            </button>
+          ),
+        )}
       </div>
 
       {sims.isLoading && <p className="text-muted">Loading…</p>}

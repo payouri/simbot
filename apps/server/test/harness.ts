@@ -29,6 +29,7 @@ export const fakeLaunch =
     scenario: () => string,
     report: () => string | undefined = () => undefined,
     gate: () => string | undefined = () => undefined,
+    stubborn: () => boolean = () => false,
   ): Launch =>
   (_buildDir, args) => {
     const reportPath = report();
@@ -39,9 +40,29 @@ export const fakeLaunch =
       `--scenario=${scenario()}`,
       ...(reportPath ? [`--report=${reportPath}`] : []),
       ...(gatePath ? [`--gate=${gatePath}`] : []),
+      ...(stubborn() ? ["--stubborn"] : []),
       ...args,
     ];
   };
+
+/** Boot recovery's test for "is this stored PID still `simc`": the fake one is a `bun` script. */
+export const isFakeSimc = (pid: number): boolean => {
+  try {
+    return readFileSync(`/proc/${pid}/cmdline`, "utf8").includes("fake-simc.ts");
+  } catch {
+    return false;
+  }
+};
+
+/** Whether a process is running (a zombie awaiting its reaper does not count). */
+export const isAlive = (pid: number): boolean => {
+  try {
+    const stat = readFileSync(`/proc/${pid}/stat`, "utf8");
+    return stat.slice(stat.lastIndexOf(")") + 2, stat.lastIndexOf(")") + 3) !== "Z";
+  } catch {
+    return false;
+  }
+};
 
 /** A scenario directory that starts as a copy of a recorded one, then applies `edit`. */
 export function derivedScenario(
@@ -92,6 +113,7 @@ export function makeHarness(
     withBuild?: boolean;
     debugLogs?: boolean;
     progressIntervalMs?: number;
+    killGraceMs?: number;
   } = {},
 ) {
   const root = mkdtempSync(join(tmpdir(), "simbot-quick-"));
@@ -103,6 +125,8 @@ export function makeHarness(
       log: () => {},
       debugLogs: opts.debugLogs,
       progressIntervalMs: opts.progressIntervalMs,
+      killGraceMs: opts.killGraceMs,
+      isSimcProcess: isFakeSimc,
     },
   );
   if (opts.withBuild ?? true) installFakeBuild(dataDir, app, BUILD_TAG);
@@ -128,6 +152,8 @@ export function makeHarness(
       const res = await call("POST", "/api/sims", { importId, settings });
       return simSchema.parse(await res.json());
     },
+    /** `POST /api/sims/:id/stop`; the raw response, since callers check status codes. */
+    stop: (id: number, keep: boolean) => call("POST", `/api/sims/${id}/stop`, { keep }),
     async queue(id: number): Promise<Sim> {
       const res = await call("POST", `/api/sims/${id}/queue`);
       return simSchema.parse(await res.json());

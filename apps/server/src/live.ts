@@ -21,6 +21,7 @@ export function createLiveTracker(bus: EventBus) {
         break;
       }
       case "sim.finished":
+      case "sim.discarded":
         if (current?.simId === event.simId) current = null;
         break;
     }

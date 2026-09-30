@@ -103,7 +103,9 @@ function transition(
   id: number,
   from: SimStatus,
   to: SimStatus,
-  patch: Partial<Record<"simc_tag" | "error" | "queued_at" | "started_at" | "finished_at", string>>,
+  patch: Partial<
+    Record<"simc_tag" | "error" | "queued_at" | "started_at" | "finished_at", string | null>
+  >,
 ): boolean {
   if (!canTransition(from, to)) throw new Error(`illegal Sim transition ${from} -> ${to}`);
   const columns = Object.keys(patch);
@@ -219,20 +221,127 @@ export function failSim(db: Db, jobId: number, simId: number, error: SimError) {
   })();
 }
 
-/** Jobs left `running` by a process that died. They fail rather than block the FIFO forever. */
-export function failOrphanedJobs(db: Db): { jobId: number; simId: number }[] {
+export type StopMode = "keep" | "discard";
+
+/** How many times in a row a crash may interrupt a Job before it fails instead of resuming. */
+export const MAX_INTERRUPTIONS = 2;
+
+/** Back to a Draft, as if it had never run: results, Combinations and run traces are dropped. */
+function resetToDraft(db: Db, simId: number, from: "queued" | "running") {
+  if (
+    !transition(db, simId, from, "draft", {
+      simc_tag: null,
+      error: null,
+      queued_at: null,
+      started_at: null,
+      finished_at: null,
+    })
+  ) {
+    throw new Error(`Sim ${simId} is no longer ${from}`);
+  }
+  // Stage results go with their Combinations (ON DELETE CASCADE).
+  db.run("DELETE FROM combinations WHERE sim_id = ?", [simId]);
+  db.run("DELETE FROM jobs WHERE kind = 'sim' AND sim_id = ?", [simId]);
+}
+
+export type StopResult =
+  | { ok: true; sim: Sim; outcome: "discarded" | "stopping" }
+  | { ok: false; reason: "not_found" | "invalid_transition" };
+
+/**
+ * Asks to end a queued or running Sim. A queued Sim returns to Draft at once (Stop and Discard
+ * alike: it has nothing to keep). A running Sim only has the request recorded on its Job: the
+ * runner signals SimC and settles the Sim once the process is gone. Discard outranks Stop.
+ */
+export function requestStop(db: Db, id: number, keep: boolean): StopResult {
+  return db.transaction((): StopResult => {
+    const current = getSim(db, id);
+    if (!current) return { ok: false, reason: "not_found" };
+    if (current.status === "queued") {
+      resetToDraft(db, id, "queued");
+    } else if (current.status === "running") {
+      const mode: StopMode = keep ? "keep" : "discard";
+      db.run(
+        `UPDATE jobs SET stop_mode = ? WHERE kind = 'sim' AND sim_id = ? AND status = 'running'
+           AND (stop_mode IS NULL OR ? = 'discard')`,
+        [mode, id, mode],
+      );
+    } else {
+      return { ok: false, reason: "invalid_transition" };
+    }
+    const sim = getSim(db, id);
+    if (!sim) throw new Error("sim vanished");
+    return { ok: true, sim, outcome: current.status === "queued" ? "discarded" : "stopping" };
+  })();
+}
+
+/** The pending Stop or Discard request on a Job, if any. */
+export function getStopMode(db: Db, jobId: number): StopMode | null {
+  const row = db
+    .query<{ stop_mode: StopMode | null }, [number]>("SELECT stop_mode FROM jobs WHERE id = ?")
+    .get(jobId);
+  return row?.stop_mode ?? null;
+}
+
+/** `running → cancelled` (Stop): the Sim keeps every Stage Result it finished. */
+export function cancelSim(db: Db, jobId: number, simId: number) {
+  db.transaction(() => {
+    const now = new Date().toISOString();
+    transition(db, simId, "running", "cancelled", { finished_at: now });
+    db.run("UPDATE jobs SET status = 'cancelled', finished_at = ? WHERE id = ?", [now, jobId]);
+  })();
+}
+
+/** `running → draft` (Discard): results and Job are deleted. Files are the caller's concern. */
+export function discardRunningSim(db: Db, simId: number) {
+  db.transaction(() => resetToDraft(db, simId, "running"))();
+}
+
+/**
+ * Boot recovery for Sim Jobs a dead process left `running`. Each is interrupted once more: the
+ * first time it goes back to the head of the Queue (Job ids are FIFO order and it was the head
+ * when it started), the second time in a row it fails. Returns what happened, for events and to
+ * know which PIDs to reap.
+ */
+export function recoverInterruptedSims(db: Db): {
+  jobId: number;
+  simId: number;
+  pid: number | null;
+  outcome: "requeued" | "failed" | "cancelled" | "discarded";
+}[] {
   const orphans = db
-    .query<{ id: number; sim_id: number }, []>(
-      "SELECT id, sim_id FROM jobs WHERE kind = 'sim' AND status = 'running'",
+    .query<{ id: number; sim_id: number; pid: number | null; interruptions: number }, []>(
+      "SELECT id, sim_id, pid, interruptions FROM jobs WHERE kind = 'sim' AND status = 'running' ORDER BY id",
     )
     .all();
-  for (const { id, sim_id } of orphans) {
-    failSim(db, id, sim_id, {
-      kind: "interrupted",
-      message: "The server stopped while this Sim was running.",
-    });
-  }
-  return orphans.map(({ id, sim_id }) => ({ jobId: id, simId: sim_id }));
+  return orphans.map(({ id, sim_id, pid, interruptions }) => {
+    const count = interruptions + 1;
+    // A Stop or Discard asked for before the crash is settled now rather than redone.
+    const mode = getStopMode(db, id);
+    if (mode === "discard") {
+      discardRunningSim(db, sim_id);
+      return { jobId: id, simId: sim_id, pid, outcome: "discarded" as const };
+    }
+    if (mode === "keep") {
+      cancelSim(db, id, sim_id);
+      return { jobId: id, simId: sim_id, pid, outcome: "cancelled" as const };
+    }
+    if (count >= MAX_INTERRUPTIONS) {
+      failSim(db, id, sim_id, {
+        kind: "interrupted",
+        message: `The server stopped ${count} times in a row while this Sim was running.`,
+      });
+      return { jobId: id, simId: sim_id, pid, outcome: "failed" as const };
+    }
+    db.transaction(() => {
+      transition(db, sim_id, "running", "queued", { started_at: null });
+      db.run(
+        "UPDATE jobs SET status = 'queued', pid = NULL, started_at = NULL, interruptions = ? WHERE id = ?",
+        [count, id],
+      );
+    })();
+    return { jobId: id, simId: sim_id, pid, outcome: "requeued" as const };
+  });
 }
 
 export function getSimResults(db: Db, simId: number): SimResultsResponse | null {

@@ -1,4 +1,4 @@
-import { abandonJob, failOrphanedJobs, nextQueuedJob } from "../db/sims";
+import { abandonJob, nextQueuedJob } from "../db/sims";
 import { type RunSimDeps, runSimJob } from "./run-sim";
 
 export type RunnerDeps = RunSimDeps & {
@@ -57,10 +57,6 @@ export function startRunner(deps: RunnerDeps): Runner {
       });
   };
 
-  // A Job left running by a dead process would block the FIFO forever.
-  for (const { simId } of failOrphanedJobs(db)) {
-    bus.emit({ type: "sim.status", simId, status: "failed" });
-  }
   const off = bus.on((event) => {
     if (event.type === "queue.changed") kick();
   });

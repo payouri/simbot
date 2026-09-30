@@ -27,6 +27,7 @@ import {
   postCopySimToDraft,
   postQueueSim,
   postSim,
+  postStopSim,
 } from "./sims";
 import { apiError, json, readBody } from "./util";
 
@@ -203,13 +204,18 @@ export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: H
       return json({ error: "method_not_allowed" }, 405);
     }
     const simRoute = pathname.match(
-      /^\/api\/sims\/([^/]+)(?:\/(queue|results|files|copy-to-draft)(?:\/(.+))?)?$/,
+      /^\/api\/sims\/([^/]+)(?:\/(queue|stop|results|files|copy-to-draft)(?:\/(.+))?)?$/,
     );
     if (simRoute) {
       const [, id = "", action, fileName] = simRoute;
       if (action === "queue") {
         return req.method === "POST"
           ? postQueueSim(db, bus, id)
+          : json({ error: "method_not_allowed" }, 405);
+      }
+      if (action === "stop") {
+        return req.method === "POST"
+          ? postStopSim(db, bus, dataDir, id, req)
           : json({ error: "method_not_allowed" }, 405);
       }
       if (action === "copy-to-draft") {

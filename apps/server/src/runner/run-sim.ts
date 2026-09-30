@@ -17,9 +17,20 @@ import {
 } from "@simbot/simc";
 import type { Db } from "../db";
 import { getImportText } from "../db/imports";
-import { abandonJob, failSim, getSim, setJobPid, startSim, succeedSim } from "../db/sims";
+import {
+  abandonJob,
+  cancelSim,
+  discardRunningSim,
+  failSim,
+  getSim,
+  getStopMode,
+  setJobPid,
+  startSim,
+  succeedSim,
+} from "../db/sims";
 import type { EventBus } from "../events";
 import type { Launch } from "../simc/check-sim";
+import { killGroup } from "./recovery";
 import { createThrottle } from "./throttle";
 
 export type { Launch };
@@ -37,8 +48,11 @@ export type RunSimDeps = {
   debugLogs?: boolean;
   /** Minimum gap between `sim.progress` events. Defaults to 250 ms (about 4 per second). */
   progressIntervalMs?: number;
+  /** How long SimC gets to exit after SIGTERM before SIGKILL. Defaults to 5 s. */
+  killGraceMs?: number;
 };
 
+const KILL_GRACE_MS = 5_000;
 const STDERR_KEEP = 8_000;
 const PROGRESS_INTERVAL_MS = 250;
 const LOG_LINE_MAX = 2_000;
@@ -82,6 +96,36 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     finished("failed");
   };
 
+  /** Stop (`cancelled`, results kept) or Discard (back to Draft, results and folder gone). */
+  const settleStop = async (mode: "keep" | "discard") => {
+    if (mode === "discard") {
+      discardRunningSim(db, job.simId);
+      await rm(join(dataDir, "sims", String(job.simId)), { recursive: true, force: true });
+      bus.emit({ type: "sim.status", simId: job.simId, status: "draft" });
+      bus.emit({ type: "sim.discarded", simId: job.simId });
+    } else {
+      cancelSim(db, job.id, job.simId);
+      bus.emit({ type: "sim.status", simId: job.simId, status: "cancelled" });
+      bus.emit({ type: "sim.finished", simId: job.simId, status: "cancelled" });
+    }
+    bus.emit({ type: "queue.changed" });
+  };
+
+  // SIGTERM to SimC's process group, then SIGKILL if it is still there after the grace period.
+  let proc: Bun.Subprocess<"ignore", "pipe", "pipe"> | null = null;
+  let killTimer: ReturnType<typeof setTimeout> | null = null;
+  const terminate = () => {
+    if (!proc || killTimer) return;
+    const pid = proc.pid;
+    killGroup(pid, "SIGTERM");
+    killTimer = setTimeout(() => killGroup(pid, "SIGKILL"), deps.killGraceMs ?? KILL_GRACE_MS);
+  };
+  // A request lands in the DB first; the event only wakes us, so one that arrives before SimC
+  // has launched is picked up by the checks below.
+  const offStop = bus.on((event) => {
+    if (event.type === "sim.stop_requested" && event.simId === job.simId) terminate();
+  });
+
   if (sim?.status !== "queued") {
     log(`runner: Job ${job.id} has no queued Sim ${job.simId}, dropping it`);
     abandonJob(db, job.id);
@@ -111,7 +155,8 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     await writeFile(inputPath, buildInput(addonString, sim.settings));
 
     const buildDir = join(dataDir, "simc", build.tag);
-    let proc: Bun.Subprocess<"ignore", "pipe", "pipe">;
+    const stopBeforeLaunch = getStopMode(db, job.id);
+    if (stopBeforeLaunch) return await settleStop(stopBeforeLaunch);
     try {
       // Its own process group, so Stop can later signal SimC and everything it forks.
       proc = Bun.spawn(launch(buildDir, stageArgs(inputPath, json2Path)), {
@@ -128,6 +173,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       });
     }
     setJobPid(db, job.id, proc.pid);
+    if (getStopMode(db, job.id)) terminate();
     bus.emit({ type: "sim.stage_started", simId: sim.id, stage: STAGE });
 
     const emitLog = (level: SimLogLevel, message: string) =>
@@ -149,6 +195,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     const onStderrLines = (lines: string[]) => {
       for (const line of lines) if (line.trim() !== "") emitLog(stderrLevel(line), line.trim());
     };
+    const running = proc;
     const [, , exitCode] = await Promise.all([
       readText(proc.stdout, (text) => onLines(stdoutParser.push(text))),
       readText(proc.stderr, (text) => {
@@ -156,13 +203,16 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
         if (stderr.length > STDERR_KEEP * 2) stderr = stderr.slice(-STDERR_KEEP);
         onStderrLines(stderrLines.push(text));
       }),
-      proc.exited,
+      running.exited,
     ]);
     onLines(stdoutParser.flush());
     onStderrLines(stderrLines.flush());
     progress.flush();
     stderr = stderr.slice(-STDERR_KEEP);
-    if (exitCode !== 0) return fail(classifyExit(proc.signalCode ? null : exitCode, stderr));
+    // A Discard wins even over a run that got to finish; a Stop only when there is nothing to keep.
+    const stop = getStopMode(db, job.id);
+    if (stop === "discard" || (stop === "keep" && exitCode !== 0)) return await settleStop(stop);
+    if (exitCode !== 0) return fail(classifyExit(running.signalCode ? null : exitCode, stderr));
 
     const json2Text = await readOrNull(json2Path);
     try {
@@ -192,6 +242,8 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       });
     }
   } finally {
+    offStop();
+    if (killTimer) clearTimeout(killTimer);
     progress.cancel();
     await rm(tmp, { recursive: true, force: true }).catch(() => {});
   }

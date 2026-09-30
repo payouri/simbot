@@ -1,15 +1,26 @@
 import { z } from "zod";
 
-/** Life cycle of a Sim. Stop/Discard (`cancelled`, back to `draft`) arrive with the Queue slice. */
-export const simStatusSchema = z.enum(["draft", "queued", "running", "succeeded", "failed"]);
+/**
+ * Life cycle of a Sim. Stop ends a running Sim as `cancelled`; Discard sends a queued or running
+ * one back to `draft`; a Sim interrupted by a crash goes back to `queued`.
+ */
+export const simStatusSchema = z.enum([
+  "draft",
+  "queued",
+  "running",
+  "succeeded",
+  "failed",
+  "cancelled",
+]);
 export type SimStatus = z.infer<typeof simStatusSchema>;
 
 export const simTransitions: Readonly<Record<SimStatus, readonly SimStatus[]>> = {
   draft: ["queued"],
-  queued: ["running"],
-  running: ["succeeded", "failed"],
+  queued: ["running", "draft"],
+  running: ["succeeded", "failed", "cancelled", "draft", "queued"],
   succeeded: [],
   failed: [],
+  cancelled: [],
 };
 
 export const canTransition = (from: SimStatus, to: SimStatus) => simTransitions[from].includes(to);
@@ -117,6 +128,13 @@ export const createSimRequestSchema = z.object({
   settings: simSettingsSchema.partial().optional(),
 });
 export type CreateSimRequest = z.input<typeof createSimRequestSchema>;
+
+/**
+ * `POST /api/sims/:id/stop`. `keep: true` is Stop (a running Sim becomes `cancelled`, keeping
+ * what it finished); `keep: false` is Discard (results and folder are deleted, back to `draft`).
+ */
+export const stopSimRequestSchema = z.object({ keep: z.boolean() });
+export type StopSimRequest = z.infer<typeof stopSimRequestSchema>;
 
 /** `POST /api/sims/:id/copy-to-draft`. Copies a Sim's input into a new Draft. */
 export const copySimToDraftRequestSchema = z.object({});

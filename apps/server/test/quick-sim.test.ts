@@ -342,7 +342,7 @@ describe("failures", () => {
 });
 
 describe("boot", () => {
-  test("a Job left running by a dead process fails its Sim instead of blocking the Queue", async () => {
+  test("a Job already interrupted once and left running again fails its Sim instead of blocking the Queue", async () => {
     start();
     const imp = await h.importText();
     const draft = await h.createSim(imp.id);
@@ -350,7 +350,9 @@ describe("boot", () => {
     await h.app.idle();
     // Simulate a crash: the finished Sim's Job and Sim are put back as running.
     h.app.db.run("UPDATE sims SET status = 'running', error = NULL WHERE id = ?", [draft.id]);
-    h.app.db.run("UPDATE jobs SET status = 'running' WHERE sim_id = ?", [draft.id]);
+    h.app.db.run("UPDATE jobs SET status = 'running', interruptions = 1 WHERE sim_id = ?", [
+      draft.id,
+    ]);
     const { dataDir, root } = h;
     h.app.close();
     const { createApp } = await import("../src/app");

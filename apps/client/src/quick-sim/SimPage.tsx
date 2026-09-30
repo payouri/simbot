@@ -1,9 +1,9 @@
 import type { SimStatus } from "@simbot/shared";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
 import { useRunningSim } from "../live/live";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
-import { getResults, getSim } from "./api";
+import { getResults, getSim, stopSim } from "./api";
 
 const STATUS_LABEL: Record<SimStatus, string> = {
   draft: "Draft",
@@ -11,9 +11,11 @@ const STATUS_LABEL: Record<SimStatus, string> = {
   running: "Running",
   succeeded: "Done",
   failed: "Failed",
+  cancelled: "Stopped",
 };
 
-const isFinished = (status: SimStatus | undefined) => status === "succeeded" || status === "failed";
+const isFinished = (status: SimStatus | undefined) =>
+  status === "succeeded" || status === "failed" || status === "cancelled";
 
 const dpsFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
 
@@ -32,6 +34,15 @@ export function SimPage() {
     enabled: succeeded,
   });
   const live = useRunningSim(id);
+  const queryClient = useQueryClient();
+  const end = useMutation({
+    mutationFn: (keep: boolean) => stopSim(id, keep),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(["sim", id], updated);
+      void queryClient.invalidateQueries({ queryKey: ["sim", id] });
+      void queryClient.invalidateQueries({ queryKey: ["queue"] });
+    },
+  });
   const dps = results.data?.results.find((r) => r.isBaseline)?.dps;
 
   return (
@@ -67,6 +78,38 @@ export function SimPage() {
                   <WarmingUp />
                 </div>
               ))}
+            {(sim.data.status === "running" || sim.data.status === "queued") && (
+              <div className="mt-4 flex items-center gap-3">
+                {sim.data.status === "running" && (
+                  <button
+                    type="button"
+                    disabled={end.isPending}
+                    onClick={() => end.mutate(true)}
+                    className="rounded-lg border border-line px-3 py-1.5 text-[12.5px] font-semibold hover:border-fg disabled:opacity-50"
+                  >
+                    Stop
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={end.isPending}
+                  onClick={() => end.mutate(false)}
+                  className="rounded-lg px-3 py-1.5 text-[12.5px] text-loss hover:underline disabled:opacity-50"
+                >
+                  Discard
+                </button>
+                <span className="text-[11.5px] text-faint">
+                  {sim.data.status === "running"
+                    ? "Stop keeps what finished. Discard deletes it and returns the Sim to a Draft."
+                    : "Returns the Sim to a Draft."}
+                </span>
+              </div>
+            )}
+            {end.isError && (
+              <p role="alert" className="mt-2 text-[12.5px] text-loss">
+                {end.error.message}
+              </p>
+            )}
             {dps && (
               <p className="num mt-2 text-[26px] font-semibold leading-none tracking-tight">
                 {dpsFormat.format(dps.mean)}

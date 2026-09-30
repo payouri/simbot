@@ -4,6 +4,7 @@ import { createEventBus } from "./events";
 import { createHttpHandler } from "./http";
 import { createLiveTracker } from "./live";
 import { startRunner } from "./runner";
+import { type IsSimcProcess, recoverInterruptedRuns } from "./runner/recovery";
 import type { Launch } from "./runner/run-sim";
 import { createSimcManager } from "./simc/manager";
 import type { Fetch } from "./simc/registry";
@@ -25,6 +26,10 @@ export type AppDeps = {
   debugLogs?: boolean;
   /** Minimum gap between `sim.progress` events (default 250 ms). Tests shrink it. */
   progressIntervalMs?: number;
+  /** How long SimC gets to exit after SIGTERM before SIGKILL (default 5 s). Tests shrink it. */
+  killGraceMs?: number;
+  /** Whether a stored PID is still `simc` (default: asks `/proc`). The fake `simc` needs its own. */
+  isSimcProcess?: IsSimcProcess;
 };
 
 /** The server seam: everything the process does, minus binding a port and the boot fetch. */
@@ -44,8 +49,10 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     launch: deps.launch,
     now: deps.now,
   });
-  // Before the runner starts: staging directories go, an interrupted SimC Job restarts.
+  // Before the runner starts: staging directories go, an interrupted SimC Job restarts, and
+  // an orphaned `simc` is killed with its interrupted Sim Job put back in the Queue.
   simc.recover();
+  recoverInterruptedRuns({ db, dataDir: config.dataDir, bus, isSimc: deps.isSimcProcess });
   const runner = startRunner({
     db,
     bus,
@@ -55,6 +62,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     log: deps.log,
     debugLogs: deps.debugLogs,
     progressIntervalMs: deps.progressIntervalMs,
+    killGraceMs: deps.killGraceMs,
     runSimcJob: simc.runJob,
   });
   const handle = createHttpHandler({

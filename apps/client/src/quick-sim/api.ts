@@ -55,3 +55,6 @@ export const deleteSim = (id: number) =>
   request("DELETE", `/api/sims/${id}`, { parse: () => ({ success: true }) });
 export const copySimToDraft = (id: number) =>
   request("POST", `/api/sims/${id}/copy-to-draft`, simSchema);
+/** Stop (`keep: true`, running Sim becomes cancelled) or Discard (`keep: false`, back to Draft). */
+export const stopSim = (id: number, keep: boolean) =>
+  request("POST", `/api/sims/${id}/stop`, simSchema, { keep });

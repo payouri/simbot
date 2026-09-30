@@ -7,9 +7,18 @@ import {
   simResultsResponseSchema,
   simSchema,
   simStatusSchema,
+  stopSimRequestSchema,
 } from "@simbot/shared";
 import type { Db } from "../db";
-import { createSim, deleteSim, getSim, getSimResults, listSims, queueSim } from "../db/sims";
+import {
+  createSim,
+  deleteSim,
+  getSim,
+  getSimResults,
+  listSims,
+  queueSim,
+  requestStop,
+} from "../db/sims";
 import type { EventBus } from "../events";
 import { apiError, json, parseId, readBody } from "./util";
 
@@ -34,6 +43,41 @@ export function postQueueSim(db: Db, bus: EventBus, rawId: string): Response {
   }
   bus.emit({ type: "queue.changed" });
   return json(simSchema.parse(queued.sim));
+}
+
+/**
+ * `POST /api/sims/:id/stop {keep}`: Stop (`keep: true`) or Discard (`keep: false`).
+ * A queued Sim returns to Draft at once (200). A running one answers 202 with the Sim still
+ * `running`: SimC is being signalled, and the Sim settles once it has exited (`sim.status`).
+ */
+export async function postStopSim(
+  db: Db,
+  bus: EventBus,
+  dataDir: string,
+  rawId: string,
+  req: Request,
+): Promise<Response> {
+  const id = parseId(rawId);
+  if (id === null) return apiError(404, "sim_not_found");
+  const body = await readBody(req, stopSimRequestSchema);
+  if (!body.ok) return body.res;
+  const stopped = requestStop(db, id, body.data.keep);
+  if (!stopped.ok) {
+    return stopped.reason === "not_found"
+      ? apiError(404, "sim_not_found")
+      : apiError(409, "invalid_transition", {
+          message: "Only a queued or running Sim can be stopped or discarded.",
+        });
+  }
+  if (stopped.outcome === "discarded") {
+    rmSync(join(dataDir, "sims", String(id)), { recursive: true, force: true });
+    bus.emit({ type: "sim.status", simId: id, status: "draft" });
+    bus.emit({ type: "sim.discarded", simId: id });
+    bus.emit({ type: "queue.changed" });
+    return json(simSchema.parse(stopped.sim));
+  }
+  bus.emit({ type: "sim.stop_requested", simId: id });
+  return json(simSchema.parse(stopped.sim), 202);
 }
 
 export function getSimById(db: Db, rawId: string): Response {

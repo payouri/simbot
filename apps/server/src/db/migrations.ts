@@ -104,4 +104,14 @@ export const migrations: readonly Migration[] = [
       ) STRICT;
     `,
   },
+  {
+    id: 4,
+    name: "stop_and_recovery",
+    sql: `
+      -- 'keep' (Stop) or 'discard', set while a running Job is being ended on request.
+      ALTER TABLE jobs ADD COLUMN stop_mode TEXT;
+      -- How many times in a row a crash interrupted this Job.
+      ALTER TABLE jobs ADD COLUMN interruptions INTEGER NOT NULL DEFAULT 0;
+    `,
+  },
 ];

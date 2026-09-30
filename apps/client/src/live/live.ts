@@ -34,6 +34,7 @@ export function applyEvent(event: AppEvent) {
       break;
     }
     case "sim.finished":
+    case "sim.discarded":
       if (running?.simId === event.simId) setRunning(null);
       break;
   }
@@ -77,6 +78,7 @@ export function LiveConnection() {
           void client.invalidateQueries({ queryKey: QUEUE_KEY });
           break;
         case "sim.finished":
+        case "sim.discarded":
           void client.invalidateQueries({ queryKey: ["sim", event.simId] });
           break;
         case "simc.status_changed":

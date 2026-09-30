@@ -13,6 +13,8 @@
  * If `--gate=<file>` is given, it writes stdout and stderr, then waits until that file exists
  * before writing the report and exiting, so a test can observe a Sim mid-run.
  *
+ * With `--stubborn` it ignores SIGTERM, so only SIGKILL ends it.
+ *
  * If `--report=<file>` is given (also before the SimC arguments), it also records how it was launched there (pid, process
  * group, argv, and the input file's text), so tests can check what the runner did.
  */
@@ -29,10 +31,15 @@ if (!scenarioArg) {
 const scenario = scenarioArg.slice("--scenario=".length);
 const reportArg = args.find((a) => a.startsWith("--report="));
 const gateArg = args.find((a) => a.startsWith("--gate="));
-const simcArgs = args.filter((a) => a !== scenarioArg && a !== reportArg && a !== gateArg);
+const stubborn = args.includes("--stubborn");
+const simcArgs = args.filter(
+  (a) => a !== scenarioArg && a !== reportArg && a !== gateArg && a !== "--stubborn",
+);
 const [input, ...options] = simcArgs;
 const option = (name: string) =>
   options.find((o) => o.startsWith(`${name}=`))?.slice(name.length + 1);
+
+if (stubborn) process.on("SIGTERM", () => {});
 
 if (!input || !existsSync(input)) {
   console.error(`Error: cannot open input file ${input}`);

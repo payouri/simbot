@@ -80,7 +80,13 @@ export const simStageFinishedEventSchema = z.object({
 export const simFinishedEventSchema = z.object({
   type: z.literal("sim.finished"),
   simId: z.number().int(),
-  status: z.enum(["succeeded", "failed"]),
+  status: z.enum(["succeeded", "failed", "cancelled"]),
+});
+
+/** A Sim was Discarded: its results are gone and it is a Draft again. */
+export const simDiscardedEventSchema = z.object({
+  type: z.literal("sim.discarded"),
+  simId: z.number().int(),
 });
 
 export const simLogLevelSchema = z.enum(["debug", "info", "warn", "error"]);
@@ -115,6 +121,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
   simProgressEventSchema,
   simStageFinishedEventSchema,
   simFinishedEventSchema,
+  simDiscardedEventSchema,
   simLogEventSchema,
   simcStatusChangedEventSchema,
   simcUpdateStatusEventSchema,

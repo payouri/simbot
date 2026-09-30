@@ -3,6 +3,8 @@ import type { AppEvent as ClientEvent, SimStatus } from "@simbot/shared";
 export type AppEvent =
   /** A Sim moved to a new status. */
   | { type: "sim.status"; simId: number; status: SimStatus }
+  /** Stop or Discard was asked for a running Sim; the runner signals its SimC. */
+  | { type: "sim.stop_requested"; simId: number }
   /** Events the global `GET /api/events` SSE stream carries, per the shared schema. `queue.changed` also wakes the runner. */
   | ClientEvent;
 
