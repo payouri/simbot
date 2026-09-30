@@ -26,17 +26,13 @@ export const CULL_SIGMAS = 2;
 
 /**
  * Upper bound on iterations per pass, so a `target_error` that never comes still ends.
- * Calibrated for 16-thread machine: benchmarked at 60s fights typically reach target_error
- * well below 50,000 iterations; setting this ceiling prevents pathological cases while
- * ensuring reasonable worst-case completion times (typically <5 min per Stage).
+ * Unmeasured default; not yet calibrated against real Sims.
  */
 export const ITERATIONS_CEILING = 50_000;
 
 /**
  * Profilesets SimC works on at once; the rest of its threads share each one's iterations.
- * Calibrated for 16-thread machine: 2 profilesets allow good parallelization while keeping
- * thread contention low. On a 16-thread machine: 2 profilesets × 2-8 threads per profileset
- * = ~4-16 threads fully utilized, leaving room for OS and other processes.
+ * Unmeasured default; not yet calibrated against real Sims.
  */
 export const PROFILESET_WORK_THREADS = 2;
 

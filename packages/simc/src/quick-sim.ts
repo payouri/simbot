@@ -16,9 +16,8 @@ export const PRECISION_TARGET_ERROR: Readonly<Record<Precision, number>> = {
 
 /**
  * How often SimC checks if it has reached the target error (every N iterations).
- * Set to 100 based on benchmarking on a 16-thread machine: balances checking overhead
- * against convergence detection accuracy. Higher values reduce overhead but may miss
- * early convergence; lower values increase overhead with diminishing accuracy gains.
+ * Unmeasured default of 100: higher values reduce checking overhead but may miss early
+ * convergence. Not yet calibrated against real Sims.
  */
 export const ANALYZE_ERROR_INTERVAL = 100;
 
