@@ -223,13 +223,15 @@ describe("WoW version header", () => {
   test("a header matching the PTR version or newer than Live is a PTR-client export", () => {
     expect(isPtrClientExport(wowFixture("wow-header-ptr.txt"), build)).toBe(true);
     expect(isPtrClientExport("# WoW 12.2.0.70500\n", build)).toBe(true);
-    expect(isPtrClientExport("# WoW 12.1.0.70000\n", build)).toBe(true);
+    expect(isPtrClientExport("# WoW 12.1.1.70000\n", build)).toBe(true);
   });
 
   test("a Live or older header is not, and neither is a missing header or build", () => {
     expect(isPtrClientExport(wowFixture("wow-header-live.txt"), build)).toBe(false);
     expect(isPtrClientExport("# WoW 12.0.9.60000\n", build)).toBe(false);
     expect(isPtrClientExport("# WoW 12.1.0.9999\n", build)).toBe(false);
+    // A Live hotfix client: same patch, higher build number.
+    expect(isPtrClientExport("# WoW 12.1.0.70011\n", build)).toBe(false);
     expect(isPtrClientExport(fixture, build)).toBe(false);
     expect(isPtrClientExport(wowFixture("wow-header-ptr.txt"), null)).toBe(false);
   });

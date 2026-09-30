@@ -1,3 +1,5 @@
+import { hasPtrOption } from "@simbot/shared";
+
 /** SimC's class keys: the profile line that opens a character (`deathknight="Name"`). */
 const CLASS_KEYS = new Set([
   "deathknight",
@@ -77,7 +79,7 @@ export function stripUnsafeOptions(addonString: string): string {
 export function stripPtrOption(addonString: string): string {
   return addonString
     .split(/(?<=\r\n|\n|\r)/)
-    .filter((line) => !/(^|\s)ptr\s*=/i.test(line))
+    .filter((line) => !hasPtrOption(line))
     .join("");
 }
 
@@ -411,7 +413,7 @@ function compareVersions(a: string, b: string): number {
 /**
  * Whether an Addon String looks exported from the PTR client of a SimC Build: its `# WoW` header
  * equals the build's PTR version (when that differs from Live, else it would match every Live
- * export), or is newer than its Live version. False without a header or a Live version. Never
+ * export), or is a newer major.minor.patch than its Live version (a higher build number alone is a Live hotfix). False without a header or a Live version. Never
  * more than a hint: the caller must not let it change Game Data.
  */
 export function isPtrClientExport(
@@ -422,5 +424,11 @@ export function isPtrClientExport(
   if (!header || !build) return false;
   const { gameDataVersion: live, ptrGameDataVersion: ptr } = build;
   if (ptr !== null && ptr !== live && compareVersions(header, ptr) === 0) return true;
-  return compareVersions(header, live) > 0;
+  // A Live hotfix client only raises the build number; a PTR client is a newer patch.
+  return (
+    compareVersions(
+      header.split(".").slice(0, 3).join("."),
+      live.split(".").slice(0, 3).join("."),
+    ) > 0
+  );
 }
