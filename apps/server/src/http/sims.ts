@@ -118,7 +118,7 @@ export async function patchSim(
 export async function postQueueSim(
   db: Db,
   bus: EventBus,
-  combos: CombinationService,
+  combinations: CombinationService,
   rawId: string,
 ): Promise<Response> {
   const id = parseId(rawId);
@@ -127,7 +127,7 @@ export async function postQueueSim(
   if (!current) return apiError(404, "sim_not_found");
   let plan: QueuePlan | undefined;
   if (isTopGear(current) && current.status === "draft" && current.topGearSelection) {
-    const frozen = await combos.freeze(current);
+    const frozen = await combinations.freeze(current);
     if (!frozen.ok) {
       return apiError(422, "invalid_combinations", {
         message: frozen.refused
@@ -162,7 +162,7 @@ export async function postQueueSim(
  */
 export async function postPreviewCombinations(
   db: Db,
-  combos: CombinationService,
+  combinations: CombinationService,
   req: Request,
   rawId: string,
 ): Promise<Response> {
@@ -174,7 +174,7 @@ export async function postPreviewCombinations(
   }
   const body = await readBody(req, previewCombinationsRequestSchema);
   if (!body.ok) return body.res;
-  const preview = await combos.preview(sim, {
+  const preview = await combinations.preview(sim, {
     selection: body.data.topGearSelection,
     settings: body.data.settings,
   });
@@ -190,7 +190,7 @@ export async function postPreviewCombinations(
  */
 export async function postPreselect(
   db: Db,
-  combos: CombinationService,
+  combinations: CombinationService,
   rawId: string,
 ): Promise<Response> {
   const id = parseId(rawId);
@@ -205,7 +205,7 @@ export async function postPreselect(
     return apiError(409, "not_top_gear", { message: "This Sim has no Top Gear selection." });
   }
   if (sim.topGearSelection.preselected) return json(simSchema.parse(sim));
-  const picked = await combos.preselection(sim);
+  const picked = await combinations.preselection(sim);
   if (!picked) return apiError(404, "import_not_found");
   const saved = updateDraft(db, id, {
     topGearSelection: {

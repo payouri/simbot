@@ -366,7 +366,7 @@ describe("Job start", () => {
     await put(sim.id, selection([at(items, 175302)]));
     const current = (await h.sim(sim.id)).topGearSelection;
     if (!current) throw new Error("no selection");
-    const frozen = await h.app.combos.freeze(await h.sim(sim.id));
+    const frozen = await h.app.combinations.freeze(await h.sim(sim.id));
     if (!frozen.ok) throw new Error("freeze failed");
     queueSim(h.app.db, sim.id, {
       selection: current,

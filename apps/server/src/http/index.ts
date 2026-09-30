@@ -53,7 +53,7 @@ export type HttpDeps = {
   /** `GET /api/icons/:name`: disk-cached icons with a quality-coloured placeholder. */
   icons: { get: (name: string, quality: number) => Promise<Response> };
   /** Combination generation, validation and the time estimate. */
-  combos: CombinationService;
+  combinations: CombinationService;
   simc: {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */
@@ -154,7 +154,7 @@ export function createHttpHandler({
   simc,
   items,
   icons,
-  combos,
+  combinations,
 }: HttpDeps) {
   const snapshot = (): SnapshotEvent => {
     const queue = getQueue(db);
@@ -269,7 +269,7 @@ export function createHttpHandler({
       const [, id = "", action, fileName] = simRoute;
       if (action === "queue") {
         return req.method === "POST"
-          ? postQueueSim(db, bus, combos, id)
+          ? postQueueSim(db, bus, combinations, id)
           : json({ error: "method_not_allowed" }, 405);
       }
       if (action === "stop") {
@@ -279,12 +279,12 @@ export function createHttpHandler({
       }
       if (action === "preview-combinations") {
         return req.method === "POST"
-          ? postPreviewCombinations(db, combos, req, id)
+          ? postPreviewCombinations(db, combinations, req, id)
           : json({ error: "method_not_allowed" }, 405);
       }
       if (action === "preselect") {
         return req.method === "POST"
-          ? postPreselect(db, combos, id)
+          ? postPreselect(db, combinations, id)
           : json({ error: "method_not_allowed" }, 405);
       }
       if (action === "copy-to-draft") {
