@@ -61,13 +61,17 @@ export function GameDataControl({
   const status = useSimcStatus().data;
   if (!status || (!status.ptrEnabled && value !== "ptr")) return null;
   const build = status.current;
-  const unavailable = !build
-    ? "No SimC Build is installed"
-    : ptrAvailable(build)
-      ? null
-      : build.ptrCheckError
-        ? `PTR failed its Check Sim on ${build.tag}`
-        : `No PTR data in SimC Build ${build.tag}`;
+  // With PTR Sims off the server hides the build's PTR data from the status, so availability is
+  // unknown here; a PTR Draft (copied from a PTR Sim) still runs, so don't claim it will fail.
+  const unavailable = !status.ptrEnabled
+    ? null
+    : !build
+      ? "No SimC Build is installed"
+      : ptrAvailable(build)
+        ? null
+        : build.ptrCheckError
+          ? `PTR failed its Check Sim on ${build.tag}`
+          : `No PTR data in SimC Build ${build.tag}`;
   return (
     <fieldset className="m-0 flex min-w-0 flex-col gap-1.5 border-0 p-0 text-[11.5px] text-faint">
       <legend className="mb-1.5 p-0">Game Data</legend>
