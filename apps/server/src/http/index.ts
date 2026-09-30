@@ -18,6 +18,7 @@ import type { Db } from "../db";
 import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
 import type { LiveTracker } from "../live";
+import { getCharacters, patchCharacter, patchSim, postMergeCharacter } from "./characters";
 import { getImportParsed, postImport } from "./imports";
 import {
   deleteSim_Handler,
@@ -194,6 +195,22 @@ export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: H
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
       return getImportParsed(db, Number(id));
     }
+    if (pathname === "/api/characters") {
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return getCharacters(db);
+    }
+    const characterRoute = pathname.match(/^\/api\/characters\/([^/]+)(?:\/(merge))?$/);
+    if (characterRoute) {
+      const [, id = "", action] = characterRoute;
+      if (action === "merge") {
+        return req.method === "POST"
+          ? postMergeCharacter(db, req, id)
+          : json({ error: "method_not_allowed" }, 405);
+      }
+      return req.method === "PATCH"
+        ? patchCharacter(db, req, id)
+        : json({ error: "method_not_allowed" }, 405);
+    }
     if (pathname === "/api/sims") {
       if (req.method === "POST") {
         return postSim(db, req);
@@ -243,6 +260,7 @@ export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: H
           return apiError(500, "internal_error");
         }
       }
+      if (req.method === "PATCH" && !action) return patchSim(db, req, id);
       if (req.method === "DELETE") {
         return deleteSim_Handler(db, id, dataDir);
       }

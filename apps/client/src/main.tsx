@@ -3,6 +3,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, Navigate, RouterProvider } from "react-router";
 import "./index.css";
+import { CharactersPage } from "./characters/CharactersPage";
 import { LiveConnection } from "./live/live";
 import { TopGearPrototypeRoute } from "./prototype/top-gear/route";
 import { QueuePage } from "./queue/QueuePage";
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
     children: [
       { path: "/simc", element: <SimcPage /> },
       { path: "/queue", element: <QueuePage /> },
+      { path: "/characters", element: <CharactersPage /> },
     ],
   },
 ]);

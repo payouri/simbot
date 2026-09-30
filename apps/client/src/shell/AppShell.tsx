@@ -12,6 +12,9 @@ export function AppShell() {
           simbot
         </Link>
         <div className="flex items-center gap-3">
+          <Link to="/characters" className="text-[12.5px] text-muted hover:text-fg">
+            Characters
+          </Link>
           <Link to="/queue" className="text-[12.5px] text-muted hover:text-fg">
             Queue
             {waiting > 0 && <span className="num ml-1.5 text-fg">{waiting}</span>}

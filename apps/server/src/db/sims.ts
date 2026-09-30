@@ -15,6 +15,7 @@ import {
 } from "@simbot/shared";
 import { parseProfileHeader } from "@simbot/simc";
 import type { Db } from ".";
+import { getCharacter } from "./characters";
 import { getImportText } from "./imports";
 
 type SimRow = {
@@ -65,14 +66,16 @@ export function createSim(
   const imp = db
     .query<{ character_id: number }, [number]>("SELECT character_id FROM imports WHERE id = ?")
     .get(input.importId);
+  const character = imp ? getCharacter(db, imp.character_id) : null;
   const text = getImportText(db, input.importId);
-  if (!imp || text === null) return null;
+  if (!imp || !character || text === null) return null;
   const header = parseProfileHeader(text);
   const snapshot: CharacterSnapshot = {
-    name: header.name,
-    region: header.region,
-    realm: header.realm,
-    class: header.class,
+    // Identity is the Character's now, so an edited Character is not frozen under its old name.
+    name: character.name,
+    region: character.region,
+    realm: character.realm,
+    class: character.class,
     spec: header.spec,
     race: header.race,
     level: header.level,

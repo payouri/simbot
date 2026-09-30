@@ -70,6 +70,47 @@ export const characterSchema = z.object({
 });
 export type Character = z.infer<typeof characterSchema>;
 
+const characterField = z.string().trim().min(1).max(100);
+
+/** `PATCH /api/characters/:id`. Any subset of the identity fields; at least one. */
+export const updateCharacterRequestSchema = z
+  .object({
+    region: characterField,
+    realm: characterField,
+    name: characterField,
+    class: characterField,
+  })
+  .partial()
+  .refine((v) => Object.values(v).some((x) => x !== undefined), {
+    message: "Give at least one of region, realm, name, class.",
+  });
+export type UpdateCharacterRequest = z.infer<typeof updateCharacterRequestSchema>;
+
+/** `POST /api/characters/:id/merge`. Moves this Character's Imports and Sims into `targetId`. */
+export const mergeCharacterRequestSchema = z.object({ targetId: z.number().int() });
+export type MergeCharacterRequest = z.infer<typeof mergeCharacterRequestSchema>;
+
+/** `GET /api/characters`: each Character with how many Imports and Sims it groups. */
+export const characterListItemSchema = characterSchema.extend({
+  importCount: z.number().int(),
+  simCount: z.number().int(),
+});
+export type CharacterListItem = z.infer<typeof characterListItemSchema>;
+export const characterListResponseSchema = z.array(characterListItemSchema);
+export type CharacterListResponse = z.infer<typeof characterListResponseSchema>;
+
+/** 409 from an edit whose identity is already another Character: the UI offers a merge. */
+export const characterConflictSchema = z.object({
+  error: z.literal("character_conflict"),
+  message: z.string().optional(),
+  conflictingCharacter: characterSchema,
+});
+export type CharacterConflict = z.infer<typeof characterConflictSchema>;
+
+/** `PATCH /api/sims/:id`. Moves a Sim to another Character; its Character Snapshot is untouched. */
+export const moveSimRequestSchema = z.object({ characterId: z.number().int() });
+export type MoveSimRequest = z.infer<typeof moveSimRequestSchema>;
+
 /** Character-dependent traits frozen on a Sim. */
 export const characterSnapshotSchema = z.object({
   name: z.string(),
