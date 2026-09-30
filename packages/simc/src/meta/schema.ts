@@ -42,6 +42,16 @@ export const metaBonusSchema = z.object({
 });
 export type MetaBonus = z.infer<typeof metaBonusSchema>;
 
+/**
+ * What makes a gem limited when socketed: SimC's unique-equipped flag, or its ItemLimitCategory
+ * (e.g. 698 "Thalassian Diamond", one at a time). Only gems with one of these are listed.
+ */
+export const metaGemSchema = z.object({
+  uniqueEquipped: z.boolean().optional(),
+  limitCategory: z.number().int().optional(),
+});
+export type MetaGem = z.infer<typeof metaGemSchema>;
+
 export const limitCategorySchema = z.object({
   name: z.string(),
   /** How many items of the category may be equipped at once. */
@@ -60,6 +70,8 @@ export const itemMetaSchema = z.object({
   /** Every bonus id this SimC Build knows, by bonus id. An id missing here is unknown to SimC. */
   bonuses: z.record(z.string(), metaBonusSchema),
   limitCategories: z.record(z.string(), limitCategorySchema),
+  /** Limited gems, by item id. Absent in files built before gems were read: no gem is limited. */
+  gems: z.record(z.string(), metaGemSchema).optional(),
 });
 export type ItemMeta = z.infer<typeof itemMetaSchema>;
 

@@ -164,6 +164,20 @@ describe("buildItemMeta", () => {
     for (const item of Object.values(meta.items)) expect([2, 4]).toContain(item.itemClass);
   });
 
+  test("lists the gems that are limited when socketed, and only those", () => {
+    expect(meta.gems).toEqual({
+      228634: { uniqueEquipped: true }, // Thunderlord's Crackling Citrine: the item flag
+      240983: { limitCategory: 698 }, // Indecipherable Eversong Diamond: ItemSparse.LimitCategory
+    });
+    expect(meta.limitCategories[698]).toEqual({
+      name: "Thalassian Diamond",
+      quantity: 1,
+      flags: 1,
+    });
+    // Pristine Xakal's Determination is a gem with neither.
+    expect(meta.gems?.[246085]).toBeUndefined();
+  });
+
   test("reads what bonus ids grant", () => {
     expect(meta.bonuses[8960]).toEqual({ limitCategory: 512 });
     expect(meta.bonuses[12854]).toEqual({ quality: 4, appearanceMod: 3, appearancePriority: -1 });

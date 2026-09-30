@@ -1,10 +1,12 @@
-static const std::array<dbc_item_data_t, 23> __item_data_chunk0 { {
+static const std::array<dbc_item_data_t, 25> __item_data_chunk0 { {
   { "BKP 2700 \"Enforcer\"",   3024, 0x00000000, 0x00002000, 0x00, 16, 10, 0, 0, 1, 26, 2, 3, 2, 3000, 0.600000f, 0.000000f, 0, 0, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
   { "\"Mage-Eye\" Blunderbuss",   3041, 0x00000000, 0x00002000, 0x00, 19, 12, 0, 0, 2, 26, 2, 3, 2, 3000, 0.600000f, 0.000000f, &__item_stats_data[2], 2, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
   { "Perfectly-Forged Credentials", 187552, 0x00028000, 0x00006000, 0x00, 226, 60, 0, 0, 4, 2, 4, 0, 1, 0, 0.000000f, 0.000000f, &__item_stats_data[56682], 3, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
   { "Knick of Time", 211345, 0x00000040, 0x00006000, 0x00, 1, 1, 0, 0, 2, 2, 4, 0, 1, 0, 0.000000f, 0.000000f, 0, 0, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
+  { "Thunderlord's Crackling Citrine", 228634, 0x08091000, 0x00026000, 0x00, 619, 1, 0, 0, 4, 0, 3, 9, 2, 0, 0.000000f, 0.000000f, 0, 0, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 4252, 0, 0, 0, 0, 0 },
   { "Void-Touched Shank", 236881, 0x00009000, 0x00006000, 0x00, 623, 80, 0, 0, 4, 13, 2, 15, 1, 1800, 0.500000f, 0.000000f, &__item_stats_data[63979], 4, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
   { "Spellbreaker's Bracers", 237834, 0x00000000, 0x00006000, 0x00, 197, 90, 0, 0, 4, 9, 4, 4, 1, 0, 0.000000f, 0.000000f, &__item_stats_data[56542], 4, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
+  { "Indecipherable Eversong Diamond", 240983, 0x00000000, 0x00006000, 0x00, 295, 1, 0, 0, 4, 0, 3, 9, 0, 0, 0.000000f, 0.000000f, 0, 0, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 4402, 0, 0, 0, 0, 2 },
   { "The Dreadblades", 242604, 0x00408020, 0x01403000, 0x00, 13, 0, 0, 0, 6, 22, 2, 7, 1, 2600, 0.500000f, 0.000000f, &__item_stats_data[2], 2, 0x0008, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },
   { "Pristine Xakal's Determination", 246085, 0x00009440, 0x00002040, 0x00, 1, 1, 0, 0, 4, 0, 3, 9, 1, 0, 0.000000f, 0.000000f, 0, 0, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 4300, 0, 0, 0, 0, 0 },
   { "Trovehunter's Bounty", 265714, 0x00000000, 0x00002000, 0x00, 1, 90, 0, 0, 4, 0, 4, 0, 0, 0, 0.000000f, 0.000000f, 0, 0, 0xffff, 0xffffffffffffffff, { 0, 0, 0 }, 0, 0, 0, 0, 0, 0 },

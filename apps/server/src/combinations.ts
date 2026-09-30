@@ -135,9 +135,12 @@ export function createCombinationService(deps: CombinationServiceDeps) {
         .filter(([k]) => k === "gem_id")
         .flatMap(([, v]) => v.split(/[/:]/).map(Number))
         .filter((n) => Number.isInteger(n) && n > 0);
-      const categories = [mi?.limitCategory, ...bonuses.map((b) => b?.limitCategory)].filter(
-        (c): c is number => c !== undefined,
-      );
+      // A socketed gem with a limit category (e.g. one Thalassian Diamond) counts the item too.
+      const categories = [
+        mi?.limitCategory,
+        ...bonuses.map((b) => b?.limitCategory),
+        ...gems.map((g) => meta?.gems?.[g]?.limitCategory),
+      ].filter((c): c is number => c !== undefined);
       gear.push({
         index: item.index,
         slot: item.slot,
@@ -164,8 +167,11 @@ export function createCombinationService(deps: CombinationServiceDeps) {
       talentLoadouts: selection.talentLoadouts,
       equippedLoadout: equippedLoadoutIndex(db, sim.importId),
       categoryLimits,
-      // No item data says which gems are unique-equipped yet.
-      uniqueGems: new Set(),
+      uniqueGems: new Set(
+        Object.entries(meta?.gems ?? {})
+          .filter(([, g]) => g.uniqueEquipped)
+          .map(([id]) => Number(id)),
+      ),
       weapons: weaponRulesFor(sim.character.class, sim.character.spec),
       minTierPieces: selection.minTierPieces,
       catalystCharges: selection.catalystCharges,

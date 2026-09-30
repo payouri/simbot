@@ -34,6 +34,9 @@ import {
   toggleLock,
 } from "./model";
 
+/** Tier-set minimums offered: none, the 2- and 4-piece bonuses, every tier slot. */
+const TIER_MINIMUMS = [0, 2, 4, 5] as const;
+
 const PRECISION_LABEL: Record<Precision, string> = { low: "Low", medium: "Medium", high: "High" };
 const FIGHT_LABEL: Record<string, string> = {
   Patchwerk: "Patchwerk",
@@ -352,6 +355,24 @@ export function Command({
               )}
             />
           </button>
+        </dd>
+        <dt className="text-faint">Tier set</dt>
+        <dd className="flex flex-wrap gap-1">
+          {TIER_MINIMUMS.map((n) => {
+            const on = (selection.minTierPieces ?? 0) === n;
+            return (
+              <button
+                key={n}
+                type="button"
+                aria-pressed={on}
+                title={n === 0 ? "No tier minimum" : `Keep at least ${n} tier pieces`}
+                className={seg(on)}
+                onClick={() => onSelection({ ...selection, minTierPieces: n })}
+              >
+                {n === 0 ? "Any" : n === 5 ? "5" : `${n}+`}
+              </button>
+            );
+          })}
         </dd>
         <dt className="text-faint">Sim</dt>
         <dd>

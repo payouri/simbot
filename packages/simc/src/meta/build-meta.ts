@@ -1,10 +1,10 @@
 import { readCsvColumns } from "./csv";
 import { type IncBonus, parseItemBonuses, parseItemData, parseItemEffects } from "./inc";
-import type { HandType, ItemMeta, MetaBonus, MetaItem } from "./schema";
+import type { HandType, ItemMeta, MetaBonus, MetaGem, MetaItem } from "./schema";
 
 /**
  * Item classes that go into item-meta and item-icons: weapons and armour, which is everything
- * a Character can wear. Gems, consumables and the rest are left out on purpose, so the files
+ * a Character can wear. Consumables and the rest are left out on purpose, so the files
  * stay small and "known item" means "known equippable item". Widen this to add more.
  */
 export const EQUIPPABLE_ITEM_CLASSES: ReadonlySet<number> = new Set([2, 4]);
@@ -13,6 +13,7 @@ export const EQUIPPABLE_ITEM_CLASSES: ReadonlySet<number> = new Set([2, 4]);
 export const isEquippable = (itemClass: number, inventoryType: number) =>
   EQUIPPABLE_ITEM_CLASSES.has(itemClass) && inventoryType !== 0;
 
+const ITEM_CLASS_GEM = 3;
 const UNIQUE_EQUIPPED = 0x00080000; // ITEM_FLAG_UNIQUE_EQUIPPED
 const EFFECT_ON_USE = 0; // ITEM_SPELLTRIGGER_ON_USE
 const EFFECT_ON_NO_DELAY_USE = 5; // ITEM_SPELLTRIGGER_ON_NO_DELAY_USE
@@ -102,7 +103,16 @@ export function buildItemMeta(build: BuildIdentity, src: ItemMetaSources): ItemM
   }
 
   const items: Record<string, MetaItem> = {};
+  const gems: Record<string, MetaGem> = {};
   for (const it of parseItemData(src.itemDataInc)) {
+    if (it.itemClass === ITEM_CLASS_GEM) {
+      const gem: MetaGem = {};
+      if ((it.flags1 & UNIQUE_EQUIPPED) !== 0) gem.uniqueEquipped = true;
+      const limit = baseLimit.get(it.id);
+      if (limit !== undefined) gem.limitCategory = limit;
+      if (Object.keys(gem).length > 0) gems[it.id] = gem;
+      continue;
+    }
     if (!isEquippable(it.itemClass, it.inventoryType)) continue;
     const item: MetaItem = {
       name: it.name,
@@ -144,6 +154,7 @@ export function buildItemMeta(build: BuildIdentity, src: ItemMetaSources): ItemM
     items,
     bonuses,
     limitCategories,
+    gems,
   };
 }
 
