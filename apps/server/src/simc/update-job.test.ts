@@ -83,6 +83,7 @@ const call = (method: string, path: string, body?: unknown) =>
   app.fetch(
     new Request(`http://simbot.test${path}`, {
       method,
+      headers: body === undefined ? undefined : { "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     }),
   );

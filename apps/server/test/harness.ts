@@ -237,6 +237,7 @@ export function makeHarness(
     app.fetch(
       new Request(`http://simbot.test${path}`, {
         method,
+        headers: body === undefined ? undefined : { "content-type": "application/json" },
         body: body === undefined ? undefined : JSON.stringify(body),
       }),
     );

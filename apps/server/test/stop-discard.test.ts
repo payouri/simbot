@@ -299,6 +299,7 @@ describe("crash recovery (a real server process, killed and restarted)", () => {
   const api = async (s: Server, method: string, path: string, body?: unknown) =>
     fetch(`${s.base}${path}`, {
       method,
+      headers: body === undefined ? undefined : { "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   const simOn = async (s: Server, id: number) =>

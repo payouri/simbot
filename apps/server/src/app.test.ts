@@ -81,3 +81,25 @@ describe("boot", () => {
     });
   });
 });
+
+describe("cross-site writes", () => {
+  test("a text/plain body (a CORS simple request) is refused before it is parsed", async () => {
+    const res = await app.fetch(
+      new Request("http://simbot.test/api/imports", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: JSON.stringify({ text: "x" }),
+      }),
+    );
+    expect(res.status).toBe(415);
+    expect(await res.json()).toMatchObject({ error: "unsupported_media_type" });
+  });
+
+  test("a body with no content type is refused too", async () => {
+    const res = await app.fetch(
+      new Request("http://simbot.test/api/imports", { method: "POST", body: "{}" }),
+    );
+    // fetch's Request defaults string bodies to text/plain.
+    expect(res.status).toBe(415);
+  });
+});
