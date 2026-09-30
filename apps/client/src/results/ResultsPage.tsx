@@ -203,7 +203,7 @@ function Verdict({
           Edit and re-run
         </button>
         {edit.isError && (
-          <p role="alert" className="text-[12px] text-loss">
+          <p role="alert" className="text-[12.5px] text-loss">
             {edit.error.message}
           </p>
         )}
@@ -269,7 +269,7 @@ function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; p
                 item={it}
                 className={clsx(
                   "block max-w-full truncate",
-                  d.items.length === 1 ? "text-[13px]" : "text-[12px]",
+                  d.items.length === 1 ? "text-[13px]" : "text-[12.5px]",
                 )}
               />
             ))
@@ -307,12 +307,12 @@ function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; p
           className="flex h-full flex-col justify-center gap-3 px-1 text-center"
           aria-live="polite"
         >
-          <p className="text-[12px] text-faint">
+          <p className="text-[11.5px] text-faint">
             #<span className="num">{row.rank}</span> · Combination{" "}
             <span className="num">{row.combinationId}</span>
           </p>
           {row.isBaseline ? (
-            <p className="text-[15px] font-semibold">Your equipped set</p>
+            <p className="text-[20px] font-semibold">Your equipped set</p>
           ) : (
             <>
               <p
@@ -339,7 +339,7 @@ function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; p
             <p className="text-[12.5px] text-muted">Talents: {loadout}</p>
           )}
           {row.inNoiseGroup && row.rank > 1 && (
-            <p className="text-[12px] text-noise">Within noise of #1</p>
+            <p className="text-[11.5px] text-noise">Within noise of #1</p>
           )}
         </div>
       }
@@ -417,7 +417,7 @@ function StageTable({
         </table>
       </div>
       {invalid !== null && (
-        <p className="text-[12px] text-loss">
+        <p className="text-[12.5px] text-loss">
           SimC refused this Combination in stage <span className="num">{invalid}</span>, so it took
           no further part.
         </p>
@@ -481,7 +481,7 @@ function Ranking({
           </span>
         </div>
         {noiseGroup > 1 && (
-          <p className="text-[12px] text-muted">
+          <p className="text-[12.5px] text-muted">
             <span className="text-noise">
               #1 to #<span className="num">{noiseGroup}</span>
             </span>{" "}
@@ -489,7 +489,7 @@ function Ranking({
           </p>
         )}
         {reachedShallow && (
-          <p className="text-[12px] text-faint">
+          <p className="text-[12.5px] text-faint">
             Each row shows the Stage it reached (<span className="num">S1</span> to{" "}
             <span className="num">S{stageCount}</span>). Rows that stopped earlier rank below every
             row that went further.
@@ -584,7 +584,7 @@ function RankRow({
             : "hover:bg-panel",
       )}
     >
-      <span className="num text-[12px] text-faint">{pinned ? "" : row.rank}</span>
+      <span className="num text-[11.5px] text-faint">{pinned ? "" : row.rank}</span>
       <span className="flex min-w-0 flex-col gap-1">
         <DeltaBar
           deltaPct={row.deltaPct}
