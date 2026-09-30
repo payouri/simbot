@@ -1,4 +1,13 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gunzipSync } from "node:zlib";
@@ -209,6 +218,29 @@ export function installFixtureMeta(dataDir: string, tag: string = BUILD_TAG) {
 }
 
 export type Harness = ReturnType<typeof makeHarness>;
+
+/**
+ * The tag of the SimC Build installed in a real data dir (the app installs it and its item-meta
+ * on first start). Throws when there is none to run against.
+ */
+export function installedBuildTag(dataDir: string): string {
+  const tag = existsSync(join(dataDir, "simc"))
+    ? readdirSync(join(dataDir, "simc")).find((d) => !d.startsWith("."))
+    : undefined;
+  if (!tag || !existsSync(join(dataDir, "meta", tag, "item-meta.json"))) {
+    throw new Error(`no SimC Build with item data in ${dataDir}; run the app once to install one`);
+  }
+  return tag;
+}
+
+/** A fresh app over a temp data dir that runs `dataDir`'s real SimC Build `tag`. */
+export function makeRealBuildHarness(dataDir: string, tag: string): Harness {
+  const h = makeHarness({ withBuild: false });
+  symlinkSync(join(dataDir, "simc"), join(h.dataDir, "simc"));
+  symlinkSync(join(dataDir, "meta"), join(h.dataDir, "meta"));
+  h.app.db.run("INSERT INTO settings (key, value) VALUES ('simc.current_tag', ?)", [tag]);
+  return h;
+}
 
 /** A temp data dir plus an app over it, with typed helpers for the Quick Sim REST calls. */
 export function makeHarness(

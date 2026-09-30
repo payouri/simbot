@@ -1,3 +1,4 @@
+export * from "./benchmark";
 export * from "./estimate";
 export * from "./generate";
 export * from "./preselect";

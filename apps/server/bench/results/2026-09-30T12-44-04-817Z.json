@@ -1,0 +1,142 @@
+{
+  "schema": 1,
+  "producedBy": "apps/server/bench/top-gear.ts",
+  "startedAt": "2026-09-30T12:44:04.817Z",
+  "simcTag": "1210-2026-09-29-d08a1c3",
+  "machine": {
+    "cpus": 16,
+    "model": "AMD Ryzen 7 7735HS with Radeon Graphics"
+  },
+  "checkSim": null,
+  "sims": [
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "high",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 50,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 24481.097289,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 780,
+          "iterations": 458,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 2692,
+          "iterations": 3858,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 551,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 20972,
+          "iterations": 33458,
+          "profilesets": 8,
+          "targetError": 0.1,
+          "maxIterations": 4451,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1891.8749999999998,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "high",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 50,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 31922.993272,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 3311,
+          "iterations": 4530,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3188,
+          "iterations": 4359,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 551,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 25389,
+          "iterations": 37109,
+          "profilesets": 9,
+          "targetError": 0.1,
+          "maxIterations": 4451,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 3235.208333333333,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "high",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 50,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 64591.295529999996,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 37134,
+          "iterations": 57721,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 4426,
+          "iterations": 6564,
+          "profilesets": 14,
+          "targetError": 0.3,
+          "maxIterations": 551,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 22972,
+          "iterations": 34559,
+          "profilesets": 9,
+          "targetError": 0.1,
+          "maxIterations": 4051,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 9635,
+      "repeat": 1
+    }
+  ]
+}

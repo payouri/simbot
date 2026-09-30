@@ -6,11 +6,14 @@
  * override lines, `set_bonus_enabled`, and the shape of `profilesets.results[]`.
  */
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, readdirSync, symlinkSync } from "node:fs";
-import { join } from "node:path";
 import { importItemsResponseSchema, rankResults, type Sim, simSchema } from "@simbot/shared";
 import { loadConfig } from "../src/config";
-import { type Harness, importItemsAddonString, makeHarness } from "./harness";
+import {
+  type Harness,
+  importItemsAddonString,
+  installedBuildTag,
+  makeRealBuildHarness,
+} from "./harness";
 
 const enabled = process.env.SIMBOT_TEST_SIMC === "1";
 let h: Harness;
@@ -21,16 +24,7 @@ const IDS = [175302, 137410, 118848, 124391, 113884, 35031];
 describe.skipIf(!enabled)("Top Gear against a real SimC Build", () => {
   beforeAll(() => {
     const dataDir = loadConfig().dataDir;
-    const tag = readdirSync(join(dataDir, "simc")).find((d) => !d.startsWith("."));
-    if (!tag || !existsSync(join(dataDir, "meta", tag, "item-meta.json"))) {
-      throw new Error(
-        `no SimC Build with item data in ${dataDir}; run the app once to install one`,
-      );
-    }
-    h = makeHarness({ withBuild: false });
-    symlinkSync(join(dataDir, "simc"), join(h.dataDir, "simc"));
-    symlinkSync(join(dataDir, "meta"), join(h.dataDir, "meta"));
-    h.app.db.run("INSERT INTO settings (key, value) VALUES ('simc.current_tag', ?)", [tag]);
+    h = makeRealBuildHarness(dataDir, installedBuildTag(dataDir));
   });
 
   afterAll(() => h?.close());

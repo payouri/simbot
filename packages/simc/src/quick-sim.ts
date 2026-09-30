@@ -11,10 +11,22 @@ export const PRECISION_TARGET_ERROR: Readonly<Record<Precision, number>> = {
 
 /**
  * How often SimC checks if it has reached the target error (every N iterations).
- * Unmeasured default of 100: higher values reduce checking overhead but may miss early
- * convergence. Not yet calibrated against real Sims.
+ * Measured: going by its later Stages' iterations × error² (about 40), this gear set needs about
+ * 40 iterations for 1% error, yet at intervals 100 to 400 every profileset of a 1% Stage ran exactly the interval plus one, and at 50 they ran 51 or 101
+ * (51.0 to 69.8 on average per Sim): SimC stops only at a check. At intervals 50 to 400
+ * that Stage was 77% to 94% of a 972-Combination Sim's Stage time.
+ * Summed median wall time over the 4-, 8- and 12-item cases (9, 81 and 972 Combinations),
+ * `profileset_work_threads=1`, Medium, 3 repeats, SimC 1210-2026-09-29-d08a1c3 on a 16-thread
+ * AMD Ryzen 7 7735HS: 266.3 s at 400, 152.9 s at 200, 92.2 s at 100, 68.1 s at 50, 64.7 s
+ * and 69.5 s at 25 (two runs), 63.6 s at 10, 61.6 s at 5. Sources:
+ * `apps/server/bench/results/2026-09-30T11-50-49-078Z.json` (400 to 25) and
+ * `2026-09-30T12-33-34-232Z.json` (25 to 5). 50 and 25 are a tie: 50 ran 68.1 s here and
+ * 69.2 s in `2026-09-30T12-47-17-748Z.json`, 25 ran 64.7 s and 69.5 s. 10 and 5 were 7% and 10%
+ * faster than 50, one run each, against 7% between the two runs of 25. Smaller
+ * intervals were not chosen because the benchmark records no achieved error, so it cannot show
+ * what stopping earlier costs in accuracy.
  */
-export const ANALYZE_ERROR_INTERVAL = 100;
+export const ANALYZE_ERROR_INTERVAL = 50;
 
 /**
  * The SimC input for a Quick Sim: the Addon String unchanged, then the frozen Sim Settings as

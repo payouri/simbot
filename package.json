@@ -15,6 +15,7 @@
     "test": "bun test",
     "check": "biome check . && bun run typecheck && bun test",
     "prototype:top-gear": "bun --cwd apps/client dev",
+    "bench:top-gear": "bun apps/server/bench/top-gear.ts",
     "test:simc": "SIMBOT_TEST_SIMC=1 bun test apps/server/test/quick-sim.simc.test.ts apps/server/test/import-items.simc.test.ts apps/server/test/smart-sim.simc.test.ts",
     "smoke:server": "bun apps/server/test/smoke-server.ts"
   },

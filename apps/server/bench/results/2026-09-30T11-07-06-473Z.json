@@ -1,0 +1,1948 @@
+{
+  "schema": 1,
+  "producedBy": "apps/server/bench/top-gear.ts",
+  "startedAt": "2026-09-30T11:07:06.473Z",
+  "simcTag": "1210-2026-09-29-d08a1c3",
+  "machine": {
+    "cpus": 16,
+    "model": "AMD Ryzen 7 7735HS with Radeon Graphics"
+  },
+  "checkSim": null,
+  "sims": [
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 13626.186693,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2633,
+          "iterations": 981,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 129,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 4156,
+          "iterations": 3882,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 527,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6798,
+          "iterations": 8619,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1131,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14269.237119000001,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2762,
+          "iterations": 980,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 130,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 4451,
+          "iterations": 4089,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 630,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7026,
+          "iterations": 8791,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1225,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14591.279156,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2793,
+          "iterations": 984,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 130,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 4628,
+          "iterations": 4191,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 624,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7136,
+          "iterations": 8862,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1220,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 37353.163398000004,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 24206,
+          "iterations": 9930,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 135,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 5224,
+          "iterations": 4820,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 634,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7887,
+          "iterations": 9418,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1134,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 37551.73283099999,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 24256,
+          "iterations": 9791,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 135,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 5219,
+          "iterations": 4695,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 628,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 8042,
+          "iterations": 9888,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1217,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 37713.221743999995,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 24643,
+          "iterations": 9862,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 132,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 5047,
+          "iterations": 4412,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 619,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7987,
+          "iterations": 9514,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1128,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 302055.91772800003,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 288876,
+          "iterations": 120050,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 144,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 5212,
+          "iterations": 4424,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 530,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7910,
+          "iterations": 9057,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1031,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 304079.21557099995,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 290746,
+          "iterations": 120162,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 138,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 5253,
+          "iterations": 4530,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 532,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 8022,
+          "iterations": 9224,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1127,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 16,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 316845.37149200006,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 303413,
+          "iterations": 120393,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 152,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 5311,
+          "iterations": 4509,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 529,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 8063,
+          "iterations": 9266,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1131,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9968.230238999939,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 971,
+          "iterations": 808,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 2964,
+          "iterations": 4008,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6002,
+          "iterations": 8708,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1201,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9780.944209000096,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 956,
+          "iterations": 808,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3187,
+          "iterations": 4108,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 601,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5603,
+          "iterations": 8308,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1101,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9902.936581999995,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 980,
+          "iterations": 808,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 2970,
+          "iterations": 3908,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5920,
+          "iterations": 8508,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1101,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 15609.37365199998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5274,
+          "iterations": 8080,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3250,
+          "iterations": 4309,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7050,
+          "iterations": 9509,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1201,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 15494.453127000015,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5209,
+          "iterations": 8080,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3404,
+          "iterations": 4509,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 601,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6847,
+          "iterations": 9809,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1201,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14988.851451999974,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5209,
+          "iterations": 8080,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3195,
+          "iterations": 4209,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6550,
+          "iterations": 9609,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1201,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 69102.06747399992,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 59095,
+          "iterations": 98071,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3476,
+          "iterations": 4509,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6480,
+          "iterations": 9109,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1101,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 69399.31842200016,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 59634,
+          "iterations": 98071,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3374,
+          "iterations": 4009,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6338,
+          "iterations": 9009,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1101,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 70271.2724179998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 59785,
+          "iterations": 98071,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3767,
+          "iterations": 4810,
+          "profilesets": 10,
+          "targetError": 0.3,
+          "maxIterations": 501,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6666,
+          "iterations": 8809,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1101,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9785.163060999941,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1020,
+          "iterations": 822,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 103,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3011,
+          "iterations": 4320,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 603,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5721,
+          "iterations": 8820,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1203,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9480.236969999969,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1023,
+          "iterations": 821,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 104,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 2826,
+          "iterations": 3921,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 503,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5596,
+          "iterations": 8718,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1202,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9470.276267000008,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1023,
+          "iterations": 824,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 104,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 2850,
+          "iterations": 3919,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 603,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5565,
+          "iterations": 8822,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1204,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 16737.397791000083,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5917,
+          "iterations": 8198,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 104,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3661,
+          "iterations": 4624,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 603,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7125,
+          "iterations": 9419,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1102,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 16596.979687999934,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5808,
+          "iterations": 8199,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 104,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3741,
+          "iterations": 4622,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 603,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7014,
+          "iterations": 9525,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1203,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 16276.53199599986,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5806,
+          "iterations": 8204,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 105,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3447,
+          "iterations": 4423,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 603,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6990,
+          "iterations": 9522,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1202,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 77125.75601999997,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 66350,
+          "iterations": 99566,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 104,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3716,
+          "iterations": 4727,
+          "profilesets": 10,
+          "targetError": 0.3,
+          "maxIterations": 503,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7007,
+          "iterations": 9026,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1103,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 77125.29119200003,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 66453,
+          "iterations": 99603,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 106,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3740,
+          "iterations": 4427,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 504,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6878,
+          "iterations": 9119,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1103,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 77950.99153600005,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 67206,
+          "iterations": 99574,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 104,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3688,
+          "iterations": 4424,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 504,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6999,
+          "iterations": 9224,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1104,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10197.340553000104,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1191,
+          "iterations": 840,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 107,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3163,
+          "iterations": 4145,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 607,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5812,
+          "iterations": 8741,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1205,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9806.462065000087,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1184,
+          "iterations": 845,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 107,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3093,
+          "iterations": 4037,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 604,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5498,
+          "iterations": 8351,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1109,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10038.771179999923,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1186,
+          "iterations": 842,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 108,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3085,
+          "iterations": 4050,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 605,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5735,
+          "iterations": 8744,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1204,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 19079.82406899985,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 8059,
+          "iterations": 8448,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 110,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3709,
+          "iterations": 4557,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 607,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7277,
+          "iterations": 9751,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1206,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 18192.18227299978,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 7503,
+          "iterations": 8444,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 109,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3777,
+          "iterations": 4751,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 607,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6880,
+          "iterations": 9751,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1206,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 18301.287299999967,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 7540,
+          "iterations": 8452,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 109,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3758,
+          "iterations": 4549,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 508,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6969,
+          "iterations": 9649,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1206,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 95148.44659100007,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 84544,
+          "iterations": 102481,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 109,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 4136,
+          "iterations": 5667,
+          "profilesets": 12,
+          "targetError": 0.3,
+          "maxIterations": 507,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6414,
+          "iterations": 8845,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1007,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 93475.41221500002,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 83422,
+          "iterations": 102469,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 110,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3604,
+          "iterations": 4444,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 506,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6394,
+          "iterations": 8949,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1007,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 93139.23930200003,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 83122,
+          "iterations": 102542,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 110,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3406,
+          "iterations": 4160,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 509,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6553,
+          "iterations": 9048,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1008,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 11235.10744199995,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1559,
+          "iterations": 895,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 118,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3489,
+          "iterations": 4286,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 612,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6152,
+          "iterations": 8805,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1214,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 11270.68928000005,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1619,
+          "iterations": 895,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 115,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3555,
+          "iterations": 4102,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 612,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6064,
+          "iterations": 8901,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1210,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10715.444979999913,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1610,
+          "iterations": 889,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 115,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3261,
+          "iterations": 3894,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 514,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 5815,
+          "iterations": 8593,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1211,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 626.25,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 21458.10340700019,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 10461,
+          "iterations": 8921,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 116,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3943,
+          "iterations": 4806,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 615,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 7019,
+          "iterations": 10321,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1309,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 20756.813726999797,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 10465,
+          "iterations": 8898,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 117,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3668,
+          "iterations": 4317,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 519,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6589,
+          "iterations": 9610,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1210,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 20969.99788499996,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 10511,
+          "iterations": 8913,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 117,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3824,
+          "iterations": 4609,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 617,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6600,
+          "iterations": 9503,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1209,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 1547.7083333333333,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 133947.72861800017,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 123706,
+          "iterations": 108288,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 119,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3603,
+          "iterations": 4095,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 511,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6580,
+          "iterations": 9006,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1018,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 133817.61284600012,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 123381,
+          "iterations": 108219,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 118,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3891,
+          "iterations": 4505,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 515,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6484,
+          "iterations": 9096,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1115,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 8,
+        "analyzeErrorInterval": 100,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 135297.1136769997,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 125183,
+          "iterations": 108371,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 119,
+          "atCeiling": 0
+        },
+        {
+          "stage": 2,
+          "durationMs": 3563,
+          "iterations": 4211,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 515,
+          "atCeiling": 0
+        },
+        {
+          "stage": 3,
+          "durationMs": 6495,
+          "iterations": 9104,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1108,
+          "atCeiling": 0
+        }
+      ],
+      "previewEstimateSeconds": 6822.5,
+      "repeat": 3
+    }
+  ]
+}

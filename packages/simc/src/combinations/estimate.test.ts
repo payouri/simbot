@@ -2,15 +2,17 @@ import { describe, expect, test } from "bun:test";
 import {
   costModelFromCheckSim,
   costModelFromStages,
-  DEFAULT_COST_MODEL,
   estimateSeconds,
   isSoftWarning,
 } from "./estimate";
 import { weaponRulesFor } from "./weapons";
 
 describe("estimateSeconds", () => {
-  const base = { fightSeconds: 60, precision: "medium", model: DEFAULT_COST_MODEL } as const;
-  /** Seconds of one Stage over `n` Combinations at `error`% under the default model. */
+  // A fixed model of the test's own, so the expected values do not move when the defaults are
+  // re-measured.
+  const MODEL = { msPerIteration: 1.5, iterationsTimesErrorSq: 250 };
+  const base = { fightSeconds: 60, precision: "medium", model: MODEL } as const;
+  /** Seconds of one Stage over `n` Combinations at `error`% under `MODEL`. */
   const stage = (n: number, error: number) => (n * (250 / error ** 2) * 1.5) / 1000;
 
   test("grows with the number of Combinations", () => {
@@ -40,20 +42,22 @@ describe("estimateSeconds", () => {
   });
 
   test("follows the Smart Sim's Stage ladder, not a coarser one", () => {
-    // Medium runs 1% -> 0.3% -> 0.2%; the survivor model keeps 400 of 2000, then 40 of 400.
+    // Medium runs 1% -> 0.3% -> 0.2%; the survivor model keeps 10 of 2000, then the same 10.
     expect(estimateSeconds({ ...base, combinations: 2000 })).toBeCloseTo(
-      stage(2000, 1) + stage(400, 0.3) + stage(40, 0.2),
+      stage(2000, 1) + stage(10, 0.3) + stage(10, 0.2),
       5,
     );
-    // Low is two Stages, 1% -> 0.5%; Stage 1 alone is about 187 s for 500 Combinations.
+    // Low is two Stages, 1% -> 0.5%.
     expect(estimateSeconds({ ...base, precision: "low", combinations: 500 })).toBeCloseTo(
-      stage(500, 1) + stage(100, 0.5),
+      stage(500, 1) + stage(10, 0.5),
       5,
     );
   });
 
-  test("a Medium Top Gear of 2000 Combinations warns about a long run", () => {
-    expect(isSoftWarning(estimateSeconds({ ...base, combinations: 2000 }))).toBe(true);
+  test("a Top Gear warns once its estimate passes 30 minutes, not before", () => {
+    // Under the test model Medium Stage 1 costs 0.375 s per Combination: 4000 is about 27 min.
+    expect(isSoftWarning(estimateSeconds({ ...base, combinations: 4000 }))).toBe(false);
+    expect(isSoftWarning(estimateSeconds({ ...base, combinations: 5000 }))).toBe(true);
   });
 
   test("soft warning starts above 30 minutes", () => {
