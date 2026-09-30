@@ -80,6 +80,7 @@ export function LiveConnection() {
           void client.invalidateQueries({ queryKey: ["sim", event.simId] });
           break;
         case "simc.status_changed":
+        case "simc.update_status":
           void client.invalidateQueries({ queryKey: SIMC_KEY });
           break;
       }

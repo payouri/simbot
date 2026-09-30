@@ -67,11 +67,75 @@ export const simcUpdateStatusSchema = z.object({
 });
 export type SimcUpdateStatus = z.infer<typeof simcUpdateStatusSchema>;
 
+/** What a `simc_update` Job applies. Resolved to a tag when the Job starts, not when it is queued. */
+export const simcJobTargetSchema = z.discriminatedUnion("kind", [
+  /** The newest Docker Hub nightly at Job start. */
+  z.object({ kind: z.literal("nightly") }),
+  /** The Seed SimC Build shipped with the app. */
+  z.object({ kind: z.literal("seed") }),
+  /** A SimC Build that is already installed: switching to it pins it. */
+  z.object({ kind: z.literal("installed"), tag: z.string().min(1) }),
+]);
+export type SimcJobTarget = z.infer<typeof simcJobTargetSchema>;
+
+/** The steps of a SimC Update, in order. */
+export const simcUpdateStepSchema = z.enum(["fetch", "check", "meta", "commit"]);
+export type SimcUpdateStep = z.infer<typeof simcUpdateStepSchema>;
+
+export const simcJobStatusSchema = z.enum(["queued", "running", "done", "failed"]);
+export type SimcJobStatus = z.infer<typeof simcJobStatusSchema>;
+
+/** A `simc_update` Job. `step` is the step running now, or the one that failed. */
+export const simcJobSchema = z.object({
+  id: z.number().int(),
+  target: simcJobTargetSchema,
+  status: simcJobStatusSchema,
+  step: simcUpdateStepSchema.nullable(),
+  /** The tag the target resolved to, once the Job has started. */
+  tag: z.string().nullable(),
+  error: z.string().nullable(),
+  createdAt: z.string(),
+});
+export type SimcJob = z.infer<typeof simcJobSchema>;
+
+/** `POST /api/simc/jobs`. */
+export const queueSimcJobRequestSchema = z.object({ target: simcJobTargetSchema });
+export type QueueSimcJobRequest = z.infer<typeof queueSimcJobRequestSchema>;
+
+export const MAX_KEEP_BUILDS = 20;
+export const DEFAULT_KEEP_BUILDS = 3;
+
+/** `PATCH /api/simc/settings`. */
+export const simcSettingsRequestSchema = z.object({
+  /** How many SimC Builds to keep installed (the current one and any in use always stay). */
+  keep: z.number().int().min(1).max(MAX_KEEP_BUILDS),
+});
+export type SimcSettingsRequest = z.infer<typeof simcSettingsRequestSchema>;
+
+const checkSimDpsSchema = z.object({ mean: z.number(), meanError: z.number() });
+
+/** The Check Sim result stored for the Current SimC Build, and the previous build's when both exist. */
+export const simcCheckSimSchema = z.object({
+  tag: z.string().min(1),
+  importId: z.number().int(),
+  dps: checkSimDpsSchema,
+  previous: z.object({ tag: z.string().min(1), dps: checkSimDpsSchema }).nullable(),
+});
+export type SimcCheckSim = z.infer<typeof simcCheckSimSchema>;
+
 /** `GET /api/simc`. `current` is null until a SimC Build is installed. */
 export const simcStatusResponseSchema = z.object({
   current: simcBuildSchema.nullable(),
   install: simcInstallStateSchema,
   /** The stored result of the last update check; null before the first one or with no build. */
   update: simcUpdateStatusSchema.nullable(),
+  /** Every installed SimC Build, newest first. */
+  installed: z.array(simcBuildSchema),
+  /** How many builds retention keeps. */
+  keep: z.number().int().min(1),
+  /** The latest SimC Update Job while it is queued, running or failed; null once it is done. */
+  job: simcJobSchema.nullable(),
+  /** The Check Sim DPS of the Current SimC Build and, when both exist, of the build before it. */
+  checkSim: simcCheckSimSchema.nullable(),
 });
 export type SimcStatusResponse = z.infer<typeof simcStatusResponseSchema>;

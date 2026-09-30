@@ -19,9 +19,10 @@ import type { Db } from "../db";
 import { getImportText } from "../db/imports";
 import { abandonJob, failSim, getSim, setJobPid, startSim, succeedSim } from "../db/sims";
 import type { EventBus } from "../events";
+import type { Launch } from "../simc/check-sim";
 import { createThrottle } from "./throttle";
 
-export type Launch = (buildDir: string, args: readonly string[]) => string[];
+export type { Launch };
 
 export type RunSimDeps = {
   db: Db;

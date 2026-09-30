@@ -84,4 +84,24 @@ export const migrations: readonly Migration[] = [
       CREATE INDEX jobs_by_status ON jobs (status, id);
     `,
   },
+  {
+    id: 3,
+    name: "simc_update_jobs",
+    sql: `
+      ALTER TABLE jobs ADD COLUMN target TEXT;
+      ALTER TABLE jobs ADD COLUMN step TEXT;
+      ALTER TABLE jobs ADD COLUMN resolved_tag TEXT;
+      ALTER TABLE jobs ADD COLUMN error TEXT;
+
+      CREATE TABLE check_sim_results (
+        build_tag      TEXT NOT NULL,
+        import_id      INTEGER NOT NULL REFERENCES imports (id),
+        previous_tag   TEXT,
+        dps_mean       REAL NOT NULL,
+        dps_mean_error REAL NOT NULL,
+        created_at     TEXT NOT NULL,
+        PRIMARY KEY (build_tag, import_id)
+      ) STRICT;
+    `,
+  },
 ];

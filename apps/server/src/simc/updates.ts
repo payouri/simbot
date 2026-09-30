@@ -14,6 +14,14 @@ const TAG_PARTS = /^\d+-(\d{4}-\d{2}-\d{2})-([0-9a-f]+)$/;
 
 const tagDate = (tag: string) => TAG_PARTS.exec(tag)?.[1] ?? null;
 
+/** Sort order for SimC Builds, newest first: by the date in the tag, then by the tag itself. */
+export function newestFirst(a: { tag: string }, b: { tag: string }): number {
+  const x = tagDate(a.tag) ?? "";
+  const y = tagDate(b.tag) ?? "";
+  if (x !== y) return x < y ? 1 : -1;
+  return a.tag < b.tag ? 1 : a.tag > b.tag ? -1 : 0;
+}
+
 /**
  * Whether `candidate` is a newer build than `current`. Nightly tags carry their date, so a later
  * date wins. On the same date a different commit only counts when Docker Hub pushed it after

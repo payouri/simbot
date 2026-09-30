@@ -5,8 +5,13 @@ import {
   appEventSchema,
   healthResponseSchema,
   queueResponseSchema,
+  queueSimcJobRequestSchema,
+  type SimcJob,
+  type SimcJobTarget,
   type SimcStatusResponse,
   type SnapshotEvent,
+  simcJobSchema,
+  simcSettingsRequestSchema,
   simcStatusResponseSchema,
 } from "@simbot/shared";
 import type { Db } from "../db";
@@ -23,7 +28,7 @@ import {
   postQueueSim,
   postSim,
 } from "./sims";
-import { apiError, json } from "./util";
+import { apiError, json, readBody } from "./util";
 
 export type HttpDeps = {
   db: Db;
@@ -35,6 +40,14 @@ export type HttpDeps = {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */
     check: () => Promise<SimcStatusResponse>;
+    /** Queues a SimC Update Job. */
+    queueJob: (
+      target: SimcJobTarget,
+    ) => Promise<
+      { ok: true; job: SimcJob } | { ok: false; reason: "busy" | "not_installed" | "no_seed" }
+    >;
+    /** Sets how many SimC Builds retention keeps. */
+    setKeep: (keep: number) => Promise<void>;
   };
 };
 
@@ -139,6 +152,28 @@ export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: H
     if (pathname === "/api/simc/check") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
       return json(simcStatusResponseSchema.parse(await simc.check()));
+    }
+    if (pathname === "/api/simc/jobs") {
+      if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+      const body = await readBody(req, queueSimcJobRequestSchema);
+      if (!body.ok) return body.res;
+      const queued = await simc.queueJob(body.data.target);
+      if (queued.ok) return json(simcJobSchema.parse(queued.job), 201);
+      if (queued.reason === "busy") {
+        return apiError(409, "job_in_progress", {
+          message: "A SimC Update is already queued or running.",
+        });
+      }
+      return queued.reason === "not_installed"
+        ? apiError(404, "build_not_installed", { message: "That SimC Build is not installed." })
+        : apiError(404, "no_seed_build", { message: "This app ships no Seed SimC Build." });
+    }
+    if (pathname === "/api/simc/settings") {
+      if (req.method !== "PATCH") return json({ error: "method_not_allowed" }, 405);
+      const body = await readBody(req, simcSettingsRequestSchema);
+      if (!body.ok) return body.res;
+      await simc.setKeep(body.data.keep);
+      return json(simcStatusResponseSchema.parse(await simc.status()));
     }
     if (pathname === "/api/events") {
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);

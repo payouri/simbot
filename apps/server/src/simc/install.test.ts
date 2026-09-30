@@ -15,101 +15,7 @@ import { join } from "node:path";
 import { simcStatusResponseSchema } from "@simbot/shared";
 import { itemIconsSchema, itemMetaSchema } from "@simbot/simc";
 import { createApp } from "../app";
-import manifestFixture from "./fixtures/manifest.json";
-import tagsFixture from "./fixtures/tags.json";
-import { buildLayer } from "./tar-fixture";
-
-const metaFixtures = join(import.meta.dir, "../../../../packages/simc/src/meta/fixtures");
-const fixture = (name: string) => readFileSync(join(metaFixtures, name), "utf8");
-const json2 = readFileSync(join(import.meta.dir, "fixtures", "json2.json"), "utf8");
-const LATEST_NIGHTLY = tagsFixture.results.find((r) => r.name !== "latest")?.name ?? "";
-
-const digestOf = (bytes: Uint8Array) =>
-  `sha256:${new Bun.CryptoHasher("sha256").update(bytes).digest("hex")}`;
-
-/**
- * Layers shaped like the real image (see fixtures/manifest.json): musl loader and libs,
- * the simc binary, profiles. `simc` is a fake that writes the recorded json2 report, and the
- * loader is a shim that drops `--library-path <p>` and execs the rest, so no musl is needed.
- */
-function fakeImage(report: string) {
-  const layers = [
-    buildLayer([
-      { path: "bin/busybox", content: "not needed", mode: 0o755 },
-      { path: "lib/ld-musl-x86_64.so.1", content: '#!/bin/sh\nshift 2\nexec "$@"\n', mode: 0o755 },
-      { path: "lib/libc.musl-x86_64.so.1", symlink: "ld-musl-x86_64.so.1" },
-      { path: "usr/lib/libz.so.1.3.2", content: "z", mode: 0o755 },
-      { path: "usr/lib/libz.so.1", symlink: "libz.so.1.3.2" },
-      { path: "usr/lib/libapk.so.3.0.0", content: "apk", mode: 0o755 },
-      { path: "usr/lib/engines-3/afalg.so", content: "engine", mode: 0o755 },
-    ]),
-    buildLayer([{ path: "usr/lib/libstdc++.so.6.0.34", content: "cxx", mode: 0o755 }]),
-    buildLayer([
-      { path: "app/", dir: true },
-      {
-        path: "app/SimulationCraft/simc",
-        content: `#!/bin/sh
-for a in "$@"; do case "$a" in json2=*) out="\${a#json2=}";; esac; done
-cat > "$out" <<'JSON'
-${report}
-JSON
-`,
-        mode: 0o755,
-      },
-    ]),
-    buildLayer([
-      { path: "app/SimulationCraft/profiles/CI.simc", content: "optimal_raid=1\n" },
-      { path: "app/SimulationCraft/profiles/MID1/MID1_Mage_Fire.simc", content: "mage=x\n" },
-    ]),
-  ];
-  const blobs = new Map(layers.map((l) => [digestOf(l), l]));
-  const manifest = {
-    ...manifestFixture,
-    layers: [...blobs.entries()].map(([digest, bytes]) => ({
-      ...manifestFixture.layers[0],
-      digest,
-      size: bytes.length,
-    })),
-  };
-  return { blobs, manifest };
-}
-
-type Handler = (url: string, n: number) => Response | undefined;
-
-/** An injected `fetch` that replays recorded registry/Hub responses and logs every call. */
-function fakeRegistry(override: Handler = () => undefined, report: string = json2) {
-  const image = fakeImage(report);
-  const calls: string[] = [];
-  const counts = new Map<string, number>();
-  const fetchFn = async (input: string | URL | Request) => {
-    const url = String(input instanceof Request ? input.url : input);
-    calls.push(url);
-    const n = (counts.get(url) ?? 0) + 1;
-    counts.set(url, n);
-    const forced = override(url, n);
-    if (forced) return forced;
-    if (url.startsWith("https://auth.docker.io/token")) {
-      return Response.json({ token: "anonymous-token" });
-    }
-    if (url.startsWith("https://hub.docker.com/v2/repositories/simulationcraftorg/simc/tags")) {
-      return Response.json(tagsFixture);
-    }
-    if (url.startsWith(`https://raw.githubusercontent.com/simulationcraft/simc/d08a1c3/`)) {
-      return new Response(fixture(`${url.slice(url.lastIndexOf("/") + 1)}`));
-    }
-    const db2 = /^https:\/\/wago\.tools\/db2\/(\w+)\/csv\?build=(.+)$/.exec(url);
-    if (db2) {
-      return new Response(fixture(`${db2[1]}.csv`), {
-        headers: { "content-disposition": `attachment; filename="${db2[1]}.${db2[2]}.csv"` },
-      });
-    }
-    if (url.includes("/manifests/")) return Response.json(image.manifest);
-    const blob = image.blobs.get(url.slice(url.lastIndexOf("/") + 1));
-    if (url.includes("/blobs/") && blob) return new Response(blob);
-    return new Response("not found", { status: 404 });
-  };
-  return { fetch: fetchFn as typeof fetch, calls, image };
-}
+import { fakeRegistry, fixture, json2, LATEST_NIGHTLY } from "./registry-fixture";
 
 let root: string;
 let dataDir: string;
@@ -141,7 +47,8 @@ beforeEach(() => {
   logs.length = 0;
 });
 
-afterEach(() => {
+afterEach(async () => {
+  await app?.idle();
   app?.close();
   app = undefined;
   rmSync(root, { recursive: true, force: true });
@@ -157,16 +64,21 @@ describe("boot with an empty data dir", () => {
 
     const { res, body } = await status(a);
     expect(res?.status).toBe(200);
+    const build = {
+      tag: LATEST_NIGHTLY,
+      simcVersion: "1210-01",
+      gitRevision: "d08a1c3",
+      gitBranch: "midnight",
+      gameDataVersion: "12.1.0.69933",
+    };
     expect(body).toEqual({
-      current: {
-        tag: LATEST_NIGHTLY,
-        simcVersion: "1210-01",
-        gitRevision: "d08a1c3",
-        gitBranch: "midnight",
-        gameDataVersion: "12.1.0.69933",
-      },
+      current: build,
       install: { state: "idle", error: null },
       update: null,
+      installed: [build],
+      keep: 3,
+      job: null,
+      checkSim: null,
     });
     expect(LATEST_NIGHTLY).toBe("1210-2026-09-29-d08a1c3");
   });
@@ -240,7 +152,7 @@ describe("transient failures", () => {
     const a = boot(registry);
     await a.boot();
     expect((await status(a)).body.current?.tag).toBe(LATEST_NIGHTLY);
-    expect(sleeps).toEqual([500, 1000, 500]);
+    expect(sleeps).toEqual([1000, 4000, 1000]);
   });
 
   test("Retry-After is honoured, capped at 60 seconds", async () => {
@@ -285,7 +197,7 @@ describe("transient failures", () => {
     expect(body.install.error).toContain("after 3 attempt(s)");
     expect(logs.join("\n")).toContain("continuing without one");
     expect(registry.calls.filter((u) => u.includes("/blobs/"))).toHaveLength(3);
-    expect(sleeps).toEqual([500, 1000]);
+    expect(sleeps).toEqual([1000, 4000]);
     expect(existsSync(join(dataDir, "simc", LATEST_NIGHTLY))).toBe(false);
     expect(readdirSafe(join(dataDir, "simc", ".partial"))).toEqual([]);
     // The app still serves.
@@ -402,7 +314,7 @@ describe("item-meta and item-icons", () => {
     });
     await boot(registry).boot();
     expect(existsSync(join(metaDirFor(), "item-icons.json"))).toBe(true);
-    expect(sleeps).toEqual([500, 500]);
+    expect(sleeps).toEqual([1000, 1000]);
   });
 
   test("data pinned to another build than asked for is refused", async () => {

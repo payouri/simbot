@@ -22,7 +22,8 @@ const MANIFEST_ACCEPT = [
 export const NIGHTLY_TAG = /^\d+-\d{4}-\d{2}-\d{2}-[0-9a-f]{7,40}$/;
 
 const MAX_ATTEMPTS = 3;
-const BACKOFF_MS = 500;
+/** Wait before retry n (1-based): 1 s, then 4 s, then 16 s should the attempts ever grow. */
+const BACKOFF_MS = [1000, 4000, 16_000] as const;
 const MAX_RETRY_AFTER_MS = 60_000;
 
 export class RegistryError extends Error {
@@ -56,7 +57,7 @@ export function createRetry(sleep: (ms: number) => Promise<void>) {
           throw new Error(`${what} failed after ${attempt} attempt(s): ${reason}`, { cause: err });
         }
         const wait = err instanceof RegistryError ? err.retryAfterMs : undefined;
-        await sleep(wait ?? BACKOFF_MS * 2 ** (attempt - 1));
+        await sleep(wait ?? BACKOFF_MS[Math.min(attempt, BACKOFF_MS.length) - 1] ?? 16_000);
       }
     }
   };

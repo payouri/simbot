@@ -18,6 +18,8 @@ export type AppDeps = {
   launch?: Launch;
   /** Tag of the Seed SimC Build shipped in the app, if any. */
   seedTag?: () => string | null;
+  /** Directory of the Seed SimC Build shipped in the app, laid out like an installed build. */
+  seedDir?: () => string | null;
   now?: () => Date;
   /** Dev flag: SimC's non-progress stdout also goes out as `sim.log` at `debug`. */
   debugLogs?: boolean;
@@ -38,8 +40,12 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     log: deps.log,
     events: bus,
     seedTag: deps.seedTag,
+    seedDir: deps.seedDir,
+    launch: deps.launch,
     now: deps.now,
   });
+  // Before the runner starts: staging directories go, an interrupted SimC Job restarts.
+  simc.recover();
   const runner = startRunner({
     db,
     bus,
@@ -49,6 +55,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     log: deps.log,
     debugLogs: deps.debugLogs,
     progressIntervalMs: deps.progressIntervalMs,
+    runSimcJob: simc.runJob,
   });
   const handle = createHttpHandler({
     db,
@@ -56,10 +63,17 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     bus,
     live,
     clientDir: config.clientDir,
-    simc: { status: () => simc.status(), check: () => simc.check() },
+    simc: {
+      status: () => simc.status(),
+      check: () => simc.check(),
+      queueJob: (target) => simc.queueJob(target),
+      setKeep: (keep) => simc.setKeep(keep),
+    },
   });
   return {
     db,
+    /** The in-process event bus, for tests that watch what the app emits. */
+    bus,
     fetch: (req: Request) => handle(req),
     /**
      * Boot work that needs the network: with no Current SimC Build, installs the latest

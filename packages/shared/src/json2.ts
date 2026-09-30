@@ -19,3 +19,15 @@ export const quickSimJson2Schema = z.object({
   }),
 });
 export type QuickSimJson2 = z.infer<typeof quickSimJson2Schema>;
+
+/**
+ * The Check Sim report: the Quick Sim slice plus the one profileset it ran. A build whose json2
+ * lacks profileset results (or names them differently) is rejected.
+ */
+export const checkSimJson2Schema = quickSimJson2Schema.extend({
+  sim: quickSimJson2Schema.shape.sim.extend({
+    profilesets: z.object({
+      results: z.array(z.object({ name: z.string(), mean: z.number() })).min(1),
+    }),
+  }),
+});

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { characterSnapshotSchema, simKindSchema } from "./sim";
+import { simcJobStatusSchema, simcUpdateStepSchema } from "./simc";
 
 /** One Job in the Queue: the running one, or one waiting its turn. */
 export const queueEntrySchema = z.object({
@@ -96,6 +97,16 @@ export const simLogEventSchema = z.object({
 /** The stored SimC status changed (an update check finished, or the Current SimC Build changed). Clients refetch `GET /api/simc`. */
 export const simcStatusChangedEventSchema = z.object({ type: z.literal("simc.status_changed") });
 
+/** A SimC Update Job moved: it started, entered a step, finished or failed. */
+export const simcUpdateStatusEventSchema = z.object({
+  type: z.literal("simc.update_status"),
+  jobId: z.number().int(),
+  status: simcJobStatusSchema,
+  step: simcUpdateStepSchema.nullable(),
+  tag: z.string().nullable(),
+  error: z.string().nullable(),
+});
+
 /** Everything the global `GET /api/events` SSE stream can carry. */
 export const appEventSchema = z.discriminatedUnion("type", [
   snapshotEventSchema,
@@ -106,6 +117,7 @@ export const appEventSchema = z.discriminatedUnion("type", [
   simFinishedEventSchema,
   simLogEventSchema,
   simcStatusChangedEventSchema,
+  simcUpdateStatusEventSchema,
 ]);
 export type AppEvent = z.infer<typeof appEventSchema>;
 export type SnapshotEvent = z.infer<typeof snapshotEventSchema>;

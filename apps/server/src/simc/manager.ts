@@ -1,19 +1,56 @@
+import { rmSync } from "node:fs";
+import { mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
 import {
+  DEFAULT_KEEP_BUILDS,
   type SimcBuild,
   type SimcInstallState,
+  type SimcJob,
+  type SimcJobTarget,
   type SimcStatusResponse,
   type SimcUpdateStatus,
+  type SimcUpdateStep,
   simcUpdateStatusSchema,
 } from "@simbot/shared";
 import type { Db } from "../db";
+import {
+  failSimcJob,
+  finishSimcJob,
+  getCheckSim,
+  getSimcJob,
+  latestImport,
+  latestOpenSimcJob,
+  queueSimcJob,
+  requeueInterruptedSimcJobs,
+  saveCheckSim,
+  setSimcJobStep,
+  setSimcJobTag,
+  startSimcJob,
+  tagsInUse,
+} from "../db/simc-jobs";
 import type { EventBus } from "../events";
-import { installBuild, readInstalledBuild } from "./install";
-import { ensureBuildMeta } from "./meta";
+import { type Launch, runCheckSim } from "./check-sim";
+import {
+  buildDir,
+  commitBuild,
+  discardPartial,
+  installBuild,
+  listInstalledBuilds,
+  partialDir,
+  populateFromRegistry,
+  populateFromSeed,
+  readInstalledBuild,
+  removeBuild,
+  simcRoot,
+  stageBuild,
+} from "./install";
+import { ensureBuildMeta, metaDir, metaRoot, readBuildMeta } from "./meta";
 import { createRegistryClient, type RegistryDeps } from "./registry";
 import { runUpdateCheck } from "./updates";
 
 const CURRENT_KEY = "simc.current_tag";
 const UPDATE_KEY = "simc.update_check";
+const KEEP_KEY = "simc.keep";
 
 /** A check younger than this is served from the store without touching the network. */
 export const CHECK_MAX_AGE_MS = 60 * 60 * 1000;
@@ -25,12 +62,23 @@ export type SimcManagerDeps = RegistryDeps & {
   log?: (message: string) => void;
   /** Tag of the Seed SimC Build shipped in the app, if any; offered when newer than current. */
   seedTag?: () => string | null;
+  /** Directory of the Seed SimC Build shipped in the app, laid out like an installed build. */
+  seedDir?: () => string | null;
+  /** argv that launches a SimC Build directory for the Check Sim. Tests pass the fake `simc`. */
+  launch?: Launch;
   now?: () => Date;
 };
 
 /** Owns the Current SimC Build: which tag it is, and fetching one when there is none. */
 export function createSimcManager(deps: SimcManagerDeps) {
-  const { db, dataDir, events, log = console.error, seedTag = () => null } = deps;
+  const {
+    db,
+    dataDir,
+    events,
+    log = console.error,
+    seedTag = () => null,
+    seedDir = () => null,
+  } = deps;
   const now = deps.now ?? (() => new Date());
   const registry = createRegistryClient(deps);
   let install: SimcInstallState = { state: "idle", error: null };
@@ -74,6 +122,19 @@ export function createSimcManager(deps: SimcManagerDeps) {
     return tag ? await readInstalledBuild(dataDir, tag) : null;
   };
 
+  const statusOf = async (
+    build: SimcBuild | null,
+    update: SimcUpdateStatus | null,
+  ): Promise<SimcStatusResponse> => ({
+    current: build,
+    install,
+    update,
+    installed: await listInstalledBuilds(dataDir),
+    keep: keepCount(),
+    job: latestOpenSimcJob(db),
+    checkSim: build ? getCheckSim(db, build.tag) : null,
+  });
+
   let inFlight: Promise<void> | null = null;
 
   /** Single-flight: one check at a time, and callers during a check share it. */
@@ -82,14 +143,20 @@ export function createSimcManager(deps: SimcManagerDeps) {
       const previous = updateFor(build);
       let result: SimcUpdateStatus;
       try {
-        result = await runUpdateCheck({
-          fetch: deps.fetch,
-          listNightlyTags: () => registry.listNightlyTags(),
+        // Newer is measured against the newest installed build, not the current one: switching
+        // to an older build pins it, and stays quiet until something newer than all of them exists.
+        const base = (await listInstalledBuilds(dataDir))[0] ?? build;
+        result = {
+          ...(await runUpdateCheck({
+            fetch: deps.fetch,
+            listNightlyTags: () => registry.listNightlyTags(),
+            currentTag: base.tag,
+            gitRevision: base.gitRevision,
+            seedTag: seedTag(),
+            now: now(),
+          })),
           currentTag: build.tag,
-          gitRevision: build.gitRevision,
-          seedTag: seedTag(),
-          now: now(),
-        });
+        };
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         log(`simc: update check failed: ${message}`);
@@ -115,9 +182,211 @@ export function createSimcManager(deps: SimcManagerDeps) {
     return inFlight;
   };
 
+  const keepCount = () => {
+    const raw = db
+      .query<{ value: string }, [string]>("SELECT value FROM settings WHERE key = ?")
+      .get(KEEP_KEY)?.value;
+    const n = Number(raw);
+    return Number.isInteger(n) && n >= 1 ? n : DEFAULT_KEEP_BUILDS;
+  };
+
+  /**
+   * Retention: keeps the newest `keep` builds, and never evicts the Current SimC Build or one an
+   * unfinished Sim uses (those count towards the number). Never throws: a failed removal is
+   * logged and retried at the next eviction.
+   */
+  const evict = async () => {
+    try {
+      const installed = await listInstalledBuilds(dataDir);
+      const cur = currentTag();
+      const keep = new Set<string>([...(cur ? [cur] : []), ...tagsInUse(db)]);
+      for (const b of installed) {
+        if (keep.size >= keepCount()) break;
+        keep.add(b.tag);
+      }
+      for (const b of installed) {
+        if (keep.has(b.tag)) continue;
+        await removeBuild(dataDir, b.tag);
+        await rm(metaDir(dataDir, b.tag), { recursive: true, force: true });
+      }
+    } catch (err) {
+      log(`simc: eviction failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  };
+
+  const emitJob = (job: {
+    id: number;
+    status: SimcJob["status"];
+    step: SimcUpdateStep | null;
+    tag: string | null;
+    error: string | null;
+  }) =>
+    events.emit({
+      type: "simc.update_status",
+      jobId: job.id,
+      status: job.status,
+      step: job.step,
+      tag: job.tag,
+      error: job.error,
+    });
+
+  /** Which tag a target means right now, and how to fill a staging directory with it. */
+  const resolveTarget = async (
+    target: SimcJobTarget,
+  ): Promise<{ tag: string; populate: (dir: string) => Promise<void> }> => {
+    if (target.kind === "installed") {
+      return {
+        tag: target.tag,
+        populate: async () => {
+          throw new Error(`SimC Build ${target.tag} is not installed`);
+        },
+      };
+    }
+    if (target.kind === "seed") {
+      const tag = seedTag();
+      const dir = seedDir();
+      if (!tag || !dir) throw new Error("this app ships no Seed SimC Build");
+      return { tag, populate: populateFromSeed(dir) };
+    }
+    const [latest] = await registry.listNightlyTags();
+    if (!latest) throw new Error("no SimC nightly tags found on Docker Hub");
+    return { tag: latest, populate: populateFromRegistry(registry, latest) };
+  };
+
+  /**
+   * Runs one `simc_update` Job to a terminal state: fetch into `.partial/`, Check Sim, item
+   * data into `meta/<tag>/`, then commit (rename, switch, evict). Never throws. Any failure
+   * before the switch removes what the Job made and leaves the Current SimC Build as it was.
+   */
+  const runJob = async (jobId: number): Promise<void> => {
+    if (!startSimcJob(db, jobId)) return;
+    const job = getSimcJob(db, jobId);
+    if (!job) return;
+    let step: SimcUpdateStep = "fetch";
+    let tag: string | null = null;
+    let staged = false;
+    let installedHere = false;
+    let metaBuiltHere = false;
+    const publish = (status: SimcJob["status"], error: string | null = null) => {
+      emitJob({ id: jobId, status, step: status === "done" ? null : step, tag, error });
+    };
+    const enter = (next: SimcUpdateStep) => {
+      step = next;
+      setSimcJobStep(db, jobId, next);
+      publish("running");
+    };
+
+    try {
+      enter("fetch");
+      const target = await resolveTarget(job.target);
+      tag = target.tag;
+      setSimcJobTag(db, jobId, tag);
+      publish("running");
+      let build = await readInstalledBuild(dataDir, tag);
+      if (!build) {
+        staged = true;
+        build = await stageBuild({ dataDir, tag, populate: target.populate });
+      }
+
+      enter("check");
+      const imp = latestImport(db);
+      const tmpRoot = join(dataDir, "tmp");
+      await mkdir(tmpRoot, { recursive: true });
+      const { dps } = await runCheckSim({
+        dir: staged ? partialDir(dataDir, tag) : buildDir(dataDir, tag),
+        tmpRoot,
+        addonString: imp?.text ?? null,
+        launch: deps.launch,
+      });
+
+      enter("meta");
+      const hadMeta = (await readBuildMeta(dataDir, tag)) !== null;
+      await ensureBuildMeta({ dataDir, build, fetch: deps.fetch, sleep: deps.sleep });
+      metaBuiltHere = !hadMeta;
+
+      enter("commit");
+      if (staged) {
+        await commitBuild(dataDir, tag);
+        installedHere = true;
+      }
+      const before = currentTag();
+      db.transaction(() => {
+        setCurrentTag(build.tag);
+        if (imp) {
+          saveCheckSim(db, {
+            buildTag: build.tag,
+            importId: imp.id,
+            previousTag:
+              before === build.tag ? (getCheckSim(db, build.tag)?.previous?.tag ?? null) : before,
+            dps,
+          });
+        }
+      })();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      log(`simc: update job ${jobId} failed at ${step}: ${message}`);
+      if (tag && staged) await discardPartial(dataDir, tag);
+      if (tag && installedHere) await removeBuild(dataDir, tag).catch(() => {});
+      if (tag && staged && metaBuiltHere) {
+        await rm(metaDir(dataDir, tag), { recursive: true, force: true }).catch(() => {});
+      }
+      failSimcJob(db, jobId, step, message);
+      publish("failed", message);
+      events.emit({ type: "simc.status_changed" });
+      return;
+    }
+    await evict();
+    finishSimcJob(db, jobId);
+    publish("done");
+    events.emit({ type: "simc.status_changed" });
+  };
+
   return {
     /** The Current SimC Build, or null when none is installed. */
     current,
+
+    /**
+     * Startup cleanup, before the runner starts: staging directories are deleted and a
+     * SimC Update Job that was running when the process died goes back to the Queue, to start
+     * again from step 1.
+     */
+    recover(): void {
+      rmSync(join(simcRoot(dataDir), ".partial"), { recursive: true, force: true });
+      rmSync(join(metaRoot(dataDir), ".partial"), { recursive: true, force: true });
+      requeueInterruptedSimcJobs(db);
+    },
+
+    runJob,
+
+    /**
+     * Queues a SimC Update Job. Refused while another is queued or running, when an installed
+     * target isn't installed, and when a seed target has no Seed SimC Build.
+     */
+    async queueJob(
+      target: SimcJobTarget,
+    ): Promise<
+      { ok: true; job: SimcJob } | { ok: false; reason: "busy" | "not_installed" | "no_seed" }
+    > {
+      if (target.kind === "installed" && !(await readInstalledBuild(dataDir, target.tag))) {
+        return { ok: false, reason: "not_installed" };
+      }
+      if (target.kind === "seed" && !(seedTag() && seedDir())) {
+        return { ok: false, reason: "no_seed" };
+      }
+      const queued = queueSimcJob(db, target);
+      if (!queued.ok) return queued;
+      emitJob(queued.job);
+      events.emit({ type: "simc.status_changed" });
+      events.emit({ type: "queue.changed" });
+      return queued;
+    },
+
+    /** Sets how many builds to keep (at least 1) and evicts down to it right away. */
+    async setKeep(keep: number): Promise<void> {
+      putSetting(KEEP_KEY, String(keep));
+      await evict();
+      events.emit({ type: "simc.status_changed" });
+    },
 
     /** The stored state, instantly. A stale one (over an hour old) starts a background check. */
     async status(): Promise<SimcStatusResponse> {
@@ -127,14 +396,14 @@ export function createSimcManager(deps: SimcManagerDeps) {
         const age = update ? now().getTime() - Date.parse(update.checkedAt) : Infinity;
         if (!(age < CHECK_MAX_AGE_MS)) void runCheck(build);
       }
-      return { current: build, install, update };
+      return statusOf(build, update);
     },
 
     /** Forces a check now, ignoring the hour. Resolves with the stored result; null with no build. */
     async check(): Promise<SimcStatusResponse> {
       const build = await current();
       if (build) await (inFlight ?? runCheck(build));
-      return { current: build, install, update: updateFor(build) };
+      return statusOf(build, updateFor(build));
     },
 
     /** Resolves when any background check has finished. For tests and shutdown. */

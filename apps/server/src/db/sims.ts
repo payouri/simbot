@@ -149,16 +149,16 @@ export function queueSim(db: Db, id: number): QueueResult {
   })();
 }
 
-export type QueuedJob = { id: number; simId: number };
+export type QueuedJob = { id: number; kind: "sim" | "simc_update"; simId: number | null };
 
-/** The oldest waiting Job: the Queue is strict FIFO. */
+/** The oldest waiting Job of any kind: the Queue is strict FIFO. */
 export function nextQueuedJob(db: Db): QueuedJob | null {
   const row = db
-    .query<{ id: number; sim_id: number }, []>(
-      "SELECT id, sim_id FROM jobs WHERE kind = 'sim' AND status = 'queued' ORDER BY id LIMIT 1",
+    .query<{ id: number; kind: QueuedJob["kind"]; sim_id: number | null }, []>(
+      "SELECT id, kind, sim_id FROM jobs WHERE status = 'queued' ORDER BY id LIMIT 1",
     )
     .get();
-  return row ? { id: row.id, simId: row.sim_id } : null;
+  return row ? { id: row.id, kind: row.kind, simId: row.sim_id } : null;
 }
 
 /** `queued → running`, recording the SimC Build tag (null when there was none to resolve). */
