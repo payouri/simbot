@@ -1,6 +1,6 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { DpsSummary } from "@simbot/shared";
+import type { DpsSummary, GameData } from "@simbot/shared";
 import {
   buildCheckSimInput,
   buildPaths,
@@ -49,7 +49,7 @@ export async function runCheckSim(opts: {
   addonString: string | null;
   launch?: Launch;
   /** `ptr` runs the PTR pass (`ptr=1`). Defaults to Live. */
-  gameData?: "live" | "ptr";
+  gameData?: GameData;
 }): Promise<{
   dps: DpsSummary;
   source: "import" | "profile";

@@ -1,4 +1,4 @@
-import type { DpsSummary } from "@simbot/shared";
+import type { DpsSummary, GameData } from "@simbot/shared";
 import { stripPtrOption, stripUnsafeOptions } from "./addon-string";
 import { baselineDps, checkSimJson2Schema, Json2FormatError, readJson2 } from "./json2";
 
@@ -14,7 +14,7 @@ export const CHECK_SIM_TARGET_ERROR = 1;
  * override so the build's profileset path is exercised too. The PTR pass puts its `ptr=1` before
  * the profile, where SimC reads it before creating the player (see `buildInput`).
  */
-export function buildCheckSimInput(profile: string, gameData: "live" | "ptr" = "live"): string {
+export function buildCheckSimInput(profile: string, gameData: GameData = "live"): string {
   const safe = stripPtrOption(stripUnsafeOptions(profile));
   const head = safe.endsWith("\n") ? safe : `${safe}\n`;
   // Live is SimC's default and is never spelled out; only the PTR pass selects the PTR data.

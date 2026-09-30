@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { hasPtrOption } from "@simbot/shared";
 import {
   adler32,
   isPtrClientExport,
   parseAddonString,
   parseWowVersionHeader,
+  stripPtrOption,
 } from "./addon-string";
 
 const fixture = `# Rootbeer - Frost - 2026-09-29 22:41 - EU/Draenor
@@ -242,6 +244,22 @@ describe("WoW version header", () => {
     for (const b of [none, same]) {
       expect(isPtrClientExport(wowFixture("wow-header-live.txt"), b)).toBe(false);
       expect(isPtrClientExport(wowFixture("wow-header-ptr.txt"), b)).toBe(true);
+    }
+  });
+});
+
+describe("stripPtrOption", () => {
+  test("drops exactly the lines the shared raw-options gate refuses", () => {
+    const lines = [
+      "ptr=1",
+      "fight_style=Patchwerk ptr=1",
+      "PTR = 1",
+      "optr=1",
+      "script_ptr=2",
+      "level=90",
+    ];
+    for (const line of lines) {
+      expect(stripPtrOption(`${line}\n`) === "").toBe(hasPtrOption(line));
     }
   });
 });
