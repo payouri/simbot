@@ -164,6 +164,27 @@ describe("raw SimC options", () => {
     expect(patch.status).toBe(400);
   });
 
+  test("a stored ptr option reads as PTR Game Data and never reaches SimC as a raw line", async () => {
+    await start();
+    const imp = await h.importText();
+    const sim = await h.createSim(imp.id);
+    const stored = JSON.parse(
+      (h.app.db.query("SELECT settings FROM sims WHERE id = ?").get(sim.id) as { settings: string })
+        .settings,
+    );
+    delete stored.gameData;
+    stored.rawOptions = "optr=1\nfight_style=Patchwerk ptr=1";
+    h.app.db.run("UPDATE sims SET settings = ? WHERE id = ?", [JSON.stringify(stored), sim.id]);
+    const read = await h.sim(sim.id);
+    expect(read.settings).toMatchObject({
+      gameData: "ptr",
+      rawOptions: "optr=1\nfight_style=Patchwerk",
+    });
+    const copy = await h.call("POST", "/api/sims", { copyFromSimId: sim.id });
+    expect(copy.status).toBeLessThan(300);
+    expect(simSchema.parse(await copy.json()).settings.gameData).toBe("ptr");
+  });
+
   test("other options that merely contain ptr are fine", async () => {
     await start();
     const imp = await h.importText();

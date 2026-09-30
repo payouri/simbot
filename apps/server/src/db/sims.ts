@@ -7,6 +7,7 @@ import {
   type DpsSummary,
   defaultSimSettings,
   defaultTopGearSelection,
+  hasPtrOption,
   normalizeSelection,
   type Sim,
   type SimError,
@@ -50,6 +51,30 @@ const SIM_SELECT = `
   SELECT s.*, i.ptr_client AS import_ptr_client
   FROM sims s JOIN imports i ON i.id = s.import_id`;
 
+/**
+ * Reads stored Sim Settings. Before Game Data existed, `ptr=1` in the raw options was the only way
+ * to run on PTR, and such settings read as `live`. Game Data owns `ptr` now, so a stored ptr option
+ * is moved into `gameData` (the last one wins) and dropped from the raw options, which keeps what
+ * a Sim is badged and recorded as equal to what SimC runs.
+ */
+export function parseStoredSettings(json: string): SimSettings {
+  const settings = simSettingsSchema.parse(JSON.parse(json));
+  if (!hasPtrOption(settings.rawOptions)) return settings;
+  const option = /(^|\s)ptr\s*=\s*(\S*)/gi;
+  let value: string | undefined;
+  for (const m of settings.rawOptions.matchAll(option)) value = m[2];
+  return {
+    ...settings,
+    gameData: value === undefined ? settings.gameData : value === "1" ? "ptr" : "live",
+    rawOptions: settings.rawOptions
+      .replace(option, "$1")
+      .split("\n")
+      .map((l) => l.trimEnd())
+      .join("\n")
+      .trim(),
+  };
+}
+
 const toSim = (row: SimRow): Sim => ({
   id: row.id,
   kind: row.kind,
@@ -58,7 +83,7 @@ const toSim = (row: SimRow): Sim => ({
   importPtrClient: row.import_ptr_client === 1,
   characterId: row.character_id,
   character: characterSnapshotSchema.parse(JSON.parse(row.character_snapshot)),
-  settings: simSettingsSchema.parse(JSON.parse(row.settings)),
+  settings: parseStoredSettings(row.settings),
   topGearSelection: row.top_gear_selection
     ? topGearSelectionSchema.parse(JSON.parse(row.top_gear_selection))
     : null,
@@ -798,7 +823,7 @@ export function getSimQueueEntries(db: Db): SimQueueEntry[] {
     jobId: r.job_id,
     simId: r.sim_id,
     kind: r.kind,
-    gameData: simSettingsSchema.parse(JSON.parse(r.settings)).gameData,
+    gameData: parseStoredSettings(r.settings).gameData,
     status: r.job_status,
     character: characterSnapshotSchema.parse(JSON.parse(r.character_snapshot)),
     queuedAt: r.queued_at,
