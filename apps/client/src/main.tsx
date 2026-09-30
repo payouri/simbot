@@ -18,14 +18,14 @@ const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/quick-sim" replace /> },
-  { path: "/quick-sim", element: <QuickSimPage /> },
-  { path: "/history", element: <HistoryPage /> },
-  { path: "/sims/:id", element: <SimPage /> },
-  { path: "/sims/:id/setup", element: <SetupPage /> },
   { path: "/prototype/top-gear", element: <TopGearPrototypeRoute /> },
   {
     element: <AppShell />,
     children: [
+      { path: "/quick-sim", element: <QuickSimPage /> },
+      { path: "/history", element: <HistoryPage /> },
+      { path: "/sims/:id", element: <SimPage /> },
+      { path: "/sims/:id/setup", element: <SetupPage /> },
       { path: "/simc", element: <SimcPage /> },
       { path: "/queue", element: <QueuePage /> },
       { path: "/characters", element: <CharactersPage /> },
