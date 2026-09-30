@@ -10,17 +10,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { useImportItems } from "../items/api";
 import { queueSim } from "../quick-sim/api";
-import { useDraftQuery, useImportSetup } from "./api";
+import { preselectDraft, useCombinationPreview, useDraftQuery, useImportSetup } from "./api";
 import { useDraftAutosave } from "./autosave";
 import { Command } from "./Command";
-import {
-  candidatesInPlay,
-  groupBySlot,
-  includedCount,
-  setCandidates,
-  toggleItem,
-  toggleLock,
-} from "./model";
+import { groupBySlot, includedCount, setCandidates, toggleItem, toggleLock } from "./model";
 import { focusSlot, Sheet, type Side, SlotTile, useIsPhone } from "./Sheet";
 import { Tray } from "./Tray";
 
@@ -78,7 +71,28 @@ function Setup({ sim }: { sim: Sim }) {
     },
   });
 
-  const canRun = candidatesInPlay(input.selection, groups) === 0;
+  const preview = useCombinationPreview(sim.id, input);
+
+  // A Draft that has not had the default preselection gets it once, unless the user has already
+  // picked something by the time it answers.
+  const inputRef = useRef(input);
+  inputRef.current = input;
+  const asked = useRef(false);
+  const ready = !items.isPending && !items.isError;
+  useEffect(() => {
+    if (!ready || asked.current || input.selection.preselected) return;
+    asked.current = true;
+    if (input.selection.included.length > 0) return;
+    void preselectDraft(sim.id)
+      .then((saved) => {
+        const current = inputRef.current.selection;
+        if (!saved.topGearSelection || current.included.length > 0) return;
+        edit({ selection: { ...current, ...saved.topGearSelection } });
+      })
+      .catch(() => {});
+  }, [ready, sim.id, input.selection, edit]);
+
+  const canRun = (preview.data?.issues.length ?? 0) === 0;
   const runRef = useRef(() => {});
   runRef.current = () => {
     if (canRun && !run.isPending) run.mutate();
@@ -167,6 +181,8 @@ function Setup({ sim }: { sim: Sim }) {
           selection={input.selection}
           groups={groups}
           save={save}
+          preview={preview.data}
+          previewError={preview.isError}
           runError={run.isError ? run.error.message : null}
           running={run.isPending}
           onSettings={(settings) => edit({ settings })}

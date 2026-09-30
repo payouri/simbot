@@ -11,7 +11,12 @@ export const quickSimJson2Schema = z.object({
       .array(
         z.object({
           collected_data: z.object({
-            dps: z.object({ mean: z.number(), mean_std_dev: z.number().nonnegative() }),
+            dps: z.object({
+              mean: z.number(),
+              mean_std_dev: z.number().nonnegative(),
+              /** Spread of one iteration; with `mean_std_dev` it gives the iteration count. */
+              std_dev: z.number().nonnegative().optional(),
+            }),
           }),
         }),
       )

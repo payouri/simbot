@@ -1,9 +1,11 @@
 import { rmSync } from "node:fs";
 import { join } from "node:path";
 import {
-  type ApiError,
+  combinationPreviewSchema,
   createSimRequestSchema,
+  MAX_COMBINATIONS,
   patchSimRequestSchema,
+  previewCombinationsRequestSchema,
   type SimListItem,
   simListResponseSchema,
   simResultsResponseSchema,
@@ -11,6 +13,7 @@ import {
   simStatusSchema,
   stopSimRequestSchema,
 } from "@simbot/shared";
+import { type CombinationService, selectionIssues } from "../combinations";
 import type { Db } from "../db";
 import { moveSim } from "../db/characters";
 import { getParsedImport } from "../db/imports";
@@ -21,6 +24,7 @@ import {
   getSim,
   getSimResults,
   listSims,
+  type QueuePlan,
   queueSim,
   requestStop,
   updateDraft,
@@ -41,48 +45,6 @@ export async function postSim(db: Db, req: Request): Promise<Response> {
   const sim = importId === undefined ? null : createSim(db, { importId, kind, settings });
   if (!sim) return apiError(404, "import_not_found");
   return json(simSchema.parse(sim), 201);
-}
-
-/**
- * Checks a Top Gear Selection against the Sim's Import: every included item must be a
- * selectable Candidate Item (not equipped, not an Unknown Item, read by SimC) and every Talent
- * Loadout must exist. Returns one issue per offender.
- */
-async function selectionIssues(
-  db: Db,
-  items: HttpDeps["items"],
-  importId: number,
-  selection: { included: number[]; talentLoadouts: number[] },
-): Promise<NonNullable<ApiError["issues"]>> {
-  const issues: NonNullable<ApiError["issues"]> = [];
-  if (selection.included.length > 0) {
-    const view = await items.view(importId);
-    const byIndex = new Map((view?.items ?? []).map((i) => [i.index, i]));
-    selection.included.forEach((index, at) => {
-      const item = byIndex.get(index);
-      const why = !item
-        ? "is not an item of this Import"
-        : item.selectable
-          ? null
-          : item.status === "unknown"
-            ? "is an Unknown Item and cannot be selected"
-            : item.source === "equipped"
-              ? "is equipped, not a Candidate Item"
-              : "was not read by SimC and cannot be selected";
-      if (why)
-        issues.push({ path: `topGearSelection.included.${at}`, message: `Item ${index} ${why}.` });
-    });
-  }
-  const loadouts = getParsedImport(db, importId)?.talentLoadouts.length ?? 0;
-  selection.talentLoadouts.forEach((index, at) => {
-    if (index >= loadouts) {
-      issues.push({
-        path: `topGearSelection.talentLoadouts.${at}`,
-        message: `Talent Loadout ${index} does not exist.`,
-      });
-    }
-  });
-  return issues;
 }
 
 /**
@@ -111,7 +73,11 @@ export async function patchSim(
     });
   }
   if (topGearSelection) {
-    const issues = await selectionIssues(db, items, current.importId, topGearSelection);
+    const issues = selectionIssues(
+      await items.view(current.importId),
+      getParsedImport(db, current.importId)?.talentLoadouts.length ?? 0,
+      topGearSelection,
+    ).map(({ path, message }) => ({ path, message }));
     if (issues.length > 0) {
       return apiError(422, "invalid_selection", {
         message: "The selection includes items that cannot be selected.",
@@ -139,18 +105,115 @@ export async function patchSim(
   return json(simSchema.parse(sim));
 }
 
-/** `POST /api/sims/:id/queue`: `draft → queued`. */
-export function postQueueSim(db: Db, bus: EventBus, rawId: string): Response {
+/**
+ * `POST /api/sims/:id/queue`: `draft → queued`. A Top Gear re-generates its Combinations from
+ * the saved selection first and queues only if they validate: 422 `invalid_combinations`
+ * carries the per-Candidate errors (above 50,000 Combinations too). The Combinations and the
+ * SimC Build they were validated on are frozen on the Sim.
+ */
+export async function postQueueSim(
+  db: Db,
+  bus: EventBus,
+  combos: CombinationService,
+  rawId: string,
+): Promise<Response> {
   const id = parseId(rawId);
   if (id === null) return apiError(404, "sim_not_found");
-  const queued = queueSim(db, id);
+  const current = getSim(db, id);
+  if (!current) return apiError(404, "sim_not_found");
+  let plan: QueuePlan | undefined;
+  // A Draft with Candidate Items included is a Top Gear whatever it started as.
+  const isTopGear =
+    current.kind === "top_gear" || (current.topGearSelection?.included.length ?? 0) > 0;
+  if (isTopGear && current.status === "draft" && current.topGearSelection) {
+    const frozen = await combos.freeze(current);
+    if (!frozen.ok) {
+      return apiError(422, "invalid_combinations", {
+        message: frozen.refused
+          ? `Too many Combinations: the limit is ${MAX_COMBINATIONS.toLocaleString("en-US")}.`
+          : "The selection has no valid set of Combinations.",
+        issues: frozen.issues,
+      });
+    }
+    plan = {
+      selection: current.topGearSelection,
+      simcTag: frozen.simcTag,
+      combinations: frozen.combinations,
+    };
+  }
+  const queued = queueSim(db, id, plan);
   if (!queued.ok) {
-    return queued.reason === "not_found"
-      ? apiError(404, "sim_not_found")
+    if (queued.reason === "not_found") return apiError(404, "sim_not_found");
+    return queued.reason === "selection_changed"
+      ? apiError(409, "selection_changed", {
+          message: "The selection changed while it was being checked. Try again.",
+        })
       : apiError(409, "invalid_transition", { message: "Only a Draft can be queued." });
   }
   bus.emit({ type: "queue.changed" });
   return json(simSchema.parse(queued.sim));
+}
+
+/**
+ * `POST /api/sims/:id/preview-combinations`: how many Combinations the setup makes, what is
+ * wrong with it and how long it should take. The body may hold unsaved edits (selection,
+ * settings); what it leaves out comes from the Draft. Read only.
+ */
+export async function postPreviewCombinations(
+  db: Db,
+  combos: CombinationService,
+  req: Request,
+  rawId: string,
+): Promise<Response> {
+  const id = parseId(rawId);
+  const sim = id === null ? null : getSim(db, id);
+  if (!sim) return apiError(404, "sim_not_found");
+  if (sim.kind !== "top_gear" && sim.topGearSelection === null) {
+    return apiError(409, "not_top_gear", { message: "This Sim has no Top Gear selection." });
+  }
+  const body = await readBody(req, previewCombinationsRequestSchema);
+  if (!body.ok) return body.res;
+  const preview = await combos.preview(sim, {
+    selection: body.data.topGearSelection,
+    settings: body.data.settings,
+  });
+  return preview
+    ? json(combinationPreviewSchema.parse(preview))
+    : apiError(404, "import_not_found");
+}
+
+/**
+ * `POST /api/sims/:id/preselect`: applies the default preselection to a Draft, once (it marks
+ * the selection `preselected`): likely upgrades by item-level gain, Great Vault first, within
+ * 500 Combinations. Included candidates already there are kept. Returns the Sim.
+ */
+export async function postPreselect(
+  db: Db,
+  combos: CombinationService,
+  rawId: string,
+): Promise<Response> {
+  const id = parseId(rawId);
+  const sim = id === null ? null : getSim(db, id);
+  if (!sim || id === null) return apiError(404, "sim_not_found");
+  if (sim.status !== "draft") {
+    return apiError(409, "not_a_draft", {
+      message: "A Sim's input is frozen once it leaves Draft.",
+    });
+  }
+  if (!sim.topGearSelection) {
+    return apiError(409, "not_top_gear", { message: "This Sim has no Top Gear selection." });
+  }
+  if (sim.topGearSelection.preselected) return json(simSchema.parse(sim));
+  const picked = await combos.preselection(sim);
+  if (!picked) return apiError(404, "import_not_found");
+  const saved = updateDraft(db, id, {
+    topGearSelection: {
+      ...sim.topGearSelection,
+      included: [...new Set([...sim.topGearSelection.included, ...picked])],
+      preselected: true,
+    },
+  });
+  return saved.ok ? json(simSchema.parse(saved.sim)) : apiError(409, "not_a_draft");
 }
 
 /**

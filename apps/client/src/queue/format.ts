@@ -32,3 +32,11 @@ export function passLabel(p: SimProgress): string {
   if (p.phase === "profileset") return p.label ?? "Profileset";
   return "Profilesets";
 }
+
+/** The estimate in the command column: `~3 min`, `under 1 min`, `~1.5 h`. */
+export function formatEstimate(seconds: number): string {
+  if (seconds < 60) return "under 1 min";
+  const minutes = seconds / 60;
+  if (minutes < 120) return `~${Math.round(minutes)} min`;
+  return `~${(Math.round(minutes / 6) / 10).toString()} h`;
+}

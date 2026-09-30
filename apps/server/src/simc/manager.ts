@@ -314,7 +314,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
       const imp = latestImport(db);
       const tmpRoot = join(dataDir, "tmp");
       await mkdir(tmpRoot, { recursive: true });
-      const { dps } = await runCheckSim({
+      const { dps, durationMs, iterations } = await runCheckSim({
         dir: staged ? partialDir(dataDir, tag) : buildDir(dataDir, tag),
         tmpRoot,
         addonString: imp?.text ?? null,
@@ -346,6 +346,8 @@ export function createSimcManager(deps: SimcManagerDeps) {
             previousTag:
               before === build.tag ? (getCheckSim(db, build.tag)?.previous?.tag ?? null) : before,
             dps,
+            durationMs,
+            iterations,
           });
         }
       })();

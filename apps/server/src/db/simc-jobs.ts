@@ -134,12 +134,20 @@ export function latestImport(db: Db): { id: number; text: string } | null {
 /** Stores the Check Sim of `buildTag` on an Import, replacing an earlier one for the same pair. */
 export function saveCheckSim(
   db: Db,
-  input: { buildTag: string; importId: number; previousTag: string | null; dps: DpsSummary },
+  input: {
+    buildTag: string;
+    importId: number;
+    previousTag: string | null;
+    dps: DpsSummary;
+    durationMs?: number | null;
+    iterations?: number | null;
+  },
 ) {
   db.run(
     `INSERT OR REPLACE INTO check_sim_results
-       (build_tag, import_id, previous_tag, dps_mean, dps_mean_error, created_at)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+       (build_tag, import_id, previous_tag, dps_mean, dps_mean_error, created_at,
+        duration_ms, iterations)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       input.buildTag,
       input.importId,
@@ -147,8 +155,37 @@ export function saveCheckSim(
       input.dps.mean,
       input.dps.meanError,
       new Date().toISOString(),
+      input.durationMs ?? null,
+      input.iterations ?? null,
     ],
   );
+}
+
+/** The cost of the newest Check Sim of `tag`: wall time, iterations and the error it reached. */
+export function getCheckSimCost(
+  db: Db,
+  tag: string,
+): { durationMs: number | null; iterations: number | null; errorPercent: number } | null {
+  const row = db
+    .query<
+      {
+        duration_ms: number | null;
+        iterations: number | null;
+        dps_mean: number;
+        dps_mean_error: number;
+      },
+      [string]
+    >(
+      `SELECT duration_ms, iterations, dps_mean, dps_mean_error FROM check_sim_results
+       WHERE build_tag = ? ORDER BY created_at DESC LIMIT 1`,
+    )
+    .get(tag);
+  if (!row || row.dps_mean <= 0) return null;
+  return {
+    durationMs: row.duration_ms,
+    iterations: row.iterations,
+    errorPercent: (row.dps_mean_error / row.dps_mean) * 100,
+  };
 }
 
 type CheckRow = {

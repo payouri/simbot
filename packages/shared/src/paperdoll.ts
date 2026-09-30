@@ -93,6 +93,14 @@ export const topGearSelectionSchema = z.object({
   included: z.array(z.number().int().min(0)).max(2000),
   talentLoadouts: z.array(z.number().int().min(0)).max(100),
   lockedSlots: z.array(paperdollSlotSchema).max(paperdollSlotSchema.options.length),
+  /** At least this many tier-set pieces in every Combination (0 or absent: no minimum). */
+  minTierPieces: z.number().int().min(0).max(5).optional(),
+  /** Catalyst charges the Combination may spend; absent: not limited. */
+  catalystCharges: z.number().int().min(0).max(100).optional(),
+  /** Upgrade budget (crests) the Combination may spend; absent: not limited. */
+  upgradeBudget: z.number().int().min(0).max(100000).optional(),
+  /** The default preselection has been applied (or declined), so it is not applied again. */
+  preselected: z.boolean().optional(),
 });
 export type TopGearSelection = z.infer<typeof topGearSelectionSchema>;
 
@@ -108,6 +116,10 @@ export const normalizeSelection = (s: TopGearSelection): TopGearSelection => ({
   included: [...new Set(s.included)].sort((a, b) => a - b),
   talentLoadouts: [...new Set(s.talentLoadouts)].sort((a, b) => a - b),
   lockedSlots: paperdollSlotSchema.options.filter((slot) => s.lockedSlots.includes(slot)),
+  ...(s.minTierPieces ? { minTierPieces: s.minTierPieces } : {}),
+  ...(s.catalystCharges !== undefined ? { catalystCharges: s.catalystCharges } : {}),
+  ...(s.upgradeBudget !== undefined ? { upgradeBudget: s.upgradeBudget } : {}),
+  ...(s.preselected ? { preselected: true } : {}),
 });
 
 /** A Talent Loadout of an Import, as the setup lists it. */

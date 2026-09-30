@@ -23,6 +23,7 @@ export {
   isPlayerProfile,
   readCheckSimResult,
 } from "./check-sim";
+export * from "./combinations";
 export {
   assembleIndex,
   BASE_ACTOR,

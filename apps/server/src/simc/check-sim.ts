@@ -48,7 +48,13 @@ export async function runCheckSim(opts: {
   /** The latest Import's Addon String, if there is one. */
   addonString: string | null;
   launch?: Launch;
-}): Promise<{ dps: DpsSummary; source: "import" | "profile" }> {
+}): Promise<{
+  dps: DpsSummary;
+  source: "import" | "profile";
+  /** Wall time of the SimC run and the iterations it took: what the time estimate is built on. */
+  durationMs: number;
+  iterations: number | null;
+}> {
   const { dir, launch = launchCommand } = opts;
   const profile = opts.addonString ?? (await findProfile(buildPaths(dir).profiles));
   if (profile === null) throw new Error("no Import and the build ships no profile to check with");
@@ -59,6 +65,7 @@ export async function runCheckSim(opts: {
     const json2Path = join(work, "check.json");
     await writeFile(inputPath, buildCheckSimInput(profile));
     let proc: Bun.Subprocess<"ignore", "pipe", "pipe">;
+    const started = performance.now();
     try {
       proc = Bun.spawn(launch(dir, stageArgs(inputPath, json2Path)), {
         cwd: work,
@@ -82,8 +89,15 @@ export async function runCheckSim(opts: {
         classifyExit(proc.signalCode ? null : exitCode, stderr.slice(-STDERR_KEEP)).message,
       );
     }
+    const durationMs = Math.round(performance.now() - started);
     const text = await readFile(json2Path, "utf8").catch(() => null);
-    return { dps: readCheckSimResult(text).dps, source: opts.addonString ? "import" : "profile" };
+    const result = readCheckSimResult(text);
+    return {
+      dps: result.dps,
+      source: opts.addonString ? "import" : "profile",
+      durationMs,
+      iterations: result.iterations,
+    };
   } finally {
     await rm(work, { recursive: true, force: true });
   }

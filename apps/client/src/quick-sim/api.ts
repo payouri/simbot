@@ -30,9 +30,11 @@ async function request<T>(
   const payload: unknown = await res.json().catch(() => null);
   if (!res.ok) {
     const err = apiErrorSchema.safeParse(payload);
+    const first = err.success ? err.data.issues?.[0]?.message : undefined;
+    const more = err.success ? Math.max(0, (err.data.issues?.length ?? 0) - 1) : 0;
     throw new Error(
       err.success
-        ? (err.data.message ?? err.data.error)
+        ? `${err.data.message ?? err.data.error}${first ? ` ${first}` : ""}${more > 0 ? ` (and ${more} more)` : ""}`
         : `${method} ${path} failed: ${res.status}`,
     );
   }

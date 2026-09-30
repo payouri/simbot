@@ -272,7 +272,12 @@ export function createItemIndexer(deps: ItemIndexerDeps) {
     return { importId, simcTag: index.simcTag, pass: index.pass, items, unknown: index.unknown };
   }
 
-  return { ensure, view };
+  /** The item-meta of a SimC Build, or null when the build has none. */
+  async function meta(tag: string): Promise<ItemMeta | null> {
+    return (await metaFor(tag))?.meta ?? null;
+  }
+
+  return { ensure, view, meta };
 }
 
 export type ItemIndexer = ReturnType<typeof createItemIndexer>;

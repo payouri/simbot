@@ -15,6 +15,7 @@ import {
   simcSettingsRequestSchema,
   simcStatusResponseSchema,
 } from "@simbot/shared";
+import type { CombinationService } from "../combinations";
 import type { Db } from "../db";
 import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
@@ -28,6 +29,8 @@ import {
   getSims,
   patchSim,
   postCopySimToDraft,
+  postPreselect,
+  postPreviewCombinations,
   postQueueSim,
   postSim,
   postStopSim,
@@ -48,6 +51,8 @@ export type HttpDeps = {
   };
   /** `GET /api/icons/:name`: disk-cached icons with a quality-coloured placeholder. */
   icons: { get: (name: string, quality: number) => Promise<Response> };
+  /** Combination generation, validation and the time estimate. */
+  combos: CombinationService;
   simc: {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */
@@ -142,6 +147,7 @@ export function createHttpHandler({
   simc,
   items,
   icons,
+  combos,
 }: HttpDeps) {
   const snapshot = (): SnapshotEvent => {
     const queue = getQueue(db);
@@ -250,18 +256,28 @@ export function createHttpHandler({
       return json({ error: "method_not_allowed" }, 405);
     }
     const simRoute = pathname.match(
-      /^\/api\/sims\/([^/]+)(?:\/(queue|stop|results|files|copy-to-draft)(?:\/(.+))?)?$/,
+      /^\/api\/sims\/([^/]+)(?:\/(queue|stop|results|files|copy-to-draft|preview-combinations|preselect)(?:\/(.+))?)?$/,
     );
     if (simRoute) {
       const [, id = "", action, fileName] = simRoute;
       if (action === "queue") {
         return req.method === "POST"
-          ? postQueueSim(db, bus, id)
+          ? postQueueSim(db, bus, combos, id)
           : json({ error: "method_not_allowed" }, 405);
       }
       if (action === "stop") {
         return req.method === "POST"
           ? postStopSim(db, bus, dataDir, id, req)
+          : json({ error: "method_not_allowed" }, 405);
+      }
+      if (action === "preview-combinations") {
+        return req.method === "POST"
+          ? postPreviewCombinations(db, combos, req, id)
+          : json({ error: "method_not_allowed" }, 405);
+      }
+      if (action === "preselect") {
+        return req.method === "POST"
+          ? postPreselect(db, combos, id)
           : json({ error: "method_not_allowed" }, 405);
       }
       if (action === "copy-to-draft") {

@@ -22,6 +22,7 @@ import {
   cancelSim,
   discardRunningSim,
   failSim,
+  getFrozenSimcTag,
   getSim,
   getStopMode,
   setJobPid,
@@ -39,6 +40,12 @@ export type RunSimDeps = {
   db: Db;
   dataDir: string;
   bus: EventBus;
+  /**
+   * Checks a Top Gear's frozen Combinations against the Current SimC Build; resolves with the
+   * problems (none: fine). Called at Job start when that build is not the one they were
+   * validated on.
+   */
+  revalidate?: (simId: number) => Promise<string[]>;
   /** Resolves the Current SimC Build at Job start. */
   currentBuild: () => Promise<SimcBuild | null>;
   /** argv for a SimC Build directory; tests swap in the fake `simc`. */
@@ -143,6 +150,16 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     bus.emit({ type: "queue.changed" });
     if (!build) {
       return fail({ kind: "no_simc_build", message: "No SimC Build is installed." });
+    }
+
+    if (sim.kind === "top_gear" && deps.revalidate && getFrozenSimcTag(db, sim.id) !== build.tag) {
+      const problems = await deps.revalidate(sim.id);
+      if (problems.length > 0) {
+        return fail({
+          kind: "invalid_combinations",
+          message: `SimC Build ${build.tag} changed what the Combinations allow: ${problems.slice(0, 3).join(" ")}`,
+        });
+      }
     }
 
     const addonString = getImportText(db, sim.importId);

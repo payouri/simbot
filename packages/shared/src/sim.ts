@@ -126,6 +126,7 @@ export const simErrorKindSchema = z.enum([
   "simc_exit",
   "output_format_changed",
   "interrupted",
+  "invalid_combinations",
   "internal",
 ]);
 export type SimErrorKind = z.infer<typeof simErrorKindSchema>;

@@ -1,5 +1,7 @@
+import { createCombinationService } from "./combinations";
 import type { Config } from "./config";
 import { openDb } from "./db";
+import { getFrozenCombinations, getSim } from "./db/sims";
 import { createEventBus } from "./events";
 import { createHttpHandler } from "./http";
 import { createIconService } from "./icons";
@@ -58,6 +60,18 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
   // an orphaned `simc` is killed with its interrupted Sim Job put back in the Queue.
   simc.recover();
   recoverInterruptedRuns({ db, dataDir: config.dataDir, bus, isSimc: deps.isSimcProcess });
+  const items = createItemIndexer({
+    db,
+    dataDir: config.dataDir,
+    currentBuild: () => simc.current(),
+    launch: deps.launch,
+    log: deps.log,
+  });
+  const combos = createCombinationService({
+    db,
+    items,
+    currentBuild: () => simc.current(),
+  });
   const runner = startRunner({
     db,
     bus,
@@ -69,13 +83,12 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     progressIntervalMs: deps.progressIntervalMs,
     killGraceMs: deps.killGraceMs,
     runSimcJob: simc.runJob,
-  });
-  const items = createItemIndexer({
-    db,
-    dataDir: config.dataDir,
-    currentBuild: () => simc.current(),
-    launch: deps.launch,
-    log: deps.log,
+    revalidate: async (simId) => {
+      const sim = getSim(db, simId);
+      if (!sim) return [];
+      const issues = await combos.revalidate(sim, getFrozenCombinations(db, simId));
+      return issues.map((i) => i.message);
+    },
   });
   const icons = createIconService({ dataDir: config.dataDir, fetch: deps.fetch ?? fetch });
   const handle = createHttpHandler({
@@ -85,6 +98,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     live,
     items,
     icons,
+    combos,
     clientDir: config.clientDir,
     simc: {
       status: () => simc.status(),
@@ -97,6 +111,7 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     db,
     /** The in-process event bus, for tests that watch what the app emits. */
     bus,
+    combos,
     fetch: (req: Request) => handle(req),
     /**
      * Boot work that needs the network: with no Current SimC Build, installs the latest

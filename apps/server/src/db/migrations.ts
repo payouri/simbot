@@ -131,4 +131,16 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE sims ADD COLUMN top_gear_selection TEXT;
     `,
   },
+  {
+    id: 7,
+    name: "frozen_combinations",
+    sql: `
+      -- The SimC Build tag the Sim's Combinations were generated and validated against when it
+      -- was queued. Re-validated at Job start if the Current SimC Build is another one.
+      ALTER TABLE sims ADD COLUMN frozen_simc_tag TEXT;
+      -- What the Check Sim cost: wall time and iterations. Calibrates the time estimate.
+      ALTER TABLE check_sim_results ADD COLUMN duration_ms INTEGER;
+      ALTER TABLE check_sim_results ADD COLUMN iterations INTEGER;
+    `,
+  },
 ];

@@ -1,7 +1,9 @@
 import {
   type CharacterSnapshot,
+  type CombinationDefinition,
   canTransition,
   characterSnapshotSchema,
+  combinationDefinitionSchema,
   type DpsSummary,
   defaultSimSettings,
   defaultTopGearSelection,
@@ -214,26 +216,51 @@ function transition(
 
 export type QueueResult =
   | { ok: true; sim: Sim; jobId: number }
-  | { ok: false; reason: "not_found" | "invalid_transition" };
+  | { ok: false; reason: "not_found" | "invalid_transition" | "selection_changed" };
+
+/** The Combinations a Top Gear Sim is queued with, generated from `selection` on `simcTag`. */
+export type QueuePlan = {
+  selection: TopGearSelection;
+  simcTag: string | null;
+  combinations: readonly { isBaseline: boolean; definition: CombinationDefinition }[];
+};
 
 /**
- * `draft → queued`: freezes the Sim, creates its baseline Combination and appends a `sim` Job
- * to the FIFO, all in one transaction.
+ * `draft → queued`: freezes the Sim, stores its Combinations (a Top Gear's generated ones with
+ * the baseline first, otherwise just the baseline) and appends a `sim` Job to the FIFO, all in
+ * one transaction. A plan built from a selection that was edited meanwhile is refused.
  */
-export function queueSim(db: Db, id: number): QueueResult {
+export function queueSim(db: Db, id: number, plan?: QueuePlan): QueueResult {
   return db.transaction((): QueueResult => {
     const current = getSim(db, id);
     if (!current) return { ok: false, reason: "not_found" };
     if (!canTransition(current.status, "queued"))
       return { ok: false, reason: "invalid_transition" };
+    if (
+      plan &&
+      JSON.stringify(normalizeSelection(plan.selection)) !==
+        JSON.stringify(current.topGearSelection && normalizeSelection(current.topGearSelection))
+    ) {
+      return { ok: false, reason: "selection_changed" };
+    }
     const now = new Date().toISOString();
     if (!transition(db, id, current.status, "queued", { queued_at: now })) {
       return { ok: false, reason: "invalid_transition" };
     }
-    db.run("INSERT INTO combinations (sim_id, definition, is_baseline) VALUES (?, ?, 1)", [
-      id,
-      JSON.stringify({ kind: "equipped" }),
-    ]);
+    const insert = db.prepare(
+      "INSERT INTO combinations (sim_id, definition, is_baseline) VALUES (?, ?, ?)",
+    );
+    if (plan) {
+      for (const c of plan.combinations) {
+        insert.run(id, JSON.stringify(c.definition), c.isBaseline ? 1 : 0);
+      }
+      db.run("UPDATE sims SET frozen_simc_tag = ?, kind = 'top_gear' WHERE id = ?", [
+        plan.simcTag,
+        id,
+      ]);
+    } else {
+      insert.run(id, JSON.stringify({ kind: "equipped" }), 1);
+    }
     const job = db.run(
       "INSERT INTO jobs (kind, sim_id, status, created_at) VALUES ('sim', ?, 'queued', ?)",
       [id, now],
@@ -332,6 +359,7 @@ function resetToDraft(db: Db, simId: number, from: "queued" | "running") {
   ) {
     throw new Error(`Sim ${simId} is no longer ${from}`);
   }
+  db.run("UPDATE sims SET frozen_simc_tag = NULL WHERE id = ?", [simId]);
   // Stage results go with their Combinations (ON DELETE CASCADE).
   db.run("DELETE FROM combinations WHERE sim_id = ?", [simId]);
   db.run("DELETE FROM jobs WHERE kind = 'sim' AND sim_id = ?", [simId]);
@@ -540,4 +568,25 @@ export function listSims(db: Db, filters: SimListFilters): Sim[] {
 export function deleteSim(db: Db, simId: number): boolean {
   const result = db.run("DELETE FROM sims WHERE id = ?", [simId]);
   return result.changes > 0;
+}
+
+/** The Combinations frozen on a Sim, in the order they were generated (the baseline first). */
+export function getFrozenCombinations(db: Db, simId: number): CombinationDefinition[] {
+  return db
+    .query<{ definition: string }, [number]>(
+      "SELECT definition FROM combinations WHERE sim_id = ? ORDER BY id",
+    )
+    .all(simId)
+    .map((r) => combinationDefinitionSchema.parse(JSON.parse(r.definition)));
+}
+
+/** The SimC Build tag the Sim's Combinations were validated against when it was queued. */
+export function getFrozenSimcTag(db: Db, simId: number): string | null {
+  return (
+    db
+      .query<{ frozen_simc_tag: string | null }, [number]>(
+        "SELECT frozen_simc_tag FROM sims WHERE id = ?",
+      )
+      .get(simId)?.frozen_simc_tag ?? null
+  );
 }

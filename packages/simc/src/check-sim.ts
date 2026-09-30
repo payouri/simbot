@@ -33,10 +33,14 @@ export const isPlayerProfile = (text: string) => PLAYER_LINE.test(text);
 
 /**
  * Reads the Check Sim result out of json2 text (`null` when SimC wrote no file). Same DPS and
- * error rule as a Quick Sim. Throws `Json2FormatError` unless the whole report fits the schema,
+ * error rule as a Quick Sim, plus the iteration count that calibrates the time estimate. Throws `Json2FormatError` unless the whole report fits the schema,
  * including the profileset result.
  */
-export function readCheckSimResult(text: string | null): { dps: DpsSummary } {
+export function readCheckSimResult(text: string | null): {
+  dps: DpsSummary;
+  /** Iterations the run needed (`(std_dev / mean_std_dev)^2`), when the report has `std_dev`. */
+  iterations: number | null;
+} {
   if (text === null) throw new Json2FormatError("no json2 report was written");
   let raw: unknown;
   try {
@@ -55,7 +59,12 @@ export function readCheckSimResult(text: string | null): { dps: DpsSummary } {
   }
   const dps = sim.players[0]?.collected_data.dps;
   if (!dps) throw new Json2FormatError("no player in report");
+  const iterations =
+    dps.std_dev !== undefined && dps.mean_std_dev > 0
+      ? Math.round((dps.std_dev / dps.mean_std_dev) ** 2)
+      : null;
   return {
     dps: { mean: dps.mean, meanError: dps.mean_std_dev * sim.options.confidence_estimator },
+    iterations,
   };
 }

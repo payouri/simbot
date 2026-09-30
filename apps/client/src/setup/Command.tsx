@@ -1,4 +1,5 @@
 import {
+  type CombinationPreview,
   fightStyleSchema,
   type ImportItemsResponse,
   type ImportSetup,
@@ -15,6 +16,7 @@ import { ChevronDown, Lock, Play } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router";
 import { PassNote, UnknownBanner } from "../items/ImportItems";
+import { formatEstimate } from "../queue/format";
 import { useSimcStatus } from "../simc/api";
 import { chipView } from "../simc/SimcChip";
 import type { SaveState } from "./autosave";
@@ -38,6 +40,12 @@ const FIGHT_LABEL: Record<string, string> = {
   HeavyMovement: "Heavy movement",
   DungeonSlice: "Dungeon slice",
 };
+
+/** What the estimate rests on, for the tooltip. */
+const estimateTitle = (p: CombinationPreview) =>
+  p.estimateBasis === "check_sim"
+    ? "Estimated from the last Check Sim of this SimC Build"
+    : "Estimated with default speeds until a Check Sim has measured this SimC Build";
 
 export const modKey =
   typeof navigator !== "undefined" && /Mac|iPhone/.test(navigator.platform) ? "⌘" : "Ctrl";
@@ -171,6 +179,8 @@ export function Command({
   selection,
   groups,
   save,
+  preview,
+  previewError,
   runError,
   running,
   onSettings,
@@ -185,6 +195,9 @@ export function Command({
   selection: TopGearSelection;
   groups: Record<PaperdollSlot, SlotItems>;
   save: SaveState;
+  /** The Combination count, validation and estimate of the setup on screen. */
+  preview: CombinationPreview | undefined;
+  previewError: boolean;
   runError: string | null;
   running: boolean;
   onSettings: (next: SimSettings) => void;
@@ -198,7 +211,10 @@ export function Command({
   const c = sim.character;
   const inPlay = candidatesInPlay(selection, groups);
   const slots = slotsInPlay(selection, groups);
-  const canRun = inPlay === 0 && !running;
+  // Issues would come back as a 422; Run stays available while the first preview is on its way.
+  const issues = preview?.issues ?? [];
+  const canRun = !running && issues.length === 0;
+  const count = new Intl.NumberFormat("en-US");
   const consumables = Object.entries(setup?.consumables ?? {});
 
   return (
@@ -318,11 +334,29 @@ export function Command({
       <div className="mt-auto flex flex-col gap-3 border-t border-line pt-4">
         <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2">
           <div className="flex flex-col">
-            <span className="num text-[26px] leading-none font-semibold tracking-[-0.02em]">
-              {inPlay}
+            <span
+              className={clsx(
+                "num text-[26px] leading-none font-semibold tracking-[-0.02em]",
+                preview?.refused && "text-loss",
+              )}
+              aria-live="polite"
+            >
+              {preview
+                ? `${preview.atLeast ? "more than " : ""}${count.format(preview.count)}`
+                : "…"}
             </span>
             <span className="pt-1 text-[12.5px] text-muted">
-              {inPlay === 1 ? "candidate" : "candidates"} included across{" "}
+              {preview?.count === 1 ? "combination" : "combinations"}
+              {preview?.estimateSeconds != null && (
+                <>
+                  {" · "}
+                  <span className="num" title={estimateTitle(preview)}>
+                    {formatEstimate(preview.estimateSeconds)}
+                  </span>
+                </>
+              )}
+              {" · "}
+              <span className="num">{inPlay}</span> {inPlay === 1 ? "candidate" : "candidates"} in{" "}
               <span className="num">{slots}</span> {slots === 1 ? "slot" : "slots"}
             </span>
           </div>
@@ -341,15 +375,33 @@ export function Command({
             </button>
           </div>
         </div>
-        {inPlay === 0 ? (
+        {preview?.refused ? (
+          <p role="alert" className="text-[12.5px] text-loss">
+            Over the limit of {count.format(preview.max)} combinations after pruning. Include fewer
+            candidates or lock a slot to run.
+          </p>
+        ) : preview?.softWarning ? (
+          <p className="rounded-[6px] bg-noise-wash px-2.5 py-1.5 text-[12.5px] text-fg">
+            This is a long run: about {formatEstimate(preview.estimateSeconds ?? 0)}. Fewer
+            candidates or a lower precision make it shorter.
+          </p>
+        ) : inPlay === 0 ? (
           <p className="text-[12.5px] text-muted">
             Only your equipped set is selected, so this runs as a single baseline sim.
           </p>
-        ) : (
-          <p className="text-[12.5px] text-muted">
-            Top Gear runs are not available yet. Your selection is saved on this Draft; clear the
-            included candidates to sim the equipped set.
-          </p>
+        ) : null}
+        {issues.filter((i) => i.candidate !== null).length > 0 && (
+          <ul className="flex flex-col gap-1 text-[12.5px] text-loss">
+            {issues
+              .filter((i) => i.candidate !== null)
+              .slice(0, 5)
+              .map((i) => (
+                <li key={i.path}>{i.message}</li>
+              ))}
+          </ul>
+        )}
+        {previewError && (
+          <p className="text-[12.5px] text-faint">The combination count is not available now.</p>
         )}
         {runError && (
           <p role="alert" className="text-[12.5px] text-loss">
