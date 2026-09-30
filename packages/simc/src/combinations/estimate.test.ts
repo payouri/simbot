@@ -8,7 +8,9 @@ import {
 import { weaponRulesFor } from "./weapons";
 
 describe("estimateSeconds", () => {
-  const base = { fightSeconds: 60, targetErrorPercent: 0.2, model: DEFAULT_COST_MODEL };
+  const base = { fightSeconds: 60, precision: "medium", model: DEFAULT_COST_MODEL } as const;
+  /** Seconds of one Stage over `n` Combinations at `error`% under the default model. */
+  const stage = (n: number, error: number) => (n * (250 / error ** 2) * 1.5) / 1000;
 
   test("grows with the number of Combinations", () => {
     expect(estimateSeconds({ ...base, combinations: 1000 })).toBeGreaterThan(
@@ -16,11 +18,11 @@ describe("estimateSeconds", () => {
     );
   });
 
-  test("a tighter target costs more, a longer fight costs more", () => {
-    const at = (targetErrorPercent: number, fightSeconds = 60) =>
-      estimateSeconds({ ...base, combinations: 500, targetErrorPercent, fightSeconds });
-    expect(at(0.1)).toBeGreaterThan(at(0.5));
-    expect(at(0.2, 300)).toBeCloseTo(at(0.2, 60) * 5, 5);
+  test("a tighter precision costs more, a longer fight costs more", () => {
+    const at = (precision: "low" | "medium" | "high", fightSeconds = 60) =>
+      estimateSeconds({ ...base, combinations: 500, precision, fightSeconds });
+    expect(at("high")).toBeGreaterThan(at("low"));
+    expect(at("medium", 300)).toBeCloseTo(at("medium", 60) * 5, 5);
   });
 
   test("uses the measured model", () => {
@@ -31,11 +33,26 @@ describe("estimateSeconds", () => {
     );
   });
 
-  test("one Combination is a single full-precision run", () => {
-    const s = estimateSeconds({ ...base, combinations: 1 });
-    const iterations = 250 / 0.2 ** 2;
-    expect(s).toBeGreaterThan((iterations * 1.5) / 1000);
-    expect(s).toBeLessThan(((iterations * 1.5) / 1000) * 1.2);
+  test("up to four Combinations is a single full-precision Stage", () => {
+    expect(estimateSeconds({ ...base, combinations: 1 })).toBeCloseTo(stage(1, 0.2), 5);
+    expect(estimateSeconds({ ...base, combinations: 4 })).toBeCloseTo(stage(4, 0.2), 5);
+  });
+
+  test("follows the Smart Sim's Stage ladder, not a coarser one", () => {
+    // Medium runs 1% -> 0.3% -> 0.2%; the survivor model keeps 400 of 2000, then 40 of 400.
+    expect(estimateSeconds({ ...base, combinations: 2000 })).toBeCloseTo(
+      stage(2000, 1) + stage(400, 0.3) + stage(40, 0.2),
+      5,
+    );
+    // Low is two Stages, 1% -> 0.5%; Stage 1 alone is about 187 s for 500 Combinations.
+    expect(estimateSeconds({ ...base, precision: "low", combinations: 500 })).toBeCloseTo(
+      stage(500, 1) + stage(100, 0.5),
+      5,
+    );
+  });
+
+  test("a Medium Top Gear of 2000 Combinations warns about a long run", () => {
+    expect(isSoftWarning(estimateSeconds({ ...base, combinations: 2000 }))).toBe(true);
   });
 
   test("soft warning starts above 30 minutes", () => {

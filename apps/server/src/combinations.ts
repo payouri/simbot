@@ -23,7 +23,6 @@ import {
   generateCombinations,
   type ItemMeta,
   isSoftWarning,
-  PRECISION_TARGET_ERROR,
   parseItemLine,
   preselect,
   weaponRulesFor,
@@ -240,7 +239,7 @@ export function createCombinationService(deps: CombinationServiceDeps) {
       : estimateSeconds({
           combinations: gen.count,
           fightSeconds: settings.durationSeconds,
-          targetErrorPercent: PRECISION_TARGET_ERROR[settings.precision],
+          precision: settings.precision,
           model,
         });
     return {

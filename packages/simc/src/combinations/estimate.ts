@@ -1,4 +1,5 @@
-import { SOFT_WARN_SECONDS } from "@simbot/shared";
+import { type Precision, SOFT_WARN_SECONDS } from "@simbot/shared";
+import { stageLadder } from "../smart-sim";
 
 /**
  * What one SimC Build costs to run, measured on this machine.
@@ -38,43 +39,42 @@ export function costModelFromCheckSim(run: {
   };
 }
 
-/** One Stage of the provisional ladder: precision relative to the final one, and who is kept. */
-export type StageShape = { errorFactor: number; keepFraction: number; keepMin: number };
+/** Who a Cull is assumed to keep: `keepFraction` of the field, never fewer than `keepMin`. */
+export type CullShape = { keepFraction: number; keepMin: number };
 
 /**
- * The Smart Sim ladder the estimate assumes, until the Smart Sim itself defines the real Cull:
- * everything at a coarse precision, the leaders at a finer one, the contenders at the precision
- * the user picked.
- *
- * Unmeasured shape (provisional): stage 1 is 8x coarser and keeps the top 20% (min 40), stage 2
- * is 3x coarser and keeps the top 10% (min 12), stage 3 is the user's precision. Real Cull
- * behavior may differ; no accuracy is claimed.
+ * The survivor model the estimate assumes for each Cull, in Stage order (the final Stage has no
+ * Cull). The Stage precisions themselves come from `stageLadder`, the ladder the Smart Sim runs.
+ * - First Cull: keep the top 20%, at least 40.
+ * - Second Cull: keep the top 10%, at least 12 (above `CULL_KEEP_TOP` plus the baseline).
+ * The real Cull keeps whoever is within 2 standard errors of the best, so the share it keeps
+ * depends on the DPS spread. Unmeasured shape (provisional): real Cull behavior may differ; no
+ * accuracy is claimed.
  */
-export const ESTIMATE_LADDER: readonly StageShape[] = [
-  { errorFactor: 8, keepFraction: 0.2, keepMin: 40 },
-  { errorFactor: 3, keepFraction: 0.1, keepMin: 12 },
-  { errorFactor: 1, keepFraction: 1, keepMin: 0 },
+export const ESTIMATE_CULLS: readonly CullShape[] = [
+  { keepFraction: 0.2, keepMin: 40 },
+  { keepFraction: 0.1, keepMin: 12 },
 ];
 
 export type EstimateInput = {
   combinations: number;
   fightSeconds: number;
-  /** Final `target_error`, percent of DPS. */
-  targetErrorPercent: number;
+  /** The precision preset; it picks the Stage ladder (`stageLadder`) and the final error. */
+  precision: Precision;
   model?: CostModel;
 };
 
-/** Wall-clock seconds for a Top Gear over `combinations`, laddered like a Smart Sim. */
+/** Wall-clock seconds for a Top Gear over `combinations`, laddered like the Smart Sim. */
 export function estimateSeconds(input: EstimateInput): number {
   const model = input.model ?? DEFAULT_COST_MODEL;
   const perIterationMs = model.msPerIteration * (input.fightSeconds / COST_MODEL_FIGHT_SECONDS);
   let alive = Math.max(0, Math.floor(input.combinations));
   let ms = 0;
-  for (const stage of ESTIMATE_LADDER) {
-    const error = input.targetErrorPercent * stage.errorFactor;
+  stageLadder(input.precision, alive).forEach((error, i) => {
     ms += alive * (model.iterationsTimesErrorSq / error ** 2) * perIterationMs;
-    alive = Math.min(alive, Math.max(stage.keepMin, Math.ceil(alive * stage.keepFraction)));
-  }
+    const cull = ESTIMATE_CULLS[i] ?? ESTIMATE_CULLS[ESTIMATE_CULLS.length - 1];
+    if (cull) alive = Math.min(alive, Math.max(cull.keepMin, Math.ceil(alive * cull.keepFraction)));
+  });
   return ms / 1000;
 }
 
