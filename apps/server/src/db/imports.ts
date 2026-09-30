@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { type Import, type ItemIndex, itemIndexSchema } from "@simbot/shared";
+import { type Import, type ItemIndex, itemIndexSchema, type SimcBuild } from "@simbot/shared";
 import {
   equippedTalentsLine,
   isPtrClientExport,
@@ -42,17 +42,21 @@ const toImport = (row: ImportRow): Import => ({
 
 export const checksumOf = (text: string) => createHash("sha256").update(text).digest("hex");
 
+/** The Current SimC Build's game data versions, or null with no build installed. */
+export type ImportBuild = Pick<SimcBuild, "gameDataVersion" | "ptrGameDataVersion"> | null;
+
 /**
  * Stores an Addon String as an Import, matching (or creating) its Character on region, realm,
  * name and class. Pasting the same text for the same Character again returns the existing
  * Import. Throws `AddonStringError` when the text has no character header. `build` is the
  * Current SimC Build's game data versions: they decide the Import's PTR-client flag, which is
- * recorded with a new Import and kept as it was for an existing one.
+ * recorded with a new Import and kept as it was for an existing one. It is required: pass null
+ * explicitly when there is no build, so a forgotten argument fails to compile.
  */
 export function createImport(
   db: Db,
   text: string,
-  build: Parameters<typeof isPtrClientExport>[1] = null,
+  build: ImportBuild,
 ): { import: Import; created: boolean } {
   const header = parseProfileHeader(text);
   const checksum = checksumOf(text);

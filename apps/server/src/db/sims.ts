@@ -316,7 +316,7 @@ export function startSim(
   jobId: number,
   simId: number,
   simcTag: string | null,
-  gameDataVersion: string | null = null,
+  gameDataVersion: string | null,
 ): boolean {
   return db.transaction(() => {
     const now = new Date().toISOString();
