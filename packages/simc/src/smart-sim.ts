@@ -28,24 +28,29 @@ export const CULL_SIGMAS = 2;
 /**
  * Upper bound on iterations per pass, so a `target_error` that never comes still ends.
  * Kept at 50,000 because the benchmark shows it is never binding: no profileset of any benchmark
- * Sim ran at the ceiling. The most iterations one profileset ran was 1,401 at Medium (with an
- * error-check interval of 200; `apps/server/bench/results/2026-09-30T11-50-49-078Z.json` and the
- * other Medium files) and 4,451 at High (final Stage, 0.1% target error;
- * `2026-09-30T12-44-04-817Z.json`, one repeat). Low was never run. One gear set on one machine;
- * 50,000 is 11x headroom over the highest seen, not a tuned value.
+ * Sim ran at the ceiling. The most iterations one profileset ran: 401 at Low
+ * (`apps/server/bench/results/2026-09-30T16-58-33-758Z.json`, two gear sets, up to 17,497
+ * Combinations), 2,211 at Medium (`2026-09-30T15-23-13-858Z.json`), 4,451 at High
+ * (`2026-09-30T12-44-04-817Z.json`, 0.1% target error) and 4,021 at High over 39,366
+ * Combinations (`2026-09-30T17-49-31-838Z.json`). 50,000 is 11x headroom over the highest seen,
+ * not a tuned value. One machine.
  */
 export const ITERATIONS_CEILING = 50_000;
 
 /**
  * Profilesets SimC works on at once; the rest of its threads share each one's iterations.
- * Measured: 1 is the fastest of 1, 2, 4, 8 and 16 on a 16-thread machine (AMD Ryzen 7 7735HS,
- * SimC 1210-2026-09-29-d08a1c3, Medium, 3 repeats, `analyze_error_interval=100`). Summed median
- * wall time over the 4-, 8- and 12-item cases (9, 81 and 972 Combinations): 94.8 s at 1,
- * 103.2 s at 2, 121.8 s at 4, 166.2 s at 8, 355.9 s at 16 (the old default, 2, cost 9% more).
- * Source: `apps/server/bench/results/2026-09-30T11-07-06-473Z.json`. Its Stage 1 is up to 971
- * short profilesets (101 iterations each at 1), and a likely reason is that splitting one that
- * short over threads costs more than it gains; the benchmark does not measure why. Threads were
- * swept at interval 100 only, before the interval moved to 50. One gear set on one machine.
+ * Measured: 1 is the fastest of 1, 2, 4, 8 and 16 on a 16-thread machine (AMD Ryzen 7 7735HS),
+ * both times it was swept. At `analyze_error_interval=50`, SimC 1210-2026-09-30-613b5fb, Medium,
+ * 3 repeats, two gear sets (the import-items fixture's Frost Death Knight and
+ * `bench/sets/gulthrak-fury.txt`, 4, 8 and 12 items each): summed median wall time over the six
+ * cases 138.6 s at 1, 160.8 s at 2, 199.4 s at 4, 300.3 s at 8, 682.3 s at 16
+ * (`apps/server/bench/results/2026-09-30T15-23-13-858Z.json`). At interval 100, SimC
+ * 1210-2026-09-29-d08a1c3, the Frost set alone: 94.8 s at 1, 103.2 s at 2, 121.8 s at 4, 166.2 s
+ * at 8, 355.9 s at 16 (`2026-09-30T11-07-06-473Z.json`). Its Stage 1 is up to 972 short
+ * profilesets, and a likely reason is that splitting one that short over threads costs more
+ * than it gains; the benchmark does not measure why. At interval 5 (the same two sets and
+ * cases): 123.9 s at 1, 152.9 s at 2, 185.0 s at 4 (`2026-09-30T18-59-57-173Z.json`). One
+ * machine.
  */
 export const PROFILESET_WORK_THREADS = 1;
 

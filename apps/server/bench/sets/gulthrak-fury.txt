@@ -1,0 +1,150 @@
+# Gulthrak - Fury - 2026-09-30 17:14 - EU/Dalaran
+# SimC Addon 12.1.0-03
+# WoW 12.1.0.69933, TOC 120100
+# Requires SimulationCraft 1000-01 or newer
+
+warrior="Gulthrak"
+level=90
+race=orc
+region=eu
+server=dalaran
+role=attack
+professions=blacksmithing=1/engineering=1
+spec=fury
+# loot_spec=fury
+
+talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAgGDjZMz2yMzMjZmxMzMzMjZWmZmZmxsYmZGAAIMwGssY0YGQmFMjFAzgBAMzAwwiZAGD
+
+# Saved Loadout: Delves Slayer
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAAGADMAAzMjNMAADAAgx22ALgBMDDwgNAAAAAAAAA
+# Saved Loadout: Mythic+ Slayer
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADMzwAzMeg5BmZMzMzMzMzDsZmZmZMbzMPgBAAAbbDsAAmhBA2AAAAAAAAA
+# Saved Loadout: Delves/Outdoor Mountain Thane
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADwMzAGMAwMzMjthZMjBzDMDAAADAW2MMmBwAGLAAAAAAAAA
+# Saved Loadout: Salyer Raid Midnight
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAjhZGzMbmZmZmhxMzMjZmZWmZGzMzsZMzAAAYssNwCYAzwAMDbAzMM2AAgZGGjhxgxA
+# Saved Loadout: Slayer AOE
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAjhxYmZzMzMzMzMmZmZmZMzyMGzMmNzMzAAAYssNwCYAzwAMDbAzMbGAAgZGGzyADGD
+# Saved Loadout: M+ Test
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAjhxYmZbZmZmZGzYmxMzMmZZmZMmZ2GzMDAAgxyyALgBMDDwMsBYmNGAAwMjhZZmZAD
+# Saved Loadout: Delves Mountain Thane
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAjhxMmZbZmZmxMzYmZmZmxMLzMzMzYWMzMDAAADsBLLGGzAYWwMWAMDGAwMDADLmBYM
+# Saved Loadout: sqdqsd
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADMYGYmxDMPAzMzAzMzDsYmZGzMbDPwMAAwAAAAAAAAAAAAAAAA
+# Saved Loadout: M+ Slayer
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADMzwAzMeg5BmZMzMzMzMzDsZmZmZMbzMPgBAAwYbbgFwAmhBYwGAAAAAAAAA
+# Saved Loadout: Slayer ST
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADYYAgBAGzMjFMjZMwDMDAAgxy2ALgBMDDwgNAAAAAAAAA
+# Saved Loadout: Fury Midnight Slayer
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAjhxYmZbZmZmZGzYmZmxMmZbmZMmZ2mHYmZAAAM22GYBMGMDDwMsBMjNGAwMDmZMMmZGwA
+# Saved Loadout: Tank
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+# Saved Loadout: Delves/Outdoor Slayer
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAAAGADMAAzMjNMAADAAgx22ALgBMDDwgNAAAAAAAAA
+# Saved Loadout: M+
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADwYADMAgZmZsgBDYMDAAAAAAAAAAAAAAAAAA
+# Saved Loadout: Slayer AOE
+# talents=CgEASWsDSHNyPDXnbxuIhH3ZdDAAAAAAADYYAgBAYmZshBAYAAAM22GYBMgZYAGsBAAAAAAAA
+
+omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
+
+# Tempered Horns of the Jade Warlord (308)
+head=,id=271456,bonus_id=41/13696/13692/13698/12838,redirected_base_stats=272258
+# Preyhunter's Choker (305)
+neck=,id=275531,bonus_id=6652/13668/12841
+# Raging Pauldrons of the Jade Warlord (321)
+shoulder=,id=271454,bonus_id=6652/13694/13697/12846,redirected_base_stats=272260
+# Pyrewalker's Mantle (308)
+back=,id=272225,bonus_id=6652/13662/12842,content_tuning=6011
+# Cuirass of the Jade Warlord (321)
+chest=,id=271459,bonus_id=6652/13690/13698/12846,redirected_base_stats=272255
+# Pledgebearer's Splints (305)
+wrist=,id=272262,bonus_id=12841/6652/13696/13662,content_tuning=6015
+# Pledgebearer's Gauntlets (308)
+hands=,id=272257,bonus_id=6652/13662/12838,content_tuning=6011
+# Pledgebearer's Girdle (305)
+waist=,id=272261,bonus_id=12841/6652/13696/13662,content_tuning=6015
+# Venom Warden's Greaves (308)
+legs=,id=268224,bonus_id=6652/13662/13333/12838,content_tuning=4240
+# Pledgebearer's Sabatons (321)
+feet=,id=272256,bonus_id=40/13662/12846
+# Colubrine Band (295)
+finger1=,id=272147,bonus_id=6652/13668/11215/12834,content_tuning=6015
+# Ouroboric Signet (295)
+finger2=,id=272150,bonus_id=12834/6652/13668,content_tuning=6015
+# Glorious Crusader's Keepsake (308)
+trinket1=,id=251792,bonus_id=6652/12838,content_tuning=6014
+# Effigy of Ula'tek's Faithful (311)
+trinket2=,id=274493,bonus_id=6652/12843,content_tuning=6015
+# Exhumed Soul-Cleaver (321)
+main_hand=,id=272280,bonus_id=6652/12846,content_tuning=6014
+# Realm Splitter (308)
+off_hand=,id=272274,bonus_id=6652/12838,content_tuning=6014
+
+### Gear from Bags
+#
+# head=,id=171886,bonus_id=8902/12841/7756/13695/13662/12699,content_tuning=806
+#
+# head=,id=250458,bonus_id=6652/12667/13577/13333/12787,content_tuning=4907
+#
+# neck=,id=272229,bonus_id=12834/6652/13668,content_tuning=6015
+#
+# neck=,id=272229,bonus_id=12819/6652/13668,content_tuning=6015
+#
+# shoulder=,id=272244,bonus_id=12826/6652/11215/13662,content_tuning=6015
+#
+# shoulder=,id=207624,bonus_id=10305/6652/1537/8766,content_tuning=2078
+#
+# back=,id=264594,bonus_id=12817/6652/13663/11311,content_tuning=4280
+#
+# back=,id=251206,bonus_id=13661/13437/6652/13663,content_tuning=3022
+#
+# hands=,id=264537,bonus_id=12817/6652/13663/11311,content_tuning=4280
+#
+# waist=,id=156220,bonus_id=7756/13696/13662/12834,content_tuning=1020
+#
+# waist=,id=258934,bonus_id=13900/13663,drop_level=90,content_tuning=6257
+#
+# legs=,id=272259,bonus_id=12834/6652/13662,content_tuning=6015
+#
+# feet=,id=258937,bonus_id=13900/13663,drop_level=90,content_tuning=4280
+#
+# finger1=,id=275529,bonus_id=6652/13668/12834,content_tuning=5236
+#
+# finger1=,id=272148,bonus_id=12834/6652/13668,content_tuning=6015
+#
+# Colubrine Band (272)
+# finger1=,id=272147,bonus_id=12819/6652/13668,content_tuning=6015
+#
+# finger1=,id=263890,bonus_id=6652/13668/12830,content_tuning=3321
+#
+# finger1=,id=264601,bonus_id=12817/6652/13668/11311,content_tuning=4280
+#
+# finger1=,id=265814,bonus_id=13639,content_tuning=3085
+#
+# trinket1=,id=274496,bonus_id=12833/6652,content_tuning=6012
+#
+# Glorious Crusader's Keepsake (292)
+# trinket1=,id=251792,bonus_id=12833/6652/11215,content_tuning=6015
+#
+# trinket1=,id=264694,bonus_id=12826/6652/11215,content_tuning=6015
+#
+# trinket1=,id=248583,bonus_id=13183/12841/6652,content_tuning=6015
+
+### Weekly Reward Choices
+#
+### End of Weekly Reward Choices
+
+### Additional Character Info
+#
+# catalyst_currencies=2813:8/3269:8/3116:8/3378:8/3465:1
+#
+# upgrade_currencies=c:1792:550/c:2122:1/c:3442:22/c:3445:7/c:3443:10/c:3444:14/c:3446:5/i:224072:3/i:274476:9
+#
+# slot_high_watermarks=0:308:321/1:305:305/2:321:321/3:321:321/4:305:305/5:308:308/6:321:321/7:305:305/8:308:308/9:295:295/10:308:308/11:308:308/12:321:321/13:0:292/14:266:298/15:89:295/16:99:292
+#
+# upgrade_achievements=19326/19577/19578/40107/40115/40118/62410/62411
+#
+# bonus_roll_currencies=3418:0/3511:0
+
+# Checksum: b6775177

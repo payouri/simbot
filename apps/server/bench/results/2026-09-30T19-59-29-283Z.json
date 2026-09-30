@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "producedBy": "apps/server/bench/top-gear.ts",
+  "startedAt": "2026-09-30T19:59:29.283Z",
+  "simcTag": "1210-2026-09-30-613b5fb",
+  "machine": {
+    "cpus": 16,
+    "model": "AMD Ryzen 7 7735HS with Radeon Graphics"
+  },
+  "checkSim": null,
+  "checkSims": {
+    "addon-string": {
+      "durationMs": 722,
+      "iterations": 320,
+      "errorPercent": 0.8244574053049504
+    }
+  },
+  "sims": [
+    {
+      "caseName": "addon-string/cap-18",
+      "precision": "high",
+      "fightSeconds": 600,
+      "combinations": 39366,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 1334063.0659379999,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 1296460,
+          "iterations": 834960,
+          "profilesets": 39365,
+          "targetError": 1,
+          "maxIterations": 56,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9999968972022762,
+          "medianErrorPercent": 0.9318601567023929
+        },
+        {
+          "stage": 2,
+          "durationMs": 14174,
+          "iterations": 11218,
+          "profilesets": 53,
+          "targetError": 0.3,
+          "maxIterations": 271,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2999794108540139,
+          "medianErrorPercent": 0.29758950240920834
+        },
+        {
+          "stage": 3,
+          "durationMs": 22524,
+          "iterations": 17019,
+          "profilesets": 9,
+          "targetError": 0.1,
+          "maxIterations": 2046,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.0999920877873033,
+          "medianErrorPercent": 0.09996685459055128
+        }
+      ],
+      "previewEstimateSeconds": 2504.561727111111,
+      "repeat": 1
+    }
+  ]
+}

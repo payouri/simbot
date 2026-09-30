@@ -51,9 +51,7 @@ const FIGHT_LABEL: Record<string, string> = {
 const estimateTitle = (p: CombinationPreview) =>
   p.estimateBasis === "finished_sims"
     ? "Estimated from the last finished Top Gear on this SimC Build"
-    : p.estimateBasis === "check_sim"
-      ? "Estimated from the last Check Sim of this SimC Build"
-      : "Estimated with default speeds until a Check Sim has measured this SimC Build";
+    : "Estimated with default speeds until a Top Gear has finished on this SimC Build";
 
 export const modKey =
   typeof navigator !== "undefined" && /Mac|iPhone/.test(navigator.platform) ? "⌘" : "Ctrl";

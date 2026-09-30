@@ -15,7 +15,6 @@ import {
 import {
   type Combination,
   type CostModel,
-  costModelFromCheckSim,
   costModelFromStages,
   DEFAULT_COST_MODEL,
   estimateSeconds,
@@ -32,7 +31,6 @@ import {
 } from "@simbot/simc";
 import type { Db } from "./db";
 import { equippedLoadoutIndex, getParsedImport } from "./db/imports";
-import { getCheckSimCost } from "./db/simc-jobs";
 import { lastTopGearStageCosts } from "./db/sims";
 
 /** What the service needs of the item indexer. */
@@ -223,7 +221,8 @@ export function createCombinationService(deps: CombinationServiceDeps) {
 
   /**
    * The cost model of the Current SimC Build: learnt from its most recent finished Top Gear,
-   * else seeded from its last Check Sim, else the default.
+   * else the default. Its Check Sim is not used: its wall time is mostly SimC's start-up, and a
+   * model read from it was within 30% of 6 of 227 benchmarked Sims (`costModelFromCheckSim`).
    */
   async function costModel(): Promise<{
     model: CostModel;
@@ -233,9 +232,6 @@ export function createCombinationService(deps: CombinationServiceDeps) {
     if (!build) return { model: DEFAULT_COST_MODEL, basis: "default" };
     const learnt = costModelFromStages(lastTopGearStageCosts(db, build.tag));
     if (learnt) return { model: learnt, basis: "finished_sims" };
-    const cost = getCheckSimCost(db, build.tag);
-    const measured = cost ? costModelFromCheckSim(cost) : null;
-    if (measured) return { model: measured, basis: "check_sim" };
     return { model: DEFAULT_COST_MODEL, basis: "default" };
   }
 

@@ -55,9 +55,10 @@ export const combinationPreviewSchema = z.object({
   estimateSeconds: z.number().nullable(),
   /**
    * `finished_sims`: learnt from the Current SimC Build's most recent finished Top Gear.
-   * `check_sim`: seeded from its last Check Sim. `default`: a stand-in.
+   * `default`: a stand-in until then. A Check Sim is not a basis: SimC's start-up outweighs its
+   * few hundred iterations, and #58 measured it at 0.9x to 9.5x the wall time.
    */
-  estimateBasis: z.enum(["finished_sims", "check_sim", "default"]),
+  estimateBasis: z.enum(["finished_sims", "default"]),
   /** The estimate is above about 30 minutes. */
   softWarning: z.boolean(),
   /** More than 50,000 Combinations after pruning: the Sim cannot be queued. */

@@ -38,6 +38,13 @@ export type BenchStage = {
   maxIterations: number | null;
   /** Profilesets that ran `iterationsCeiling` iterations or more (stopped by it, not by error). */
   atCeiling: number | null;
+  /**
+   * Error the Stage's profilesets reached, each one's `mean_error` in percent of its mean (the
+   * unit of `targetError`): the worst and the median, from the Stage's json2. Null when unread,
+   * and absent from files written before it was recorded.
+   */
+  maxErrorPercent?: number | null;
+  medianErrorPercent?: number | null;
 };
 
 /** One Top Gear Sim of one case at one sweep point. */
@@ -73,12 +80,23 @@ export type BenchResults = {
   simcTag: string;
   machine: { cpus: number; model: string };
   /**
-   * The last Check Sim of `simcTag` in the benchmarked data dir: the basis of the estimate a Top
-   * Gear preview shows before any Top Gear has finished on that build. Null when it has none.
+   * The last Check Sim of `simcTag` in the benchmarked data dir, which the `check sim` column
+   * reads when a case's set has none in `checkSims`. Null when it has none. The app no longer
+   * estimates from a Check Sim (`costModelFromCheckSim`).
    */
   checkSim: BenchCheckSim | null;
+  /**
+   * A Check Sim the benchmark ran itself on each gear set, by set name, the way the app runs one
+   * on the latest Import. A case's estimate uses its own set's, else `checkSim`. Absent from
+   * files written before the benchmark ran them.
+   */
+  checkSims?: Record<string, BenchCheckSim>;
   sims: BenchSim[];
 };
+
+/** The gear set a case belongs to: its name up to the last `/` (`set/cap-12`). */
+export const setOfCase = (caseName: string) =>
+  caseName.includes("/") ? caseName.slice(0, caseName.lastIndexOf("/")) : caseName;
 
 export const sweepKey = (p: SweepPoint) =>
   `threads=${p.profilesetWorkThreads} interval=${p.analyzeErrorInterval} ceiling=${p.iterationsCeiling}${
@@ -93,6 +111,18 @@ const median = (xs: readonly number[]) => {
   const mid = Math.floor(s.length / 2);
   return s.length % 2 ? (s[mid] as number) : ((s[mid - 1] as number) + (s[mid] as number)) / 2;
 };
+
+/**
+ * The error a Stage's profilesets reached, from its json2 `profilesets.results`: each one's
+ * `mean_error` in percent of its `mean`, the worst and the median. Null when none has a
+ * positive mean.
+ */
+export function achievedError(
+  results: readonly { mean: number; mean_error: number }[],
+): { max: number; median: number } | null {
+  const errors = results.flatMap((r) => (r.mean > 0 ? [(r.mean_error / r.mean) * 100] : []));
+  return errors.length ? { max: Math.max(...errors), median: median(errors) } : null;
+}
 
 /** The Stage costs of a Sim, in the shape the app refines its cost model from. */
 export function stageCostsOf(sim: BenchSim): StageCost[] {
@@ -159,11 +189,12 @@ const offBy = (c: EstimateCheck) => Math.abs(c.ratio - 1);
 
 /** Checks the time estimate against every Sim's measured wall time. */
 export function checkEstimates(
-  results: Pick<BenchResults, "sims" | "checkSim">,
+  results: Pick<BenchResults, "sims" | "checkSim" | "checkSims">,
 ): SimEstimateCheck[] {
   const { sims } = results;
-  const checkSimModel = results.checkSim ? costModelFromCheckSim(results.checkSim) : null;
   return sims.map((sim) => {
+    const checkSim = results.checkSims?.[setOfCase(sim.caseName)] ?? results.checkSim;
+    const checkSimModel = checkSim ? costModelFromCheckSim(checkSim) : null;
     const measured = sim.wallMs / 1000;
     const key = sweepKey(sim.sweep);
     let worst: (EstimateCheck & { from: string }) | null = null;
@@ -201,6 +232,14 @@ export type SweepSummary = {
   atCeiling: number;
   /** Profilesets that ran in total, same scope. */
   profilesets: number;
+  /** `targetError` of the final Stage, when every Sim here shares one. */
+  finalTargetError: number | null;
+  /**
+   * Error reached in each Sim's final Stage (its worst profileset): the median over the Sims and
+   * the worst. Null when no Sim's report was read for it.
+   */
+  finalErrorMedian: number | null;
+  finalErrorMax: number | null;
 };
 
 /** One line per sweep point, fastest first; only points that ran every case are comparable. */
@@ -217,6 +256,11 @@ export function summarizeSweeps(sims: readonly BenchSim[]): SweepSummary[] {
     for (const s of ss) perCase.set(s.caseName, [...(perCase.get(s.caseName) ?? []), s.wallMs]);
     if (perCase.size !== allCases.size) continue;
     const stages = ss.flatMap((s) => s.stages);
+    const finals = ss.flatMap((s) => s.stages.at(-1) ?? []);
+    const targets = new Set(finals.map((s) => s.targetError));
+    const reached = finals.flatMap((s) =>
+      typeof s.maxErrorPercent === "number" ? [s.maxErrorPercent] : [],
+    );
     out.push({
       sweep,
       sims: ss.length,
@@ -224,6 +268,9 @@ export function summarizeSweeps(sims: readonly BenchSim[]): SweepSummary[] {
       totalWallSeconds: [...perCase.values()].reduce((sum, ms) => sum + median(ms) / 1000, 0),
       atCeiling: stages.reduce((n, s) => n + (s.atCeiling ?? 0), 0),
       profilesets: stages.reduce((n, s) => n + s.profilesets, 0),
+      finalTargetError: targets.size === 1 ? ([...targets][0] as number) : null,
+      finalErrorMedian: reached.length ? median(reached) : null,
+      finalErrorMax: reached.length ? Math.max(...reached) : null,
     });
   }
   return out.sort((a, b) => a.totalWallSeconds - b.totalWallSeconds);
@@ -237,12 +284,22 @@ const cell = (c: EstimateCheck | null) =>
 export function formatSummary(results: BenchResults): string {
   const lines = [
     `SimC ${results.simcTag} on ${results.machine.cpus} threads (${results.machine.model}), ${results.startedAt}`,
+    ...Object.entries(results.checkSims ?? {}).map(
+      ([set, c]) =>
+        `Check Sim on ${set}: ${c.durationMs === null ? "n/a" : `${(c.durationMs / 1000).toFixed(1)}s`}, ${c.iterations ?? "n/a"} iterations, ${c.errorPercent.toFixed(3)}% error`,
+    ),
     "",
     "Sweep points, fastest first (sum over cases of the median wall time):",
   ];
   for (const s of summarizeSweeps(results.sims)) {
+    const reached =
+      s.finalErrorMedian === null || s.finalErrorMax === null
+        ? "final-Stage error n/a"
+        : `final-Stage error ${s.finalErrorMedian.toFixed(3)}% median, ${s.finalErrorMax.toFixed(3)}% max${
+            s.finalTargetError === null ? "" : ` (target ${s.finalTargetError}%)`
+          }`;
     lines.push(
-      `  ${s.sweep}: ${s.totalWallSeconds.toFixed(1)}s over ${s.cases} cases, ${s.atCeiling}/${s.profilesets} profileset runs at the ceiling`,
+      `  ${s.sweep}: ${s.totalWallSeconds.toFixed(1)}s over ${s.cases} cases, ${s.atCeiling}/${s.profilesets} profileset runs at the ceiling, ${reached}`,
     );
   }
   lines.push(

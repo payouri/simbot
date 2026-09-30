@@ -5,34 +5,30 @@ import { CULL_KEEP_TOP, stageLadder } from "../smart-sim";
  * What one SimC Build costs to run, measured on this machine.
  * - `msPerIteration`: wall time of one iteration of one profileset over a 60 s fight, all
  *   threads working.
- * - `iterationsTimesErrorSq`: iterations x (mean error in percent of DPS)^2, near constant, so
- *   reaching error `e` takes about `iterationsTimesErrorSq / e^2` iterations.
+ * - `iterationsTimesErrorSq`: iterations x (mean error in percent of DPS)^2 over a 60 s fight,
+ *   near constant, so reaching error `e` takes about `iterationsTimesErrorSq / e^2` iterations
+ *   of a 60 s fight, and `60 / fight` times that over a longer one: a longer fight's DPS varies
+ *   less. The two cancel, so fight length does not change the estimate.
  */
 export type CostModel = { msPerIteration: number; iterationsTimesErrorSq: number };
 
 /**
- * The stand-in until a Check Sim has measured the Current SimC Build. It is the model the
+ * The model a preview uses until a Top Gear has finished on the Current SimC Build: what the
  * app's own learner (`costModelFromStages`) read off the 4-item Sim (9 Combinations, first
- * repeat) of `apps/server/bench/results/2026-09-30T12-47-17-748Z.json`: SimC
- * 1210-2026-09-29-d08a1c3, `profileset_work_threads=1`, `analyze_error_interval=50`, Medium,
- * AMD Ryzen 7 7735HS on 16 threads. The 12-item Sim's own model there (0.130, 59.2) is higher
- * in `iterationsTimesErrorSq` because its 971-profileset 1% Stage outweighs the rest, and a 1%
- * Stage runs to the error-check interval (59.7 iterations per profileset, where its later
- * Stages' iterations × error² are 38.6 and 39.6), which one constant cannot follow. The old 1.5
- * and 250 were about 12x and 5x the new values.
- * How it fares, from the files' summaries: on its own file it gives 86% to 115% of measured
- * wall time (a fit, not a test); on caps 14, 16 and 18 of `2026-09-30T12-50-50-411Z.json`,
- * 80%, 80% and 78% (2,916 to 39,366 Combinations); on `2026-09-30T13-53-13-088Z.json`, the only
- * file run with this model already in place, 81% to 94% (72% to 80% with SimC's `threads=8`). So it under-estimates large Top Gears
- * by about a fifth, and a Sim a little over 30 minutes can show no soft warning. None of that
- * checks the Check Sim basis (never measured) or the model the app learns from its last Top
- * Gear: learnt from a larger case, a 9-Combination Sim came out at 139% to 143% (`12-47`) and
- * 152% at High (`2026-09-30T12-44-04-817Z.json`), outside 30%. One gear set on one machine: a
- * slower machine needs its Check Sim.
+ * repeat) of `apps/server/bench/results/2026-09-30T12-47-17-748Z.json` (Frost Death Knight, 300 s
+ * fight, interval 50, SimC 1210-2026-09-29-d08a1c3, AMD Ryzen 7 7735HS on 16 threads). Its 249.5
+ * is the 49.9 learnt there, restated per 60 s fight (x 300/60); 300 s estimates are unchanged.
+ * At today's defaults (threads 1, interval 5, SimC 1210-2026-09-30-613b5fb) it gives 94% to 125%
+ * of measured wall time on all 41 such Sims, two gear sets, 9 to 39,366 Combinations, Medium and
+ * High, 300 s and 600 s fights: `2026-09-30T15-23-13-858Z.json`, `2026-09-30T17-49-31-838Z.json`,
+ * `2026-09-30T18-11-43-303Z.json`, `2026-09-30T18-59-57-173Z.json`,
+ * `2026-09-30T19-59-29-283Z.json`. It runs low at Low (`2026-09-30T16-58-33-758Z.json`, interval
+ * 50): 61% to 65% on the 4-item Sims (1.4 s and 1.5 s against 2.3 s and 2.4 s), 69% to 94% on the
+ * rest. One machine; `apps/server/bench/README.md` has the history.
  */
 export const DEFAULT_COST_MODEL: CostModel = {
   msPerIteration: 0.124,
-  iterationsTimesErrorSq: 49.9,
+  iterationsTimesErrorSq: 249.5,
 };
 
 /** Fight length the cost model is measured over (the Check Sim's `max_time`). */
@@ -42,6 +38,11 @@ export const COST_MODEL_FIGHT_SECONDS = 60;
  * Reads a cost model out of a Check Sim: how long it took, the iterations it needed to reach
  * its error, and that error (percent of DPS). It ran the base actor and one profileset over
  * `COST_MODEL_FIGHT_SECONDS`. Null when a number is missing or not positive.
+ * The app does not estimate from it: a Check Sim runs a few hundred iterations in about 0.7 s,
+ * mostly SimC's start-up. Over the six #58 results files (`2026-09-30T15-23-13-858Z.json` to
+ * `2026-09-30T19-59-29-283Z.json`) its model gave 0.9x to 9.5x the measured wall time, within
+ * 30% in 6 of 227 Sims, all at `profileset_work_threads=16`, where every Sim ran slow. The
+ * benchmark still reports it.
  */
 export function costModelFromCheckSim(run: {
   durationMs: number | null;
@@ -91,8 +92,9 @@ export function costModelFromStages(stages: readonly StageCost[]): CostModel | n
     const perActor = iterations / profilesets;
     const n = profilesets + 1;
     ms += durationMs;
-    iterationsAt60 += n * perActor * (fightSeconds / COST_MODEL_FIGHT_SECONDS);
-    iterationsTimesErrorSq += n * perActor * targetError ** 2;
+    const fightScale = fightSeconds / COST_MODEL_FIGHT_SECONDS;
+    iterationsAt60 += n * perActor * fightScale;
+    iterationsTimesErrorSq += n * perActor * targetError ** 2 * fightScale;
     actors += n;
   }
   if (actors === 0) return null;
@@ -118,8 +120,13 @@ export type CullShape = { keepFraction: number; keepMin: number };
  * 21 to 27 from 8,747 (`2026-09-30T13-53-13-088Z.json`). This shape under-counts those, but the
  * Stages after the first were at most 11% of those Sims' Stage time, 1% at 39,365.
  * The real Cull keeps whoever is within 2 standard errors of the best, so a set whose items
- * are closer in DPS than this one's keeps more, and this shape then under-estimates. Only one
- * real gear set has been measured.
+ * are closer in DPS keeps more, and this shape then under-estimates. The second gear set
+ * (`bench/sets/gulthrak-fury.txt`) is not such a set: from 8 to 38,880 profilesets every Cull
+ * left 9 plus the baseline (`2026-09-30T15-23-13-858Z.json`, `2026-09-30T18-11-43-303Z.json`,
+ * `2026-09-30T18-59-57-173Z.json`). At High, 39,365 Frost profilesets left 85, then 9; the
+ * Stages after the first were 4% of that Sim (`2026-09-30T17-49-31-838Z.json`). On this shape a
+ * Sim's own model gives 92% to 106% of its wall time at today's defaults over every #58 file, and
+ * 92% to 124% counting the interval sweep and Low (all at `profileset_work_threads=1`).
  */
 export const ESTIMATE_CULLS: readonly CullShape[] = [
   { keepFraction: 0, keepMin: CULL_KEEP_TOP },
@@ -137,11 +144,12 @@ export type EstimateInput = {
 /** Wall-clock seconds for a Top Gear over `combinations`, laddered like the Smart Sim. */
 export function estimateSeconds(input: EstimateInput): number {
   const model = input.model ?? DEFAULT_COST_MODEL;
-  const perIterationMs = model.msPerIteration * (input.fightSeconds / COST_MODEL_FIGHT_SECONDS);
+  // Per iteration the cost grows with the fight and the iterations needed shrink with it: the
+  // fight length cancels, so both terms are read at `COST_MODEL_FIGHT_SECONDS`.
   let alive = Math.max(0, Math.floor(input.combinations));
   let ms = 0;
   stageLadder(input.precision, alive).forEach((error, i) => {
-    ms += alive * (model.iterationsTimesErrorSq / error ** 2) * perIterationMs;
+    ms += alive * (model.iterationsTimesErrorSq / error ** 2) * model.msPerIteration;
     const cull = ESTIMATE_CULLS[i] ?? ESTIMATE_CULLS[ESTIMATE_CULLS.length - 1];
     if (cull) alive = Math.min(alive, Math.max(cull.keepMin, Math.ceil(alive * cull.keepFraction)));
   });

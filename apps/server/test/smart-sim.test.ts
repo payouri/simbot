@@ -11,7 +11,7 @@ import {
   simSchema,
 } from "@simbot/shared";
 import { createApp } from "../src/app";
-import { recordStage } from "../src/db/sims";
+import { getStageCosts, recordStage } from "../src/db/sims";
 import type { Launch } from "../src/runner/run-sim";
 import {
   FAKE_SIMC,
@@ -93,21 +93,7 @@ const rowsOf = (simId: number) =>
 const ladderOf = async (simId: number) =>
   simLadderResponseSchema.parse(await (await h.call("GET", `/api/sims/${simId}/ladder`)).json());
 const stageRows = (simId: number, stage: number) => rowsOf(simId).filter((r) => r.stage === stage);
-const costsOf = (simId: number) =>
-  h.app.db
-    .query<
-      {
-        stage: number;
-        duration_ms: number;
-        iterations: number | null;
-        profilesets: number;
-        target_error: number;
-      },
-      [number]
-    >(
-      "SELECT stage, duration_ms, iterations, profilesets, target_error FROM stage_costs WHERE sim_id = ? ORDER BY stage",
-    )
-    .all(simId);
+const costsOf = (simId: number) => getStageCosts(h.app.db, simId);
 
 /** Ids 1..12 sit in a tight band at the top, everything else is far behind. */
 const bandReply = (call: FakeStageCall): FakeStageReply => ({
@@ -237,12 +223,12 @@ describe("a 3-Stage Smart Sim", () => {
 
     const costs = costsOf(draft.id);
     // The fake reports 100 iterations per profileset.
-    expect(costs.map(({ duration_ms: _, ...c }) => c)).toEqual([
-      { stage: 1, iterations: 8000, profilesets: 80, target_error: 1 },
-      { stage: 2, iterations: 1100, profilesets: 11, target_error: 0.3 },
-      { stage: 3, iterations: 1100, profilesets: 11, target_error: 0.2 },
+    expect(costs.map(({ durationMs: _, ...c }) => c)).toEqual([
+      { stage: 1, iterations: 8000, profilesets: 80, targetError: 1 },
+      { stage: 2, iterations: 1100, profilesets: 11, targetError: 0.3 },
+      { stage: 3, iterations: 1100, profilesets: 11, targetError: 0.2 },
     ]);
-    expect(costs.every((c) => c.duration_ms > 0)).toBe(true);
+    expect(costs.every((c) => c.durationMs > 0)).toBe(true);
 
     const next = await topGear(HEADS);
     const res = await h.call("POST", `/api/sims/${next.id}/preview-combinations`, {});

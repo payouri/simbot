@@ -4,12 +4,24 @@
  * canned, so nothing here says anything about real run times.
  */
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { gunzipSync, gzipSync } from "node:zlib";
 import { checkEstimates, summarizeSweeps } from "@simbot/simc";
-import { type Case, parseArgs, rawOptionsOf, runBenchmark, sweepPoints } from "../bench/top-gear";
+import {
+  type Case,
+  parseArgs,
+  rawOptionsOf,
+  runBenchmark,
+  runCheckSims,
+  sweepPoints,
+} from "../bench/top-gear";
 import type { Launch } from "../src/runner/run-sim";
 import {
+  derivedScenario,
   FAKE_SIMC,
+  fakeLaunch,
   type Harness,
   IMPORT_ITEMS,
   importItemsAddonString,
@@ -109,6 +121,9 @@ describe("runBenchmark", () => {
     expect(small?.stages.length).toBeGreaterThan(0);
     expect(small?.stages[0]?.profilesets).toBeGreaterThan(0);
     expect(small?.wallMs).toBeGreaterThan(0);
+    // The fake answers every profileset 90,000 +- 50: 0.056% of its mean.
+    expect(small?.stages[0]?.maxErrorPercent).toBeCloseTo((50 / 90_000) * 100);
+    expect(small?.stages[0]?.medianErrorPercent).toBeCloseTo((50 / 90_000) * 100);
     expect(inputs.some((i) => i.includes("profileset_work_threads=8"))).toBe(true);
     expect(inputs.filter((i) => i.includes("profileset_work_threads=2")).length).toBeGreaterThan(0);
     // `--total-threads` reaches the Stage input as a raw option, after the lines it overrides.
@@ -123,4 +138,29 @@ describe("runBenchmark", () => {
     expect(summarizeSweeps(sims)).toHaveLength(3);
     expect(checkEstimates({ sims, checkSim: null })).toHaveLength(6);
   }, 60_000);
+});
+
+describe("runCheckSims", () => {
+  test("runs a Check Sim of each gear set and keeps its time, iterations and error", async () => {
+    const root = mkdtempSync(join(tmpdir(), "simbot-bench-test-"));
+    try {
+      const scenario = derivedScenario(root, "success", (files) => {
+        const report = JSON.parse(gunzipSync(files["json2.json.gz"] as Buffer).toString());
+        report.sim.profilesets = { results: [{ name: "Check Sim", mean: 100_000 }] };
+        files["json2.json.gz"] = Buffer.from(gzipSync(JSON.stringify(report)));
+      });
+      const checkSims = await runCheckSims(
+        [
+          { name: "a", text: importItemsAddonString() },
+          { name: "b", text: importItemsAddonString() },
+        ],
+        { dir: root, launch: fakeLaunch(() => scenario) },
+      );
+      expect(Object.keys(checkSims)).toEqual(["a", "b"]);
+      expect(checkSims.a?.durationMs).toBeGreaterThanOrEqual(0);
+      expect(checkSims.a?.errorPercent).toBeGreaterThan(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
 });

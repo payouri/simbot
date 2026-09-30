@@ -475,6 +475,35 @@ export function lastTopGearStageCosts(db: Db, tag: string): StageCost[] {
     }));
 }
 
+/** What one Stage of a Sim cost, as `recordStage` stored it. */
+export type RecordedStageCost = Omit<StageRunCost, "simId"> & { stage: number };
+
+/** Every Stage cost a Sim recorded, in Stage order. Empty when it recorded none. */
+export function getStageCosts(db: Db, simId: number): RecordedStageCost[] {
+  return db
+    .query<
+      {
+        stage: number;
+        duration_ms: number;
+        iterations: number | null;
+        profilesets: number;
+        target_error: number;
+      },
+      [number]
+    >(
+      `SELECT stage, duration_ms, iterations, profilesets, target_error FROM stage_costs
+       WHERE sim_id = ? ORDER BY stage`,
+    )
+    .all(simId)
+    .map((r) => ({
+      stage: r.stage,
+      durationMs: r.duration_ms,
+      iterations: r.iterations,
+      profilesets: r.profilesets,
+      targetError: r.target_error,
+    }));
+}
+
 /** SimC refused this Combination in `stage`: it takes no further part. */
 export function markInvalid(db: Db, combinationId: number, stage: number) {
   db.run("UPDATE combinations SET invalid_stage = ? WHERE id = ?", [stage, combinationId]);

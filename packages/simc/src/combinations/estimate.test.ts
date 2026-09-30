@@ -21,11 +21,12 @@ describe("estimateSeconds", () => {
     );
   });
 
-  test("a tighter precision costs more, a longer fight costs more", () => {
+  test("a tighter precision costs more; a longer fight costs the same", () => {
     const at = (precision: "low" | "medium" | "high", fightSeconds = 60) =>
       estimateSeconds({ ...base, combinations: 500, precision, fightSeconds });
     expect(at("high")).toBeGreaterThan(at("low"));
-    expect(at("medium", 300)).toBeCloseTo(at("medium", 60) * 5, 5);
+    // Each iteration of a 5x longer fight costs 5x, and it needs a fifth of the iterations.
+    expect(at("medium", 300)).toBeCloseTo(at("medium", 60), 5);
   });
 
   test("uses the measured model", () => {
@@ -89,8 +90,25 @@ describe("costModelFromStages", () => {
     ]);
     // 4000 ms over 10 * 100 + 2 * 400 * 2 = 2600 sixty-second iterations.
     expect(m?.msPerIteration).toBeCloseTo(4000 / 2600);
-    // (10 * 100 * 1 + 2 * 400 * 0.25) / 12 actors.
-    expect(m?.iterationsTimesErrorSq).toBeCloseTo(1200 / 12);
+    // At a 60 s fight: (10 * 100 * 1 + 2 * 400 * 0.25 * 120/60) / 12 actors.
+    expect(m?.iterationsTimesErrorSq).toBeCloseTo(1400 / 12);
+  });
+
+  test("learns the same model from a longer fight that needed fewer iterations", () => {
+    const at60 = {
+      durationMs: 3000,
+      iterations: 900,
+      profilesets: 9,
+      targetError: 1,
+      fightSeconds: 60,
+    };
+    const at300 = { ...at60, iterations: 180, fightSeconds: 300 };
+    expect(costModelFromStages([at300])?.msPerIteration).toBeCloseTo(
+      costModelFromStages([at60])?.msPerIteration ?? 0,
+    );
+    expect(costModelFromStages([at300])?.iterationsTimesErrorSq).toBeCloseTo(
+      costModelFromStages([at60])?.iterationsTimesErrorSq ?? 0,
+    );
   });
 
   test("skips Stages it cannot learn from, and gives nothing when none is left", () => {

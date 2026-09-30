@@ -1,0 +1,2671 @@
+{
+  "schema": 1,
+  "producedBy": "apps/server/bench/top-gear.ts",
+  "startedAt": "2026-09-30T18:59:57.173Z",
+  "simcTag": "1210-2026-09-30-613b5fb",
+  "machine": {
+    "cpus": 16,
+    "model": "AMD Ryzen 7 7735HS with Radeon Graphics"
+  },
+  "checkSim": null,
+  "checkSims": {
+    "addon-string": {
+      "durationMs": 705,
+      "iterations": 331,
+      "errorPercent": 0.8188674954527886
+    },
+    "gulthrak-fury": {
+      "durationMs": 597,
+      "iterations": 129,
+      "errorPercent": 0.7657988344659937
+    }
+  },
+  "sims": [
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 8279.556327999999,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 608,
+          "iterations": 248,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 51,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9891348263667739,
+          "medianErrorPercent": 0.9511616687455797
+        },
+        {
+          "stage": 2,
+          "durationMs": 2545,
+          "iterations": 3713,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 541,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.299780869938704,
+          "medianErrorPercent": 0.2991134885857152
+        },
+        {
+          "stage": 3,
+          "durationMs": 5089,
+          "iterations": 8168,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1106,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19992458459926146,
+          "medianErrorPercent": 0.1997778282229417
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 8740.072831999998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 668,
+          "iterations": 383,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 56,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9974818468352677,
+          "medianErrorPercent": 0.9840268256571505
+        },
+        {
+          "stage": 2,
+          "durationMs": 2633,
+          "iterations": 3703,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 491,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29936779855233897,
+          "medianErrorPercent": 0.2989770576482061
+        },
+        {
+          "stage": 3,
+          "durationMs": 5407,
+          "iterations": 8018,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1081,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999365799241255,
+          "medianErrorPercent": 0.19974426453231714
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10303.156617,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 758,
+          "iterations": 318,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 56,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9855077184117331,
+          "medianErrorPercent": 0.949076515595993
+        },
+        {
+          "stage": 2,
+          "durationMs": 3177,
+          "iterations": 3678,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 521,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.299920702630079,
+          "medianErrorPercent": 0.2987881109993985
+        },
+        {
+          "stage": 3,
+          "durationMs": 6334,
+          "iterations": 8438,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1136,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19971812524431864,
+          "medianErrorPercent": 0.19952885289994343
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 12538.791377000001,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2592,
+          "iterations": 3185,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 71,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9985740044204136,
+          "medianErrorPercent": 0.954101649105805
+        },
+        {
+          "stage": 2,
+          "durationMs": 3146,
+          "iterations": 4239,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 496,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29975034054784894,
+          "medianErrorPercent": 0.29825067068217925
+        },
+        {
+          "stage": 3,
+          "durationMs": 6768,
+          "iterations": 9289,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1096,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19995420820691656,
+          "medianErrorPercent": 0.1996150715696154
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 12147.386616999996,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2984,
+          "iterations": 3140,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 66,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9981882140762252,
+          "medianErrorPercent": 0.9614888582957578
+        },
+        {
+          "stage": 2,
+          "durationMs": 2984,
+          "iterations": 3959,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 516,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29993489058041045,
+          "medianErrorPercent": 0.2986940954513208
+        },
+        {
+          "stage": 3,
+          "durationMs": 6144,
+          "iterations": 9089,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1101,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19996002663049836,
+          "medianErrorPercent": 0.19972618991668556
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 11873.650466,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2693,
+          "iterations": 3360,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 66,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9986462126105001,
+          "medianErrorPercent": 0.9580224256306842
+        },
+        {
+          "stage": 2,
+          "durationMs": 2950,
+          "iterations": 3994,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 506,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29961906021520335,
+          "medianErrorPercent": 0.29867511837838123
+        },
+        {
+          "stage": 3,
+          "durationMs": 6198,
+          "iterations": 8979,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1091,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19989755498476366,
+          "medianErrorPercent": 0.19955887487239204
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 41573.835349,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 30672,
+          "iterations": 40806,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 71,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9999287776146898,
+          "medianErrorPercent": 0.965566709633924
+        },
+        {
+          "stage": 2,
+          "durationMs": 4119,
+          "iterations": 5633,
+          "profilesets": 13,
+          "targetError": 0.3,
+          "maxIterations": 481,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29981372488483066,
+          "medianErrorPercent": 0.2991170262693863
+        },
+        {
+          "stage": 3,
+          "durationMs": 6731,
+          "iterations": 8554,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1026,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19987369048958642,
+          "medianErrorPercent": 0.19959093983219028
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 42127.75143300001,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 31497,
+          "iterations": 40721,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 71,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9999603172334948,
+          "medianErrorPercent": 0.9643265929241527
+        },
+        {
+          "stage": 2,
+          "durationMs": 3895,
+          "iterations": 5177,
+          "profilesets": 12,
+          "targetError": 0.3,
+          "maxIterations": 481,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2996137035185518,
+          "medianErrorPercent": 0.29921345398103966
+        },
+        {
+          "stage": 3,
+          "durationMs": 6684,
+          "iterations": 8969,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1061,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19998577768629475,
+          "medianErrorPercent": 0.19972757329433138
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 41602.16695299998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 31361,
+          "iterations": 40791,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 76,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9999772163514344,
+          "medianErrorPercent": 0.9631726539083757
+        },
+        {
+          "stage": 2,
+          "durationMs": 3802,
+          "iterations": 5272,
+          "profilesets": 12,
+          "targetError": 0.3,
+          "maxIterations": 521,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29995152929136104,
+          "medianErrorPercent": 0.2990851688708918
+        },
+        {
+          "stage": 3,
+          "durationMs": 6384,
+          "iterations": 8604,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1021,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19994687573699674,
+          "medianErrorPercent": 0.19975602209944757
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10822.191306000022,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 710,
+          "iterations": 629,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 101,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9938221005130395,
+          "medianErrorPercent": 0.9769882615464379
+        },
+        {
+          "stage": 2,
+          "durationMs": 3344,
+          "iterations": 7839,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 986,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2999438100995841,
+          "medianErrorPercent": 0.29966014561368653
+        },
+        {
+          "stage": 3,
+          "durationMs": 6740,
+          "iterations": 17919,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2091,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19999742327242911,
+          "medianErrorPercent": 0.1998908800375542
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10216.758872000006,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 739,
+          "iterations": 734,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 96,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9959639488102434,
+          "medianErrorPercent": 0.9785299722529293
+        },
+        {
+          "stage": 2,
+          "durationMs": 3082,
+          "iterations": 8029,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 951,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2999219163418646,
+          "medianErrorPercent": 0.2995965556162653
+        },
+        {
+          "stage": 3,
+          "durationMs": 6365,
+          "iterations": 18259,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2196,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19996434373220645,
+          "medianErrorPercent": 0.19991451335623062
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10700.204371,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 723,
+          "iterations": 719,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 91,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9969508060188328,
+          "medianErrorPercent": 0.9803243062546593
+        },
+        {
+          "stage": 2,
+          "durationMs": 3153,
+          "iterations": 8049,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 966,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2999891372757488,
+          "medianErrorPercent": 0.2995337520721041
+        },
+        {
+          "stage": 3,
+          "durationMs": 6795,
+          "iterations": 17999,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2126,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19998206396743168,
+          "medianErrorPercent": 0.1997242053043211
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 12533.707876,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2686,
+          "iterations": 6351,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 111,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9994783102033081,
+          "medianErrorPercent": 0.9822554608856615
+        },
+        {
+          "stage": 2,
+          "durationMs": 3147,
+          "iterations": 7924,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 951,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29994260755711294,
+          "medianErrorPercent": 0.2997399783268376
+        },
+        {
+          "stage": 3,
+          "durationMs": 6671,
+          "iterations": 17714,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2051,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999824106790496,
+          "medianErrorPercent": 0.19983876948764315
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 12537.358435000002,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2710,
+          "iterations": 6376,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 106,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9993589071542877,
+          "medianErrorPercent": 0.9778268230381452
+        },
+        {
+          "stage": 2,
+          "durationMs": 3023,
+          "iterations": 7934,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 941,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29995080010592273,
+          "medianErrorPercent": 0.2994844294864414
+        },
+        {
+          "stage": 3,
+          "durationMs": 6775,
+          "iterations": 17964,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2096,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999790822383324,
+          "medianErrorPercent": 0.1999317563014754
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 12168.241014999978,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 2745,
+          "iterations": 6561,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 106,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9994652912446297,
+          "medianErrorPercent": 0.9817992468736534
+        },
+        {
+          "stage": 2,
+          "durationMs": 3192,
+          "iterations": 7894,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 931,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29990676967530383,
+          "medianErrorPercent": 0.29963789287855236
+        },
+        {
+          "stage": 3,
+          "durationMs": 6199,
+          "iterations": 17599,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2121,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999516390933005,
+          "medianErrorPercent": 0.19979501182776582
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 37744.54778999998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 27643,
+          "iterations": 77477,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 136,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9999145266987006,
+          "medianErrorPercent": 0.9813927333813888
+        },
+        {
+          "stage": 2,
+          "durationMs": 3071,
+          "iterations": 7694,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 901,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29996318838932473,
+          "medianErrorPercent": 0.2996848120750897
+        },
+        {
+          "stage": 3,
+          "durationMs": 6985,
+          "iterations": 18074,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2096,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19998156053997648,
+          "medianErrorPercent": 0.1998471154325025
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 38200.78116700001,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 28135,
+          "iterations": 77857,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 116,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9999985740819431,
+          "medianErrorPercent": 0.9811689348947067
+        },
+        {
+          "stage": 2,
+          "durationMs": 3364,
+          "iterations": 8064,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 931,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2998702143911467,
+          "medianErrorPercent": 0.2996725786168296
+        },
+        {
+          "stage": 3,
+          "durationMs": 6653,
+          "iterations": 18079,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2106,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19998135226969666,
+          "medianErrorPercent": 0.19986716902443066
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 1,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 38585.01576800004,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 28329,
+          "iterations": 78567,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 131,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9997280191883666,
+          "medianErrorPercent": 0.9814696328363209
+        },
+        {
+          "stage": 2,
+          "durationMs": 3266,
+          "iterations": 7904,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 971,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2999826417051393,
+          "medianErrorPercent": 0.2994729807471582
+        },
+        {
+          "stage": 3,
+          "durationMs": 6941,
+          "iterations": 17999,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2076,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999851909558299,
+          "medianErrorPercent": 0.1999285320916754
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9073.241964999994,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 764,
+          "iterations": 395,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 68,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9872531656555936,
+          "medianErrorPercent": 0.9378355054825662
+        },
+        {
+          "stage": 2,
+          "durationMs": 2721,
+          "iterations": 3566,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 512,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2999024504213129,
+          "medianErrorPercent": 0.2989626990106818
+        },
+        {
+          "stage": 3,
+          "durationMs": 5553,
+          "iterations": 8113,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1093,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999848054808428,
+          "medianErrorPercent": 0.19943761783152658
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9267.790972999996,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 714,
+          "iterations": 228,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 48,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.6603767241444534,
+          "medianErrorPercent": 0.9584443085887389
+        },
+        {
+          "stage": 2,
+          "durationMs": 2801,
+          "iterations": 3623,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 497,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29907678975498364,
+          "medianErrorPercent": 0.29839597234232695
+        },
+        {
+          "stage": 3,
+          "durationMs": 5720,
+          "iterations": 8259,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1162,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19989900200659272,
+          "medianErrorPercent": 0.19969146598824905
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9151.832481999998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 745,
+          "iterations": 351,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 53,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.02899461672515,
+          "medianErrorPercent": 0.9613134351974576
+        },
+        {
+          "stage": 2,
+          "durationMs": 2775,
+          "iterations": 3592,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 518,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29882079066426614,
+          "medianErrorPercent": 0.29865014725344696
+        },
+        {
+          "stage": 3,
+          "durationMs": 5599,
+          "iterations": 8017,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1083,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999774607655943,
+          "medianErrorPercent": 0.19975312302176743
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14561.547013000003,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 3544,
+          "iterations": 3270,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 68,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.0862729896739003,
+          "medianErrorPercent": 0.9464558600382653
+        },
+        {
+          "stage": 2,
+          "durationMs": 3720,
+          "iterations": 4235,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 527,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29966479390421236,
+          "medianErrorPercent": 0.2983287236271591
+        },
+        {
+          "stage": 3,
+          "durationMs": 7263,
+          "iterations": 9270,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1123,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19989444507025295,
+          "medianErrorPercent": 0.1995760688420147
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14330.54235199996,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 3624,
+          "iterations": 3443,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 68,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.1666851228470483,
+          "medianErrorPercent": 0.9560044547772987
+        },
+        {
+          "stage": 2,
+          "durationMs": 3527,
+          "iterations": 4170,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 507,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29995560719617814,
+          "medianErrorPercent": 0.29882126472663517
+        },
+        {
+          "stage": 3,
+          "durationMs": 7147,
+          "iterations": 8943,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1082,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2000192314137794,
+          "medianErrorPercent": 0.19962299754466706
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 15551.273913000012,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 4325,
+          "iterations": 3344,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 68,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.0649880583542812,
+          "medianErrorPercent": 0.9512780585595008
+        },
+        {
+          "stage": 2,
+          "durationMs": 3745,
+          "iterations": 3968,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 508,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.30038323389350846,
+          "medianErrorPercent": 0.29916235834116695
+        },
+        {
+          "stage": 3,
+          "durationMs": 7448,
+          "iterations": 9153,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1128,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19988702096534286,
+          "medianErrorPercent": 0.1993925670569955
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 53699.168282,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 41088,
+          "iterations": 42171,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 77,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.5366610521250657,
+          "medianErrorPercent": 0.9523946957986915
+        },
+        {
+          "stage": 2,
+          "durationMs": 4800,
+          "iterations": 5704,
+          "profilesets": 14,
+          "targetError": 0.3,
+          "maxIterations": 452,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2992534100816149,
+          "medianErrorPercent": 0.2984525252074939
+        },
+        {
+          "stage": 3,
+          "durationMs": 7756,
+          "iterations": 8594,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 987,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1998125398090452,
+          "medianErrorPercent": 0.1994909767178117
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 52832.572083999985,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 41022,
+          "iterations": 41657,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 73,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.1037250560193277,
+          "medianErrorPercent": 0.9545963038534679
+        },
+        {
+          "stage": 2,
+          "durationMs": 4574,
+          "iterations": 6303,
+          "profilesets": 15,
+          "targetError": 0.3,
+          "maxIterations": 498,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2993364523610136,
+          "medianErrorPercent": 0.2988150252755388
+        },
+        {
+          "stage": 3,
+          "durationMs": 7186,
+          "iterations": 8791,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1053,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19972306197323844,
+          "medianErrorPercent": 0.19954228159358411
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 53165.14854299999,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 39518,
+          "iterations": 41879,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 72,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.127843347053164,
+          "medianErrorPercent": 0.9537972422933234
+        },
+        {
+          "stage": 2,
+          "durationMs": 6340,
+          "iterations": 9217,
+          "profilesets": 21,
+          "targetError": 0.3,
+          "maxIterations": 532,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3003490114531681,
+          "medianErrorPercent": 0.29892724944336124
+        },
+        {
+          "stage": 3,
+          "durationMs": 7255,
+          "iterations": 8561,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1003,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1997788290868367,
+          "medianErrorPercent": 0.19939860165603335
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10847.139142,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 735,
+          "iterations": 588,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 87,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.030849961951148,
+          "medianErrorPercent": 0.9693368226997439
+        },
+        {
+          "stage": 2,
+          "durationMs": 3284,
+          "iterations": 7971,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 988,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2997504260076458,
+          "medianErrorPercent": 0.2993731914793658
+        },
+        {
+          "stage": 3,
+          "durationMs": 6799,
+          "iterations": 17807,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2102,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19992175270727666,
+          "medianErrorPercent": 0.19987998232987297
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10854.092650000006,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 777,
+          "iterations": 750,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 102,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.004741799252765,
+          "medianErrorPercent": 0.9747667972639488
+        },
+        {
+          "stage": 2,
+          "durationMs": 3303,
+          "iterations": 7864,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 928,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.30019362381608783,
+          "medianErrorPercent": 0.2993132901367813
+        },
+        {
+          "stage": 3,
+          "durationMs": 6746,
+          "iterations": 17729,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2043,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19991359767236144,
+          "medianErrorPercent": 0.19977931667514542
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10979.263930000016,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 749,
+          "iterations": 691,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 103,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9881188168953624,
+          "medianErrorPercent": 0.9718837510851495
+        },
+        {
+          "stage": 2,
+          "durationMs": 3350,
+          "iterations": 7986,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 957,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29972192163006134,
+          "medianErrorPercent": 0.2995352922373347
+        },
+        {
+          "stage": 3,
+          "durationMs": 6853,
+          "iterations": 17719,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2012,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19994223885996007,
+          "medianErrorPercent": 0.1997664147620467
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 13441.57353699999,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 3307,
+          "iterations": 6473,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 112,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.015676833925729,
+          "medianErrorPercent": 0.9753938419915847
+        },
+        {
+          "stage": 2,
+          "durationMs": 3305,
+          "iterations": 7932,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 948,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29961710648918516,
+          "medianErrorPercent": 0.2993511447544536
+        },
+        {
+          "stage": 3,
+          "durationMs": 6799,
+          "iterations": 17894,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2158,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2000378787617585,
+          "medianErrorPercent": 0.19977638218943833
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14161.725879000034,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 3263,
+          "iterations": 6296,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 123,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.0235824419342414,
+          "medianErrorPercent": 0.9746859837710682
+        },
+        {
+          "stage": 2,
+          "durationMs": 3532,
+          "iterations": 7918,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 938,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3002200072077369,
+          "medianErrorPercent": 0.2994108880069611
+        },
+        {
+          "stage": 3,
+          "durationMs": 7329,
+          "iterations": 17583,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2027,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19990889197448194,
+          "medianErrorPercent": 0.1997137839178855
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14011.50754000002,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 3394,
+          "iterations": 6529,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 108,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.032386134157313,
+          "medianErrorPercent": 0.9726469457684798
+        },
+        {
+          "stage": 2,
+          "durationMs": 3294,
+          "iterations": 7674,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 943,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29964391633263193,
+          "medianErrorPercent": 0.29919111317516084
+        },
+        {
+          "stage": 3,
+          "durationMs": 7293,
+          "iterations": 17980,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2093,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19990078126049787,
+          "medianErrorPercent": 0.19982605667843478
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 47819.05923599994,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 36718,
+          "iterations": 79077,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 118,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.558008022654923,
+          "medianErrorPercent": 0.9738905889453
+        },
+        {
+          "stage": 2,
+          "durationMs": 3376,
+          "iterations": 7796,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 913,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29975619563720257,
+          "medianErrorPercent": 0.2990945007788556
+        },
+        {
+          "stage": 3,
+          "durationMs": 7668,
+          "iterations": 17950,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2143,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20005477359081306,
+          "medianErrorPercent": 0.19979927420239948
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 51169.00098999997,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 38877,
+          "iterations": 78756,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 117,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.793957991185156,
+          "medianErrorPercent": 0.974254308401723
+        },
+        {
+          "stage": 2,
+          "durationMs": 3466,
+          "iterations": 7731,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 994,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3010412047323793,
+          "medianErrorPercent": 0.29933331289847614
+        },
+        {
+          "stage": 3,
+          "durationMs": 8776,
+          "iterations": 17973,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2148,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20022216203362656,
+          "medianErrorPercent": 0.19989204310403688
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 2,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 51779.82243499998,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 41123,
+          "iterations": 79709,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 133,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.985551695947495,
+          "medianErrorPercent": 0.9760129798633765
+        },
+        {
+          "stage": 2,
+          "durationMs": 3442,
+          "iterations": 7946,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 933,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2996572544766428,
+          "medianErrorPercent": 0.29951127804175104
+        },
+        {
+          "stage": 3,
+          "durationMs": 7161,
+          "iterations": 18013,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2087,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19988466723472692,
+          "medianErrorPercent": 0.1997163862830663
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 9784.475561000057,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 889,
+          "iterations": 298,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 55,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9797126872229457,
+          "medianErrorPercent": 0.9202401798310135
+        },
+        {
+          "stage": 2,
+          "durationMs": 3007,
+          "iterations": 3706,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 526,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.30034474548123036,
+          "medianErrorPercent": 0.29870891668219923
+        },
+        {
+          "stage": 3,
+          "durationMs": 5853,
+          "iterations": 8335,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1112,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20079405847660772,
+          "medianErrorPercent": 0.19946746034694057
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10370.431457000086,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 971,
+          "iterations": 315,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 53,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9992120606885622,
+          "medianErrorPercent": 0.9356614197815123
+        },
+        {
+          "stage": 2,
+          "durationMs": 3181,
+          "iterations": 3544,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 537,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3023206545029158,
+          "medianErrorPercent": 0.29794851799920974
+        },
+        {
+          "stage": 3,
+          "durationMs": 6181,
+          "iterations": 8348,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1117,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1996578652220845,
+          "medianErrorPercent": 0.1993607337526223
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 9,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10203.269836999942,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 967,
+          "iterations": 324,
+          "profilesets": 8,
+          "targetError": 1,
+          "maxIterations": 59,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.4942982365679485,
+          "medianErrorPercent": 0.9204727894521427
+        },
+        {
+          "stage": 2,
+          "durationMs": 3240,
+          "iterations": 3711,
+          "profilesets": 8,
+          "targetError": 0.3,
+          "maxIterations": 518,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29891814961322066,
+          "medianErrorPercent": 0.2976098769555836
+        },
+        {
+          "stage": 3,
+          "durationMs": 5962,
+          "iterations": 8242,
+          "profilesets": 8,
+          "targetError": 0.2,
+          "maxIterations": 1095,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19961490879808866,
+          "medianErrorPercent": 0.1992605640907001
+        }
+      ],
+      "previewEstimateSeconds": 10.333292,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 15557.644700999954,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5321,
+          "iterations": 3537,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 63,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.002120337156075,
+          "medianErrorPercent": 0.929269085052731
+        },
+        {
+          "stage": 2,
+          "durationMs": 3469,
+          "iterations": 4047,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 482,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29988272215075323,
+          "medianErrorPercent": 0.2982060617204131
+        },
+        {
+          "stage": 3,
+          "durationMs": 6733,
+          "iterations": 9191,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1142,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.199617827900189,
+          "medianErrorPercent": 0.19925219951442683
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 15496.26269299991,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5204,
+          "iterations": 3361,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 69,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.634136554248799,
+          "medianErrorPercent": 0.9322370826857992
+        },
+        {
+          "stage": 2,
+          "durationMs": 3434,
+          "iterations": 4011,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 492,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2991799753098968,
+          "medianErrorPercent": 0.29820907092437277
+        },
+        {
+          "stage": 3,
+          "durationMs": 6825,
+          "iterations": 9298,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1131,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20071565276897235,
+          "medianErrorPercent": 0.19936263935542964
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 81,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 15854.219173999969,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 5381,
+          "iterations": 3642,
+          "profilesets": 80,
+          "targetError": 1,
+          "maxIterations": 69,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.4389292275459808,
+          "medianErrorPercent": 0.9288335303419866
+        },
+        {
+          "stage": 2,
+          "durationMs": 3626,
+          "iterations": 4253,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 517,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.299811439154541,
+          "medianErrorPercent": 0.2975461712255523
+        },
+        {
+          "stage": 3,
+          "durationMs": 6814,
+          "iterations": 9256,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 1129,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.199935204698406,
+          "medianErrorPercent": 0.1993446897988286
+        }
+      ],
+      "previewEstimateSeconds": 13.678033555555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 71156.39419699996,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 59806,
+          "iterations": 44319,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 77,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.1238734511331088,
+          "medianErrorPercent": 0.9316678753887795
+        },
+        {
+          "stage": 2,
+          "durationMs": 4773,
+          "iterations": 6122,
+          "profilesets": 14,
+          "targetError": 0.3,
+          "maxIterations": 524,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3000974525734328,
+          "medianErrorPercent": 0.2975736209662634
+        },
+        {
+          "stage": 3,
+          "durationMs": 6526,
+          "iterations": 8389,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 977,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2007572248204883,
+          "medianErrorPercent": 0.19908587186022297
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 71904.56646699994,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 59871,
+          "iterations": 44473,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 77,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.2206406574671598,
+          "medianErrorPercent": 0.9301025338962352
+        },
+        {
+          "stage": 2,
+          "durationMs": 5401,
+          "iterations": 7130,
+          "profilesets": 16,
+          "targetError": 0.3,
+          "maxIterations": 536,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.30052505590206313,
+          "medianErrorPercent": 0.29784521974172845
+        },
+        {
+          "stage": 3,
+          "durationMs": 6577,
+          "iterations": 8503,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 992,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1996291684938337,
+          "medianErrorPercent": 0.19925239867389788
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "addon-string/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 972,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 69550.32024700008,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 59524,
+          "iterations": 43433,
+          "profilesets": 971,
+          "targetError": 1,
+          "maxIterations": 78,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.6783353400853498,
+          "medianErrorPercent": 0.9301156523557276
+        },
+        {
+          "stage": 2,
+          "durationMs": 3466,
+          "iterations": 3868,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 454,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3004069114401301,
+          "medianErrorPercent": 0.2982310002407579
+        },
+        {
+          "stage": 3,
+          "durationMs": 6507,
+          "iterations": 8368,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 960,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19992815613206452,
+          "medianErrorPercent": 0.19936978387118826
+        }
+      ],
+      "previewEstimateSeconds": 41.24379155555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10635.424215999898,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 918,
+          "iterations": 697,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 96,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9993467860051246,
+          "medianErrorPercent": 0.9694674746739432
+        },
+        {
+          "stage": 2,
+          "durationMs": 3245,
+          "iterations": 8020,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 941,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29935642379743094,
+          "medianErrorPercent": 0.29894602188420827
+        },
+        {
+          "stage": 3,
+          "durationMs": 6442,
+          "iterations": 17825,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2207,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19995918171917185,
+          "medianErrorPercent": 0.1996243896724551
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10482.719469999894,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 941,
+          "iterations": 744,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 99,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9733378108127362,
+          "medianErrorPercent": 0.9541233329234551
+        },
+        {
+          "stage": 2,
+          "durationMs": 3148,
+          "iterations": 7931,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 957,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2995525379054234,
+          "medianErrorPercent": 0.2988200292967396
+        },
+        {
+          "stage": 3,
+          "durationMs": 6367,
+          "iterations": 17695,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2077,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20011950684411203,
+          "medianErrorPercent": 0.1997302938957368
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-4",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 10,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 10667.472874999978,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 925,
+          "iterations": 729,
+          "profilesets": 9,
+          "targetError": 1,
+          "maxIterations": 112,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.9933685144391204,
+          "medianErrorPercent": 0.9698353961327452
+        },
+        {
+          "stage": 2,
+          "durationMs": 3225,
+          "iterations": 7961,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 1005,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2992497018788085,
+          "medianErrorPercent": 0.29827564787721617
+        },
+        {
+          "stage": 3,
+          "durationMs": 6490,
+          "iterations": 18243,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2137,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19998826408838596,
+          "medianErrorPercent": 0.1997048572739552
+        }
+      ],
+      "previewEstimateSeconds": 11.481435555555557,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14450.428307000082,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 4738,
+          "iterations": 6487,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 115,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.5019209535081088,
+          "medianErrorPercent": 0.9554100023376347
+        },
+        {
+          "stage": 2,
+          "durationMs": 3214,
+          "iterations": 7986,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 979,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29931254115654155,
+          "medianErrorPercent": 0.2990423687698245
+        },
+        {
+          "stage": 3,
+          "durationMs": 6469,
+          "iterations": 18038,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2115,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20023754851157655,
+          "medianErrorPercent": 0.19971771083032086
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14315.574675999815,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 4703,
+          "iterations": 6468,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 108,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.0444705529840914,
+          "medianErrorPercent": 0.9562997077283043
+        },
+        {
+          "stage": 2,
+          "durationMs": 3186,
+          "iterations": 7967,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 941,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29985392989671344,
+          "medianErrorPercent": 0.29918547414536056
+        },
+        {
+          "stage": 3,
+          "durationMs": 6396,
+          "iterations": 17870,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2179,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19998222780521377,
+          "medianErrorPercent": 0.19970189575325503
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-8",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 82,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 14659.504823999945,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 4826,
+          "iterations": 6540,
+          "profilesets": 81,
+          "targetError": 1,
+          "maxIterations": 114,
+          "atCeiling": 0,
+          "maxErrorPercent": 1.074072656348327,
+          "medianErrorPercent": 0.9565222154516781
+        },
+        {
+          "stage": 2,
+          "durationMs": 3249,
+          "iterations": 8152,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 947,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.29979446523770426,
+          "medianErrorPercent": 0.29861907839281765
+        },
+        {
+          "stage": 3,
+          "durationMs": 6555,
+          "iterations": 17920,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2056,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.199852377767196,
+          "medianErrorPercent": 0.19965449545418706
+        }
+      ],
+      "previewEstimateSeconds": 13.708971555555555,
+      "repeat": 3
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 63170.68055199995,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 53175,
+          "iterations": 80679,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 124,
+          "atCeiling": 0,
+          "maxErrorPercent": 3.261229840261204,
+          "medianErrorPercent": 0.9605453236682606
+        },
+        {
+          "stage": 2,
+          "durationMs": 3404,
+          "iterations": 8094,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 1001,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.30035642733806867,
+          "medianErrorPercent": 0.29896982882188017
+        },
+        {
+          "stage": 3,
+          "durationMs": 6543,
+          "iterations": 17914,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2082,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.1999933787201401,
+          "medianErrorPercent": 0.1997128434887216
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 1
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 62994.80769499997,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 53224,
+          "iterations": 81653,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 131,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.657762633293022,
+          "medianErrorPercent": 0.9602419540167713
+        },
+        {
+          "stage": 2,
+          "durationMs": 3266,
+          "iterations": 7755,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 896,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.3002106632211496,
+          "medianErrorPercent": 0.29936456506680953
+        },
+        {
+          "stage": 3,
+          "durationMs": 6456,
+          "iterations": 17607,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2036,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.20002904221979165,
+          "medianErrorPercent": 0.19970923399216506
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 2
+    },
+    {
+      "caseName": "gulthrak-fury/cap-12",
+      "precision": "medium",
+      "fightSeconds": 300,
+      "combinations": 973,
+      "sweep": {
+        "profilesetWorkThreads": 4,
+        "analyzeErrorInterval": 5,
+        "iterationsCeiling": 50000
+      },
+      "wallMs": 62869.89823099994,
+      "stages": [
+        {
+          "stage": 1,
+          "durationMs": 53094,
+          "iterations": 81314,
+          "profilesets": 972,
+          "targetError": 1,
+          "maxIterations": 122,
+          "atCeiling": 0,
+          "maxErrorPercent": 2.6608660716343873,
+          "medianErrorPercent": 0.9612222842082194
+        },
+        {
+          "stage": 2,
+          "durationMs": 3268,
+          "iterations": 7955,
+          "profilesets": 9,
+          "targetError": 0.3,
+          "maxIterations": 950,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.2992185118031452,
+          "medianErrorPercent": 0.2987484495895004
+        },
+        {
+          "stage": 3,
+          "durationMs": 6456,
+          "iterations": 17707,
+          "profilesets": 9,
+          "targetError": 0.2,
+          "maxIterations": 2092,
+          "atCeiling": 0,
+          "maxErrorPercent": 0.19983984598055962,
+          "medianErrorPercent": 0.1996623318175491
+        }
+      ],
+      "previewEstimateSeconds": 41.27472955555555,
+      "repeat": 3
+    }
+  ]
+}

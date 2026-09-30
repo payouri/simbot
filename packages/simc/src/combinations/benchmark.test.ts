@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  achievedError,
   type BenchSim,
   type BenchStage,
   checkEstimates,
@@ -23,6 +24,8 @@ const stage = (n: number, over: Partial<BenchStage> = {}): BenchStage => ({
   targetError: 1,
   maxIterations: 1000,
   atCeiling: 0,
+  maxErrorPercent: null,
+  medianErrorPercent: null,
   ...over,
 });
 
@@ -61,6 +64,24 @@ describe("summarizeSweeps", () => {
   test("leaves out a sweep point that did not run every case", () => {
     const sims = [sim("a", 1000, pt(2)), sim("b", 1000, pt(2)), sim("a", 500, pt(4))];
     expect(summarizeSweeps(sims).map((s) => s.sweep)).toEqual([sweepKey(pt(2))]);
+  });
+
+  test("reports the achieved error of each Sim's final Stage: the median and the max", () => {
+    const final = (max: number, median: number) =>
+      stage(2, { targetError: 0.2, maxErrorPercent: max, medianErrorPercent: median });
+    const sims = [
+      sim("a", 1000, pt(2), { stages: [stage(1, { maxErrorPercent: 0.9 }), final(0.25, 0.19)] }),
+      sim("b", 1000, pt(2), { stages: [final(0.21, 0.2)] }),
+      sim("c", 1000, pt(2), { stages: [final(0.22, 0.18)] }),
+    ];
+    expect(summarizeSweeps(sims)[0]).toMatchObject({
+      finalTargetError: 0.2,
+      finalErrorMedian: 0.22,
+      finalErrorMax: 0.25,
+    });
+    const unread = summarizeSweeps([sim("a", 1000)])[0];
+    expect(unread?.finalErrorMedian).toBeNull();
+    expect(unread?.finalErrorMax).toBeNull();
   });
 
   test("counts profilesets that stopped at the ceiling", () => {
@@ -111,8 +132,41 @@ describe("checkEstimates", () => {
     expect(none?.checkSimModel).toBeNull();
   });
 
+  test("prefers the Check Sim run on the case's own gear set", () => {
+    const [own, other] = checkEstimates({
+      sims: [sim("warrior/cap-4", 5000), sim("dk/cap-4", 5000)],
+      checkSim: null,
+      checkSims: { warrior: { durationMs: 2000, iterations: 1000, errorPercent: 0.5 } },
+    });
+    expect(own?.checkSimModel).not.toBeNull();
+    expect(other?.checkSimModel).toBeNull();
+    const [fallback] = checkEstimates({
+      sims: [sim("dk/cap-4", 5000)],
+      checkSim: { durationMs: 2000, iterations: 1000, errorPercent: 0.5 },
+      checkSims: { warrior: { durationMs: 4000, iterations: 1000, errorPercent: 0.5 } },
+    });
+    expect(fallback?.checkSimModel?.seconds).toBe(own?.checkSimModel?.seconds);
+  });
+
   test("learns nothing from a Sim whose iterations SimC did not report", () => {
     const [c] = checks([sim("a", 5000, pt(2), { stages: [stage(1, { iterations: null })] })]);
     expect(c?.learntFromSelf).toBeNull();
+  });
+});
+
+describe("achievedError", () => {
+  test("reads each profileset's mean error in percent of its mean", () => {
+    expect(
+      achievedError([
+        { mean: 100_000, mean_error: 200 },
+        { mean: 50_000, mean_error: 50 },
+        { mean: 80_000, mean_error: 120 },
+      ]),
+    ).toEqual({ max: 0.2, median: 0.15 });
+  });
+
+  test("is null when there is nothing to read", () => {
+    expect(achievedError([])).toBeNull();
+    expect(achievedError([{ mean: 0, mean_error: 10 }])).toBeNull();
   });
 });

@@ -11,22 +11,22 @@ export const PRECISION_TARGET_ERROR: Readonly<Record<Precision, number>> = {
 
 /**
  * How often SimC checks if it has reached the target error (every N iterations).
- * Measured: going by its later Stages' iterations × error² (about 40), this gear set needs about
- * 40 iterations for 1% error, yet at intervals 100 to 400 every profileset of a 1% Stage ran exactly the interval plus one, and at 50 they ran 51 or 101
- * (51.0 to 69.8 on average per Sim): SimC stops only at a check. At intervals 50 to 400
- * that Stage was 77% to 94% of a 972-Combination Sim's Stage time.
- * Summed median wall time over the 4-, 8- and 12-item cases (9, 81 and 972 Combinations),
- * `profileset_work_threads=1`, Medium, 3 repeats, SimC 1210-2026-09-29-d08a1c3 on a 16-thread
- * AMD Ryzen 7 7735HS: 266.3 s at 400, 152.9 s at 200, 92.2 s at 100, 68.1 s at 50, 64.7 s
- * and 69.5 s at 25 (two runs), 63.6 s at 10, 61.6 s at 5. Sources:
- * `apps/server/bench/results/2026-09-30T11-50-49-078Z.json` (400 to 25) and
- * `2026-09-30T12-33-34-232Z.json` (25 to 5). 50 and 25 are a tie: 50 ran 68.1 s here and
- * 69.2 s in `2026-09-30T12-47-17-748Z.json`, 25 ran 64.7 s and 69.5 s. 10 and 5 were 7% and 10%
- * faster than 50, one run each, against 7% between the two runs of 25. Smaller
- * intervals were not chosen because the benchmark records no achieved error, so it cannot show
- * what stopping earlier costs in accuracy.
+ * Measured: SimC stops only at a check, so a larger interval overshoots. At intervals 100 to 400
+ * every profileset of a 1% Stage ran exactly the interval plus one, where about 40 iterations
+ * reach 1% (`apps/server/bench/results/2026-09-30T11-50-49-078Z.json`, SimC
+ * 1210-2026-09-29-d08a1c3).
+ * Chosen from `2026-09-30T15-23-13-858Z.json` (SimC 1210-2026-09-30-613b5fb, 16-thread AMD Ryzen 7
+ * 7735HS, Medium, `profileset_work_threads=1`, 3 repeats, two gear sets: the import-items
+ * fixture's Frost Death Knight and `bench/sets/gulthrak-fury.txt`, 4, 8 and 12 items each).
+ * Summed median wall time over the six cases: 128.4 s at 5, 132.4 s at 10, 138.6 s at 50,
+ * 139.1 s at 25. On the 12-item cases (972 and 973 Combinations), 5 against 50: 42.9 s
+ * (41.6 to 43.0) against 48.6 s (46.9 to 49.7), and 38.8 s (38.0 to 38.8) against 43.7 s (43.3 to
+ * 44.3), no overlap between repeats. On the 4- and 8-item cases 50 was up to 0.6 s faster. The
+ * error reached costs nothing: every final Stage at every interval ended at the 0.2% target
+ * (worst profileset 0.200%; median profileset 0.196% to 0.199% at 50, 0.1996% to 0.1999% at 5).
+ * Nothing below 5 was swept. One machine.
  */
-export const ANALYZE_ERROR_INTERVAL = 50;
+export const ANALYZE_ERROR_INTERVAL = 5;
 
 /**
  * The SimC input for a Quick Sim: the Addon String unchanged, then the frozen Sim Settings as

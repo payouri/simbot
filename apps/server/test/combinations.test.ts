@@ -208,7 +208,7 @@ describe("POST /api/sims/:id/preview-combinations", () => {
     expect(performance.now() - started).toBeLessThan(1500);
   });
 
-  test("uses the Check Sim of the Current SimC Build once there is one", async () => {
+  test("keeps the default estimate when the Current SimC Build has a Check Sim", async () => {
     start();
     const { sim, items } = await draft();
     const body = { topGearSelection: selection([at(items, 175302), at(items, 137410)]) };
@@ -220,8 +220,8 @@ describe("POST /api/sims/:id/preview-combinations", () => {
       [BUILD_TAG, sim.importId, new Date().toISOString()],
     );
     const after = await previewOf(sim.id, body);
-    expect(after.estimateBasis).toBe("check_sim");
-    expect(after.estimateSeconds).not.toBe(before.estimateSeconds);
+    expect(after.estimateBasis).toBe("default");
+    expect(after.estimateSeconds).toBe(before.estimateSeconds);
   });
 
   test("404 for an unknown Sim", async () => {

@@ -9,9 +9,13 @@
  * start), and a machine that is otherwise idle: a Stage uses every thread. Results go to
  * `apps/server/bench/results/<timestamp>.json`; `--summarize <file>` reads one back.
  *
+ * Before any Sim it runs a Check Sim of each gear set on the build, as a SimC Update does on the
+ * latest Import, so the summary can show how far a Check Sim's cost model is from each Sim (the
+ * app does not estimate from it) even on a data dir that has none.
+ *
  * Options:
  *   --sets <file,file>       Addon String files, one gear set each. Default: the import-items
- *                            fixture's Frost Death Knight. Your own export is a better set.
+ *                            fixture's Frost Death Knight. Real exports live in `bench/sets/`.
  *   --caps <n,n,...>         Candidate Items taken from each set per case, in Import order
  *                            (only the ones SimC read). Default 4,8,12,16,24,all. More items is
  *                            more Combinations; the benchmark records how many it got.
@@ -30,8 +34,8 @@
  * options, which the Stage input places after the defaults, so no production code is touched.
  */
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { cpus } from "node:os";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpus, tmpdir } from "node:os";
 import { join } from "node:path";
 import {
   combinationPreviewSchema,
@@ -42,6 +46,7 @@ import {
 } from "@simbot/shared";
 import {
   ANALYZE_ERROR_INTERVAL,
+  achievedError,
   type BenchCheckSim,
   type BenchResults,
   type BenchSim,
@@ -54,6 +59,9 @@ import {
 } from "@simbot/simc";
 import { loadConfig } from "../src/config";
 import { getCheckSimCost } from "../src/db/simc-jobs";
+import { getStageCosts } from "../src/db/sims";
+import { type Launch, runCheckSim } from "../src/simc/check-sim";
+import { buildDir } from "../src/simc/install";
 import {
   type Harness,
   importItemsAddonString,
@@ -105,14 +113,47 @@ export const rawOptionsOf = (p: SweepPoint) =>
     ...(p.totalThreads === undefined ? [] : [`threads=${p.totalThreads}`]),
   ].join("\n");
 
-/** What each profileset of a Stage's json2 ran, read off the stored report. */
-function iterationsOf(json2: string): number[] {
+/** Each profileset of a Stage's json2, read off the stored report. */
+function profilesetsOf(
+  json2: string,
+): { iterations?: number; mean?: number; mean_error?: number }[] {
   const parsed = JSON.parse(json2) as {
-    sim?: { profilesets?: { results?: { iterations?: number }[] } };
+    sim?: {
+      profilesets?: { results?: { iterations?: number; mean?: number; mean_error?: number }[] };
+    };
   };
-  return (parsed.sim?.profilesets?.results ?? []).flatMap((r) =>
-    typeof r.iterations === "number" ? [r.iterations] : [],
-  );
+  return parsed.sim?.profilesets?.results ?? [];
+}
+
+/**
+ * A Check Sim of each gear set on the SimC Build in `dir`, by set name, one after the other: the
+ * run a SimC Update makes on the latest Import, whose time and iterations the summary's `check
+ * sim` column is read from.
+ */
+export async function runCheckSims(
+  sets: readonly { name: string; text: string }[],
+  opts: { dir: string; launch?: Launch },
+): Promise<Record<string, BenchCheckSim>> {
+  const tmpRoot = mkdtempSync(join(tmpdir(), "simbot-bench-check-"));
+  try {
+    const out: Record<string, BenchCheckSim> = {};
+    for (const set of sets) {
+      const run = await runCheckSim({
+        dir: opts.dir,
+        tmpRoot,
+        addonString: set.text,
+        launch: opts.launch,
+      });
+      out[set.name] = {
+        durationMs: run.durationMs,
+        iterations: run.iterations,
+        errorPercent: (run.dps.meanError / run.dps.mean) * 100,
+      };
+    }
+    return out;
+  } finally {
+    rmSync(tmpRoot, { recursive: true, force: true });
+  }
 }
 
 async function simOne(
@@ -159,35 +200,27 @@ async function simOne(
   if (sim.status !== "succeeded") {
     throw new Error(`${c.name} ended ${sim.status}: ${JSON.stringify(sim.error)}`);
   }
-  const rows = h.app.db
-    .query<
-      {
-        stage: number;
-        duration_ms: number;
-        iterations: number | null;
-        profilesets: number;
-        target_error: number;
-      },
-      [number]
-    >(
-      "SELECT stage, duration_ms, iterations, profilesets, target_error FROM stage_costs WHERE sim_id = ? ORDER BY stage",
-    )
-    .all(draft.id);
-  const stages: BenchStage[] = rows.map((r) => {
-    let per: number[] = [];
+  const stages: BenchStage[] = getStageCosts(h.app.db, draft.id).map((cost) => {
+    let results: ReturnType<typeof profilesetsOf> = [];
     try {
-      per = iterationsOf(h.readGz(h.simFile(draft.id, `stage-${r.stage}.json.gz`)));
+      results = profilesetsOf(h.readGz(h.simFile(draft.id, `stage-${cost.stage}.json.gz`)));
     } catch {
-      // No report to read: the two fields below stay null.
+      // No report to read: the fields read from it below stay null.
     }
+    const per = results.flatMap((r) => (typeof r.iterations === "number" ? [r.iterations] : []));
+    const error = achievedError(
+      results.flatMap((r) =>
+        typeof r.mean === "number" && typeof r.mean_error === "number"
+          ? [{ mean: r.mean, mean_error: r.mean_error }]
+          : [],
+      ),
+    );
     return {
-      stage: r.stage,
-      durationMs: r.duration_ms,
-      iterations: r.iterations,
-      profilesets: r.profilesets,
-      targetError: r.target_error,
+      ...cost,
       maxIterations: per.length ? Math.max(...per) : null,
       atCeiling: per.length ? per.filter((n) => n >= sweep.iterationsCeiling).length : null,
+      maxErrorPercent: error?.max ?? null,
+      medianErrorPercent: error?.median ?? null,
     };
   });
   return {
@@ -316,6 +349,12 @@ async function main() {
   const precision = precisionSchema.parse(args.get("precision") ?? "medium");
   const startedAt = new Date().toISOString();
 
+  const checkSims = await runCheckSims(sets, { dir: buildDir(dataDir, tag) });
+  for (const [set, c] of Object.entries(checkSims)) {
+    console.log(
+      `check sim ${set}: ${c.durationMs}ms, ${c.iterations} iterations, ${c.errorPercent.toFixed(3)}%`,
+    );
+  }
   const sims = await runBenchmark({
     harness: () => makeRealBuildHarness(dataDir, tag),
     cases,
@@ -333,6 +372,7 @@ async function main() {
     simcTag: tag,
     machine: { cpus: cpus().length, model: cpus()[0]?.model ?? "unknown" },
     checkSim: readCheckSim(dataDir, tag),
+    checkSims,
     sims,
   };
   const outDir = args.get("out") ?? join(import.meta.dir, "results");
