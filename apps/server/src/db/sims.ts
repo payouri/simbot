@@ -12,6 +12,7 @@ import {
   type Sim,
   type SimError,
   type SimKind,
+  type SimLadderResponse,
   type SimResultsResponse,
   type SimSettings,
   type SimStatus,
@@ -20,7 +21,7 @@ import {
   type TopGearSelection,
   topGearSelectionSchema,
 } from "@simbot/shared";
-import { parseProfileHeader } from "@simbot/simc";
+import { parseProfileHeader, stageLadder } from "@simbot/simc";
 import type { Db } from ".";
 import { getCharacter } from "./characters";
 import { equippedLoadoutIndex, getImportText } from "./imports";
@@ -307,26 +308,131 @@ export function setJobPid(db: Db, jobId: number, pid: number) {
   db.run("UPDATE jobs SET pid = ? WHERE id = ?", [pid, jobId]);
 }
 
-/** `running → succeeded`, storing the Stage Result of the baseline Combination. */
-export function succeedSim(db: Db, jobId: number, simId: number, stage: number, dps: DpsSummary) {
+/** `running → succeeded`; the Stage Results are already stored (see `recordStage`). */
+export function succeedSim(db: Db, jobId: number, simId: number) {
   db.transaction(() => {
     const now = new Date().toISOString();
-    const combination = db
-      .query<{ id: number }, [number]>(
-        "SELECT id FROM combinations WHERE sim_id = ? AND is_baseline = 1",
-      )
-      .get(simId);
-    if (!combination) throw new Error(`Sim ${simId} has no baseline Combination`);
-    db.run(
-      `INSERT INTO stage_results (combination_id, stage, dps_mean, dps_mean_error, survived)
-       VALUES (?, ?, ?, ?, 1)`,
-      [combination.id, stage, dps.mean, dps.meanError],
-    );
     if (!transition(db, simId, "running", "succeeded", { finished_at: now })) {
       throw new Error(`Sim ${simId} is no longer running`);
     }
     db.run("UPDATE jobs SET status = 'done', finished_at = ? WHERE id = ?", [now, jobId]);
   })();
+}
+
+export type CombinationRow = {
+  id: number;
+  isBaseline: boolean;
+  definition: CombinationDefinition;
+  /** The Stage in which SimC refused it; null while it is valid. */
+  invalidStage: number | null;
+};
+
+/** The Sim's frozen Combinations with their database ids (the profileset names), baseline first. */
+export function getCombinationRows(db: Db, simId: number): CombinationRow[] {
+  return db
+    .query<
+      { id: number; is_baseline: number; definition: string; invalid_stage: number | null },
+      [number]
+    >(
+      "SELECT id, is_baseline, definition, invalid_stage FROM combinations WHERE sim_id = ? ORDER BY id",
+    )
+    .all(simId)
+    .map((r) => ({
+      id: r.id,
+      isBaseline: r.is_baseline === 1,
+      definition: combinationDefinitionSchema.parse(JSON.parse(r.definition)),
+      invalidStage: r.invalid_stage,
+    }));
+}
+
+/** The last Stage that has Stage Results, 0 when none has: a resumed Sim starts after it. */
+export function lastFinishedStage(db: Db, simId: number): number {
+  return (
+    db
+      .query<{ stage: number | null }, [number]>(
+        `SELECT MAX(r.stage) AS stage FROM stage_results r
+         JOIN combinations c ON c.id = r.combination_id WHERE c.sim_id = ?`,
+      )
+      .get(simId)?.stage ?? 0
+  );
+}
+
+/** Ids of the Combinations that survived `stage`, i.e. the field of the next one. */
+export function stageSurvivorIds(db: Db, simId: number, stage: number): number[] {
+  return db
+    .query<{ combination_id: number }, [number, number]>(
+      `SELECT r.combination_id FROM stage_results r
+       JOIN combinations c ON c.id = r.combination_id
+       WHERE c.sim_id = ? AND r.stage = ? AND r.survived = 1 ORDER BY r.combination_id`,
+    )
+    .all(simId, stage)
+    .map((r) => r.combination_id);
+}
+
+export type StageOutcome = { combinationId: number; dps: DpsSummary; survived: boolean };
+
+/** Stores a finished Stage: one Stage Result per Combination that ran it, all or nothing. */
+export function recordStage(db: Db, stage: number, outcomes: readonly StageOutcome[]) {
+  db.transaction(() => {
+    const insert = db.prepare(
+      `INSERT INTO stage_results (combination_id, stage, dps_mean, dps_mean_error, survived)
+       VALUES (?, ?, ?, ?, ?)`,
+    );
+    for (const o of outcomes) {
+      insert.run(o.combinationId, stage, o.dps.mean, o.dps.meanError, o.survived ? 1 : 0);
+    }
+  })();
+}
+
+/** SimC refused this Combination in `stage`: it takes no further part. */
+export function markInvalid(db: Db, combinationId: number, stage: number) {
+  db.run("UPDATE combinations SET invalid_stage = ? WHERE id = ?", [stage, combinationId]);
+}
+
+/**
+ * The Stage ladder as it stands: every planned Stage with its `target_error` and, for the ones
+ * that finished, how many Combinations entered and were kept. Null when the Sim is unknown.
+ */
+export function getLadder(db: Db, simId: number): SimLadderResponse | null {
+  const sim = getSim(db, simId);
+  if (!sim) return null;
+  const total =
+    db
+      .query<{ n: number }, [number]>("SELECT COUNT(*) AS n FROM combinations WHERE sim_id = ?")
+      .get(simId)?.n ?? 0;
+  const counts = new Map(
+    db
+      .query<{ stage: number; entered: number; kept: number }, [number]>(
+        `SELECT r.stage, COUNT(*) AS entered, SUM(r.survived) AS kept FROM stage_results r
+         JOIN combinations c ON c.id = r.combination_id WHERE c.sim_id = ? GROUP BY r.stage`,
+      )
+      .all(simId)
+      .map((r) => [r.stage, r]),
+  );
+  const invalid = new Map(
+    db
+      .query<{ stage: number; n: number }, [number]>(
+        `SELECT invalid_stage AS stage, COUNT(*) AS n FROM combinations
+         WHERE sim_id = ? AND invalid_stage IS NOT NULL GROUP BY invalid_stage`,
+      )
+      .all(simId)
+      .map((r) => [r.stage, r.n]),
+  );
+  return {
+    simId,
+    stages: stageLadder(sim.settings.precision, total).map((targetErrorPct, i) => {
+      const stage = i + 1;
+      const done = counts.get(stage);
+      return {
+        stage,
+        targetErrorPct,
+        entered: done?.entered ?? null,
+        kept: done?.kept ?? null,
+        culled: done ? done.entered - done.kept : 0,
+        invalid: invalid.get(stage) ?? 0,
+      };
+    }),
+  };
 }
 
 /** `running → failed` with a classified error. */

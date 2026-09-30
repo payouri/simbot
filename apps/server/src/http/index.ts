@@ -26,6 +26,7 @@ import {
   deleteSim_Handler,
   getResults,
   getSimById,
+  getSimLadder,
   getSims,
   patchSim,
   postCopySimToDraft,
@@ -256,7 +257,7 @@ export function createHttpHandler({
       return json({ error: "method_not_allowed" }, 405);
     }
     const simRoute = pathname.match(
-      /^\/api\/sims\/([^/]+)(?:\/(queue|stop|results|files|copy-to-draft|preview-combinations|preselect)(?:\/(.+))?)?$/,
+      /^\/api\/sims\/([^/]+)(?:\/(queue|stop|results|ladder|files|copy-to-draft|preview-combinations|preselect)(?:\/(.+))?)?$/,
     );
     if (simRoute) {
       const [, id = "", action, fileName] = simRoute;
@@ -310,7 +311,8 @@ export function createHttpHandler({
         return deleteSim_Handler(db, id, dataDir);
       }
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
-      return action === "results" ? getResults(db, id) : getSimById(db, id);
+      if (action === "results") return getResults(db, id);
+      return action === "ladder" ? getSimLadder(db, id) : getSimById(db, id);
     }
     if (pathname === "/api" || pathname.startsWith("/api/")) {
       return apiError(404, "not_found");

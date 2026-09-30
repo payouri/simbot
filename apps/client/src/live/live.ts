@@ -1,8 +1,14 @@
-import { type AppEvent, appEventSchema, type SimProgress } from "@simbot/shared";
+import { type AppEvent, appEventSchema, type SimLogLevel, type SimProgress } from "@simbot/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useSyncExternalStore } from "react";
 import { QUEUE_KEY } from "../queue/api";
 import { SIMC_KEY } from "../simc/api";
+
+/** A line of the running Sim's streaming log. */
+export type LogLine = { id: number; level: SimLogLevel; message: string; at: number };
+
+const LOG_KEEP = 300;
+let logId = 0;
 
 export type RunningSim = {
   simId: number;
@@ -10,6 +16,8 @@ export type RunningSim = {
   stage: number | null;
   /** Null until SimC prints its first progress line: it is still warming up. */
   progress: SimProgress | null;
+  /** The newest log lines of this run, oldest first. */
+  log: LogLine[];
 };
 
 let running: RunningSim | null = null;
@@ -23,16 +31,32 @@ const setRunning = (next: RunningSim | null) => {
 export function applyEvent(event: AppEvent) {
   switch (event.type) {
     case "snapshot":
-      setRunning(event.running);
+      setRunning(event.running && { ...event.running, log: [] });
       break;
     case "sim.stage_started":
-      setRunning({ simId: event.simId, stage: event.stage, progress: null });
+      setRunning({
+        simId: event.simId,
+        stage: event.stage,
+        progress: null,
+        log: running?.simId === event.simId ? running.log : [],
+      });
       break;
     case "sim.progress": {
       const { type: _, ...progress } = event;
-      setRunning({ simId: event.simId, stage: event.stage, progress });
+      setRunning({
+        simId: event.simId,
+        stage: event.stage,
+        progress,
+        log: running?.simId === event.simId ? running.log : [],
+      });
       break;
     }
+    case "sim.log":
+      if (running?.simId === event.simId) {
+        const line = { id: ++logId, level: event.level, message: event.message, at: Date.now() };
+        setRunning({ ...running, log: [...running.log, line].slice(-LOG_KEEP) });
+      }
+      break;
     case "sim.finished":
     case "sim.discarded":
       if (running?.simId === event.simId) setRunning(null);
@@ -76,6 +100,10 @@ export function LiveConnection() {
           break;
         case "queue.changed":
           void client.invalidateQueries({ queryKey: QUEUE_KEY });
+          break;
+        case "sim.stage_started":
+        case "sim.stage_finished":
+          void client.invalidateQueries({ queryKey: ["sim", event.simId, "ladder"] });
           break;
         case "sim.finished":
         case "sim.discarded":

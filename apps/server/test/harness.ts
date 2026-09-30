@@ -46,6 +46,91 @@ export const fakeLaunch =
     ];
   };
 
+/** What the fake `simc` was asked in one launch, read off its input file. */
+export type FakeStageCall = {
+  /** From the input file's name (`stage-<n>.simc`). */
+  stage: number;
+  /** Profileset names in the input, in order. */
+  names: string[];
+  targetError: number;
+  input: string;
+  /** How many times the fake has launched so far, this one included. */
+  call: number;
+};
+
+/** What the fake `simc` answers: the base actor and each profileset as `[mean, meanError]`. */
+export type FakeStageReply = {
+  baseline?: [number, number];
+  profilesets?: Record<string, [number, number]>;
+  exit?: number;
+  stderr?: string;
+  /** The launch waits for this file before writing its report (mid-Stage observation). */
+  gate?: string;
+};
+
+/**
+ * Launches a fake `simc` that answers a Smart Sim Stage: `reply` decides, from what the input
+ * asks for, the report (written with the profilesets in reverse, since SimC's order is not
+ * ours), the exit code and stderr. Calls are appended to `calls`.
+ */
+export function smartLaunch(
+  root: () => string,
+  reply: (call: FakeStageCall) => FakeStageReply,
+  calls: FakeStageCall[] = [],
+): Launch {
+  return (_buildDir, args) => {
+    const inputPath = args[0] as string;
+    const input = readFileSync(inputPath, "utf8");
+    const call: FakeStageCall = {
+      stage: Number(/stage-(\d+)\.simc$/.exec(inputPath)?.[1] ?? 0),
+      names: [...input.matchAll(/^profileset\."([^"]+)"\+=profileset_controller/gm)].map(
+        (m) => m[1] as string,
+      ),
+      targetError: Number(/^target_error=(.*)$/m.exec(input)?.[1] ?? 0),
+      input,
+      call: calls.length + 1,
+    };
+    calls.push(call);
+    const r = reply(call);
+    const dir = mkdtempSync(join(root(), "smart-"));
+    const [mean, err] = r.baseline ?? [100_000, 100];
+    const sets = Object.entries(r.profilesets ?? {});
+    const stdout = [
+      `Baseline\t1\t${sets.length + 1}\t100\t100\t20.000\t${mean}\t0.500\t1`,
+      ...sets.map(
+        ([name, [m]], i) =>
+          `Profileset\t${name}\t${i + 2}\t${sets.length + 1}\t100\t100\t20.000\t${m}\t0.500\t1`,
+      ),
+    ];
+    writeFileSync(join(dir, "stdout.txt"), `${stdout.join("\n")}\n`);
+    if (r.stderr) writeFileSync(join(dir, "stderr.txt"), r.stderr);
+    if (r.exit) writeFileSync(join(dir, "exit"), String(r.exit));
+    if (!r.exit) {
+      writeFileSync(
+        join(dir, "json2.json"),
+        JSON.stringify({
+          sim: {
+            options: { confidence_estimator: 2 },
+            players: [{ collected_data: { dps: { mean, mean_std_dev: err / 2 } } }],
+            profilesets: {
+              results: sets
+                .map(([name, [m, e]]) => ({ name, mean: m, mean_error: e, iterations: 100 }))
+                .reverse(),
+            },
+          },
+        }),
+      );
+    }
+    return [
+      process.execPath,
+      FAKE_SIMC,
+      `--scenario=${dir}`,
+      ...(r.gate ? [`--gate=${r.gate}`] : []),
+      ...args,
+    ];
+  };
+}
+
 /** Boot recovery's test for "is this stored PID still `simc`": the fake one is a `bun` script. */
 export const isFakeSimc = (pid: number): boolean => {
   try {

@@ -3,29 +3,38 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import type { SimcBuild, SimError, SimLogLevel, SimProgress } from "@simbot/shared";
 import {
-  buildInput,
+  buildStageInput,
+  type CullEntry,
   classifyExit,
   createLineSplitter,
   createProgressParser,
+  cull,
+  invalidProfileset,
   Json2FormatError,
   launchCommand,
   type ParsedLine,
-  PRECISION_TARGET_ERROR,
-  readQuickSimResult,
+  readStageReport,
   stageArgs,
+  stageLadder,
   toSimProgress,
 } from "@simbot/simc";
 import type { Db } from "../db";
 import { getImportText } from "../db/imports";
 import {
   abandonJob,
+  type CombinationRow,
   cancelSim,
   discardRunningSim,
   failSim,
+  getCombinationRows,
   getFrozenSimcTag,
   getSim,
   getStopMode,
+  lastFinishedStage,
+  markInvalid,
+  recordStage,
   setJobPid,
+  stageSurvivorIds,
   startSim,
   succeedSim,
 } from "../db/sims";
@@ -63,7 +72,8 @@ const KILL_GRACE_MS = 5_000;
 const STDERR_KEEP = 8_000;
 const PROGRESS_INTERVAL_MS = 250;
 const LOG_LINE_MAX = 2_000;
-const STAGE = 1;
+/** Combinations SimC may refuse (exit 80 on a profileset) in one Stage before the Sim fails. */
+const MAX_INVALID_RETRIES = 3;
 
 /** Feeds a stream's decoded text to `onText` until it ends. */
 async function readText(stream: ReadableStream<Uint8Array>, onText: (text: string) => void) {
@@ -79,9 +89,11 @@ const stderrLevel = (line: string): SimLogLevel =>
 const readOrNull = (path: string) => readFile(path, "utf8").catch(() => null);
 
 /**
- * Runs one Quick Sim Job to a terminal state. Never throws: every failure is recorded on the
- * Sim as a classified error. Files live in `tmp/<job>/` while running and move to
- * `sims/<id>/stage-1.*` on success.
+ * Runs one Sim Job to a terminal state. Never throws: every failure is recorded on the Sim as a
+ * classified error. A Quick Sim is one Stage over the baseline; a Top Gear is a Smart Sim, one
+ * SimC run per Stage with a Cull between them, resuming at the first Stage without results.
+ * A Stage's files live in `tmp/<job>/` while it runs and move to `sims/<id>/stage-<n>.*` when
+ * it finishes.
  */
 export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: number }) {
   const { db, dataDir, bus, launch = launchCommand, log = console.error } = deps;
@@ -128,7 +140,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     killTimer = setTimeout(() => killGroup(pid, "SIGKILL"), deps.killGraceMs ?? KILL_GRACE_MS);
   };
   // A request lands in the DB first; the event only wakes us, so one that arrives before SimC
-  // has launched is picked up by the checks below.
+  // has launched is picked up by the checks in the Stage loop.
   const offStop = bus.on((event) => {
     if (event.type === "sim.stop_requested" && event.simId === job.simId) terminate();
   });
@@ -137,6 +149,82 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     log(`runner: Job ${job.id} has no queued Sim ${job.simId}, dropping it`);
     abandonJob(db, job.id);
     return;
+  }
+
+  const emitLog = (level: SimLogLevel, message: string) =>
+    bus.emit({ type: "sim.log", simId: sim.id, level, message: message.slice(0, LOG_LINE_MAX) });
+
+  type SimcRun =
+    | { ok: false; error: SimError }
+    | { ok: true; exitCode: number; signalled: boolean; stderr: string };
+
+  /** One SimC process, with both pipes drained and its progress streamed. */
+  async function runSimc(
+    buildDir: string,
+    stage: number,
+    inputPath: string,
+    json2Path: string,
+    targetErrorPct: number,
+  ): Promise<SimcRun> {
+    try {
+      // Its own process group, so Stop can later signal SimC and everything it forks.
+      proc = Bun.spawn(launch(buildDir, stageArgs(inputPath, json2Path)), {
+        cwd: tmp,
+        stdin: "ignore",
+        stdout: "pipe",
+        stderr: "pipe",
+        detached: true,
+      });
+    } catch (err) {
+      return {
+        ok: false,
+        error: {
+          kind: "launch_failed",
+          message: `Could not start SimC: ${err instanceof Error ? err.message : String(err)}`,
+        },
+      };
+    }
+    const running = proc;
+    setJobPid(db, job.id, running.pid);
+    if (getStopMode(db, job.id)) terminate();
+
+    const onLines = (lines: ParsedLine[]) => {
+      for (const line of lines) {
+        if (line.kind === "text") {
+          if (deps.debugLogs) emitLog("debug", line.text);
+        } else {
+          progress.push(toSimProgress(line, { simId: job.simId, stage, targetErrorPct }));
+        }
+      }
+    };
+    // Both pipes are always drained: SimC blocks once a pipe fills.
+    const stdoutParser = createProgressParser();
+    const stderrLines = createLineSplitter();
+    let stderr = "";
+    const onStderrLines = (lines: string[]) => {
+      for (const line of lines) if (line.trim() !== "") emitLog(stderrLevel(line), line.trim());
+    };
+    const [, , exitCode] = await Promise.all([
+      readText(running.stdout, (text) => onLines(stdoutParser.push(text))),
+      readText(running.stderr, (text) => {
+        stderr += text;
+        if (stderr.length > STDERR_KEEP * 2) stderr = stderr.slice(-STDERR_KEEP);
+        onStderrLines(stderrLines.push(text));
+      }),
+      running.exited,
+    ]);
+    onLines(stdoutParser.flush());
+    onStderrLines(stderrLines.flush());
+    progress.flush();
+    if (killTimer) clearTimeout(killTimer);
+    killTimer = null;
+    proc = null;
+    return {
+      ok: true,
+      exitCode,
+      signalled: running.signalCode !== null,
+      stderr: stderr.slice(-STDERR_KEEP),
+    };
   }
 
   try {
@@ -165,88 +253,161 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     const addonString = getImportText(db, sim.importId);
     if (addonString === null) throw new Error(`Import ${sim.importId} is missing`);
 
+    const rows = getCombinationRows(db, sim.id);
+    const baseline = rows.find((r) => r.isBaseline);
+    if (!baseline) throw new Error(`Sim ${sim.id} has no baseline Combination`);
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const ladder = stageLadder(sim.settings.precision, rows.length);
+
     await rm(tmp, { recursive: true, force: true });
     await mkdir(tmp, { recursive: true });
-    const inputPath = join(tmp, "stage-1.simc");
-    const json2Path = join(tmp, "stage-1.json");
-    await writeFile(inputPath, buildInput(addonString, sim.settings));
-
     const buildDir = join(dataDir, "simc", build.tag);
-    const stopBeforeLaunch = getStopMode(db, job.id);
-    if (stopBeforeLaunch) return await settleStop(stopBeforeLaunch);
-    try {
-      // Its own process group, so Stop can later signal SimC and everything it forks.
-      proc = Bun.spawn(launch(buildDir, stageArgs(inputPath, json2Path)), {
-        cwd: tmp,
-        stdin: "ignore",
-        stdout: "pipe",
-        stderr: "pipe",
-        detached: true,
-      });
-    } catch (err) {
-      return fail({
-        kind: "launch_failed",
-        message: `Could not start SimC: ${err instanceof Error ? err.message : String(err)}`,
-      });
-    }
-    setJobPid(db, job.id, proc.pid);
-    if (getStopMode(db, job.id)) terminate();
-    bus.emit({ type: "sim.stage_started", simId: sim.id, stage: STAGE });
+    const simDir = join(dataDir, "sims", String(sim.id));
 
-    const emitLog = (level: SimLogLevel, message: string) =>
-      bus.emit({ type: "sim.log", simId: sim.id, level, message: message.slice(0, LOG_LINE_MAX) });
-    const targetErrorPct = PRECISION_TARGET_ERROR[sim.settings.precision];
-    const onLines = (lines: ParsedLine[]) => {
-      for (const line of lines) {
-        if (line.kind === "text") {
-          if (deps.debugLogs) emitLog("debug", line.text);
-        } else {
-          progress.push(toSimProgress(line, { simId: sim.id, stage: STAGE, targetErrorPct }));
+    // Resume: the field is whatever survived the last finished Stage (everyone, on a fresh
+    // start), minus the Combinations SimC has refused.
+    const done = lastFinishedStage(db, sim.id);
+    let field: number[] = done === 0 ? rows.map((r) => r.id) : stageSurvivorIds(db, sim.id, done);
+    const refused = new Set(rows.filter((r) => r.invalidStage !== null).map((r) => r.id));
+    field = field.filter((id) => !refused.has(id));
+    const verbose = rows.length > 1;
+
+    for (let stage = done + 1; stage <= ladder.length; stage++) {
+      const targetError = ladder[stage - 1] as number;
+      const isFinal = stage === ladder.length;
+      const inputPath = join(tmp, `stage-${stage}.simc`);
+      const json2Path = join(tmp, `stage-${stage}.json`);
+      let dropped = 0;
+      let invalidNow = rows.filter((r) => r.invalidStage === stage).length;
+
+      for (;;) {
+        // A Stop or Discard asked for since the last check is honoured before SimC launches.
+        const stopBefore = getStopMode(db, job.id);
+        if (stopBefore) return await settleStop(stopBefore);
+
+        const survivors = field
+          .filter((id) => id !== baseline.id)
+          .map((id) => byId.get(id))
+          .filter((r): r is CombinationRow => r !== undefined);
+        await writeFile(
+          inputPath,
+          buildStageInput({
+            addonString,
+            settings: sim.settings,
+            targetError,
+            baseline: baseline.definition,
+            profilesets: survivors.map((r) => ({ id: r.id, definition: r.definition })),
+          }),
+        );
+        bus.emit({
+          type: "sim.stage_started",
+          simId: sim.id,
+          stage,
+          stages: ladder.length,
+          entered: survivors.length + 1,
+          targetErrorPct: targetError,
+        });
+        if (verbose) {
+          emitLog(
+            "info",
+            `Stage ${stage} of ${ladder.length}: ${survivors.length + 1} Combinations to ${targetError}% error.`,
+          );
         }
-      }
-    };
-    // Both pipes are always drained: SimC blocks once a pipe fills.
-    const stdoutParser = createProgressParser();
-    const stderrLines = createLineSplitter();
-    let stderr = "";
-    const onStderrLines = (lines: string[]) => {
-      for (const line of lines) if (line.trim() !== "") emitLog(stderrLevel(line), line.trim());
-    };
-    const running = proc;
-    const [, , exitCode] = await Promise.all([
-      readText(proc.stdout, (text) => onLines(stdoutParser.push(text))),
-      readText(proc.stderr, (text) => {
-        stderr += text;
-        if (stderr.length > STDERR_KEEP * 2) stderr = stderr.slice(-STDERR_KEEP);
-        onStderrLines(stderrLines.push(text));
-      }),
-      running.exited,
-    ]);
-    onLines(stdoutParser.flush());
-    onStderrLines(stderrLines.flush());
-    progress.flush();
-    stderr = stderr.slice(-STDERR_KEEP);
-    // A Discard wins even over a run that got to finish; a Stop only when there is nothing to keep.
-    const stop = getStopMode(db, job.id);
-    if (stop === "discard" || (stop === "keep" && exitCode !== 0)) return await settleStop(stop);
-    if (exitCode !== 0) return fail(classifyExit(running.signalCode ? null : exitCode, stderr));
 
-    const json2Text = await readOrNull(json2Path);
-    try {
-      const { dps } = readQuickSimResult(json2Text);
-      const simDir = join(dataDir, "sims", String(sim.id));
-      await mkdir(simDir, { recursive: true });
-      await writeFile(join(simDir, "stage-1.json.gz"), gzipSync(json2Text ?? ""));
-      await rename(inputPath, join(simDir, "stage-1.simc"));
-      succeedSim(db, job.id, sim.id, STAGE, dps);
-      bus.emit({ type: "sim.stage_finished", simId: sim.id, stage: STAGE });
-      finished("succeeded");
-    } catch (err) {
-      if (err instanceof Json2FormatError) {
-        return fail({ kind: "output_format_changed", message: err.message });
+        const run = await runSimc(buildDir, stage, inputPath, json2Path, targetError);
+        if (!run.ok) return fail(run.error);
+        // A Discard wins even over a run that got to finish; a Stop only when there is nothing to keep.
+        const stop = getStopMode(db, job.id);
+        if (stop === "discard" || (stop === "keep" && run.exitCode !== 0)) {
+          return await settleStop(stop);
+        }
+        if (run.exitCode !== 0) {
+          // Exit 80 naming one of our profilesets: drop that Combination and run the Stage again.
+          const bad = run.exitCode === 80 ? invalidProfileset(run.stderr) : null;
+          if (
+            bad !== null &&
+            bad !== baseline.id &&
+            field.includes(bad) &&
+            dropped < MAX_INVALID_RETRIES
+          ) {
+            dropped++;
+            invalidNow++;
+            markInvalid(db, bad, stage);
+            field = field.filter((id) => id !== bad);
+            emitLog(
+              "warn",
+              `Combination ${bad} is invalid for SimC and was dropped; Stage ${stage} runs again without it.`,
+            );
+            continue;
+          }
+          return fail(classifyExit(run.signalled ? null : run.exitCode, run.stderr));
+        }
+
+        const json2Text = await readOrNull(json2Path);
+        let report: ReturnType<typeof readStageReport>;
+        try {
+          report = readStageReport(
+            json2Text,
+            survivors.map((r) => r.id),
+          );
+        } catch (err) {
+          if (err instanceof Json2FormatError) {
+            return fail({ kind: "output_format_changed", message: err.message });
+          }
+          throw err;
+        }
+
+        const entries: CullEntry[] = [
+          {
+            id: baseline.id,
+            isBaseline: true,
+            mean: report.baseline.mean,
+            error: report.baseline.meanError,
+          },
+          ...survivors.map((r) => {
+            const dps = report.profilesets.get(r.id) as { mean: number; meanError: number };
+            return { id: r.id, isBaseline: false, mean: dps.mean, error: dps.meanError };
+          }),
+        ];
+        const { kept, culled } = isFinal
+          ? { kept: entries.map((e) => e.id), culled: [] as number[] }
+          : cull(entries);
+        const keptSet = new Set(kept);
+
+        // Files first: a crash before the rows land just redoes this Stage over them.
+        await mkdir(simDir, { recursive: true });
+        await writeFile(join(simDir, `stage-${stage}.json.gz`), gzipSync(json2Text ?? ""));
+        await rename(inputPath, join(simDir, `stage-${stage}.simc`));
+        recordStage(
+          db,
+          stage,
+          entries.map((e) => ({
+            combinationId: e.id,
+            dps: { mean: e.mean, meanError: e.error },
+            survived: keptSet.has(e.id),
+          })),
+        );
+        field = kept;
+        bus.emit({
+          type: "sim.stage_finished",
+          simId: sim.id,
+          stage,
+          survivors: kept.length,
+          culled: culled.length,
+          invalid: invalidNow,
+        });
+        if (verbose) {
+          emitLog(
+            "info",
+            `Stage ${stage} done: ${kept.length} kept, ${culled.length} culled${invalidNow > 0 ? `, ${invalidNow} invalid` : ""}.`,
+          );
+        }
+        break;
       }
-      throw err;
     }
+
+    succeedSim(db, job.id, sim.id);
+    finished("succeeded");
   } catch (err) {
     log(
       `runner: Job ${job.id} crashed: ${err instanceof Error ? (err.stack ?? err.message) : err}`,

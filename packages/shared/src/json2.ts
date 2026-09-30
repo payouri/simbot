@@ -36,3 +36,27 @@ export const checkSimJson2Schema = quickSimJson2Schema.extend({
     }),
   }),
 });
+
+/**
+ * The slice of a Smart Sim Stage report: the Quick Sim slice plus, when the Stage ran
+ * profilesets, `profilesets.results[]`. Each result carries its error either as `mean_error`
+ * (what SimC writes) or as `stddev` and `iterations`, from which it is derived.
+ */
+export const stageJson2Schema = quickSimJson2Schema.extend({
+  sim: quickSimJson2Schema.shape.sim.extend({
+    profilesets: z
+      .object({
+        results: z.array(
+          z.object({
+            name: z.string(),
+            mean: z.number(),
+            mean_error: z.number().nonnegative().optional(),
+            stddev: z.number().nonnegative().optional(),
+            iterations: z.number().positive().optional(),
+          }),
+        ),
+      })
+      .optional(),
+  }),
+});
+export type StageJson2 = z.infer<typeof stageJson2Schema>;

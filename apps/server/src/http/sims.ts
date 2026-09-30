@@ -7,6 +7,7 @@ import {
   patchSimRequestSchema,
   previewCombinationsRequestSchema,
   type SimListItem,
+  simLadderResponseSchema,
   simListResponseSchema,
   simResultsResponseSchema,
   simSchema,
@@ -21,6 +22,7 @@ import {
   copySim,
   createSim,
   deleteSim,
+  getLadder,
   getSim,
   getSimResults,
   listSims,
@@ -269,6 +271,13 @@ export function getResults(db: Db, rawId: string): Response {
   }
   const results = getSimResults(db, id);
   return results ? json(simResultsResponseSchema.parse(results)) : apiError(404, "sim_not_found");
+}
+
+/** `GET /api/sims/:id/ladder`: the planned Stages and what each finished one did to the field. */
+export function getSimLadder(db: Db, rawId: string): Response {
+  const id = parseId(rawId);
+  const ladder = id === null ? null : getLadder(db, id);
+  return ladder ? json(simLadderResponseSchema.parse(ladder)) : apiError(404, "sim_not_found");
 }
 
 /** `GET /api/sims?characterId&status`: List Sims with optional filters. */

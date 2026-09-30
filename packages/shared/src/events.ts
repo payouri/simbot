@@ -61,20 +61,34 @@ export const snapshotEventSchema = z.object({
 /** A Job joined, started or left the Queue. Clients refetch `GET /api/queue`. */
 export const queueChangedEventSchema = z.object({ type: z.literal("queue.changed") });
 
+/** A Stage began: how many Stages the ladder has, how many Combinations entered, its target. */
 export const simStageStartedEventSchema = z.object({
   type: z.literal("sim.stage_started"),
   simId: z.number().int(),
   stage: z.number().int(),
+  /** Stages in the ladder (the last one is at the precision the user picked). */
+  stages: z.number().int(),
+  /** Combinations in the Stage, the baseline included. */
+  entered: z.number().int(),
+  /** The `target_error` the Stage runs to, percent of DPS. */
+  targetErrorPct: z.number(),
 });
 
 export const simProgressEventSchema = simProgressSchema.extend({
   type: z.literal("sim.progress"),
 });
 
+/** A Stage finished and its Stage Results are stored; clients refetch over REST. */
 export const simStageFinishedEventSchema = z.object({
   type: z.literal("sim.stage_finished"),
   simId: z.number().int(),
   stage: z.number().int(),
+  /** Combinations kept for the next Stage (all that finished, on the last Stage). */
+  survivors: z.number().int(),
+  /** Combinations Culled by this Stage. */
+  culled: z.number().int(),
+  /** Combinations SimC refused during this Stage and that were dropped. */
+  invalid: z.number().int(),
 });
 
 export const simFinishedEventSchema = z.object({

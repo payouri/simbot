@@ -143,4 +143,13 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE check_sim_results ADD COLUMN iterations INTEGER;
     `,
   },
+  {
+    id: 8,
+    name: "smart_sim_invalid_combinations",
+    sql: `
+      -- The Stage in which SimC refused this Combination (exit 80 on its profileset). It is
+      -- dropped from that Stage on and has no Stage Result for it or any later one.
+      ALTER TABLE combinations ADD COLUMN invalid_stage INTEGER;
+    `,
+  },
 ];

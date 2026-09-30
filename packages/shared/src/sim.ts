@@ -267,3 +267,25 @@ export const apiErrorSchema = z.object({
   issues: z.array(z.object({ path: z.string(), message: z.string() })).optional(),
 });
 export type ApiError = z.infer<typeof apiErrorSchema>;
+
+/** One rung of a Sim's Stage ladder, as it stands: planned, running or done. */
+export const ladderStageSchema = z.object({
+  stage: z.number().int(),
+  /** The `target_error` the Stage runs to, percent of DPS. */
+  targetErrorPct: z.number(),
+  /** Combinations that entered the Stage; null until it has finished. */
+  entered: z.number().int().nullable(),
+  /** Combinations kept for the next Stage; null until it has finished. */
+  kept: z.number().int().nullable(),
+  culled: z.number().int(),
+  /** Combinations SimC refused during the Stage. */
+  invalid: z.number().int(),
+});
+export type LadderStage = z.infer<typeof ladderStageSchema>;
+
+/** `GET /api/sims/:id/ladder`: every planned Stage, with what the finished ones did to the field. */
+export const simLadderResponseSchema = z.object({
+  simId: z.number().int(),
+  stages: z.array(ladderStageSchema),
+});
+export type SimLadderResponse = z.infer<typeof simLadderResponseSchema>;

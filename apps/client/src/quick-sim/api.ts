@@ -6,9 +6,11 @@ import {
   characterListResponseSchema,
   characterSchema,
   importSchema,
+  type SimLadderResponse,
   type SimListResponse,
   type SimResultsResponse,
   type SimStatus,
+  simLadderResponseSchema,
   simListResponseSchema,
   simResultsResponseSchema,
   simSchema,
@@ -48,6 +50,8 @@ export const queueSim = (id: number) => request("POST", `/api/sims/${id}/queue`,
 export const getSim = (id: number) => request("GET", `/api/sims/${id}`, simSchema);
 export const getResults = (id: number): Promise<SimResultsResponse> =>
   request("GET", `/api/sims/${id}/results`, simResultsResponseSchema);
+export const getLadder = (id: number): Promise<SimLadderResponse> =>
+  request("GET", `/api/sims/${id}/ladder`, simLadderResponseSchema);
 export const listSims = (filters?: {
   characterId?: number;
   status?: SimStatus;

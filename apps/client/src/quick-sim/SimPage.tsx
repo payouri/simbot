@@ -5,6 +5,7 @@ import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { getResults, getSim, stopSim } from "./api";
+import { RunLog, StageLadder } from "./Ladder";
 
 const STATUS_LABEL: Record<SimStatus, string> = {
   draft: "Draft",
@@ -44,7 +45,8 @@ export function SimPage() {
       void queryClient.invalidateQueries({ queryKey: ["queue"] });
     },
   });
-  const dps = results.data?.results.find((r) => r.isBaseline)?.dps;
+  // The baseline's last Stage Result is the one at the precision the user picked.
+  const dps = results.data?.results.filter((r) => r.isBaseline).at(-1)?.dps;
 
   // A Draft is edited in the setup; Discard sends a Sim back here as a Draft.
   if (sim.data?.status === "draft") return <Navigate to={`/sims/${id}/setup`} replace />;
@@ -82,6 +84,10 @@ export function SimPage() {
                   <WarmingUp />
                 </div>
               ))}
+            {sim.data.kind === "top_gear" && sim.data.status !== "queued" && (
+              <StageLadder simId={id} status={sim.data.status} />
+            )}
+            {sim.data.status === "running" && <RunLog simId={id} />}
             {(sim.data.status === "running" || sim.data.status === "queued") && (
               <div className="mt-4 flex items-center gap-3">
                 {sim.data.status === "running" && (

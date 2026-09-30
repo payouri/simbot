@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   apiErrorSchema,
@@ -19,18 +20,27 @@ import {
   importItemsAddonString,
   installFixtureMeta,
   makeHarness,
+  smartLaunch,
 } from "./harness";
 
 let h: Harness;
 afterEach(() => h?.close());
 
 function start() {
-  const launch: Launch = (_dir, args) => [
-    process.execPath,
-    FAKE_SIMC,
-    `--scenario=${join(IMPORT_ITEMS, "success")}`,
-    ...args,
-  ];
+  // A Top Gear Stage (profilesets in its input) is answered by the Smart Sim fake; the item
+  // pass replays its recording.
+  const stage = smartLaunch(
+    () => h.root,
+    (call) => ({
+      profilesets: Object.fromEntries(
+        call.names.map((n) => [n, [99_000, 100] as [number, number]]),
+      ),
+    }),
+  );
+  const launch: Launch = (dir, args) =>
+    /^profileset\./m.test(readFileSync(args[0] as string, "utf8"))
+      ? stage(dir, args)
+      : [process.execPath, FAKE_SIMC, `--scenario=${join(IMPORT_ITEMS, "success")}`, ...args];
   h = makeHarness({ launch });
   installFixtureMeta(h.dataDir);
 }

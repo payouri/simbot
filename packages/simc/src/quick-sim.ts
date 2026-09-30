@@ -16,16 +16,22 @@ export const PRECISION_TARGET_ERROR: Readonly<Record<Precision, number>> = {
 
 /**
  * The SimC input for a Quick Sim: the Addon String unchanged, then the frozen Sim Settings as
- * option lines, then the user's raw options (which may override the generated ones).
+ * option lines, then the user's raw options (which may override the generated ones). A Smart
+ * Sim Stage passes its own `targetError` and `extraLines`, which sit before the raw options.
  */
-export function buildInput(addonString: string, settings: SimSettings): string {
+export function buildInput(
+  addonString: string,
+  settings: SimSettings,
+  options: { targetError?: number; extraLines?: readonly string[] } = {},
+): string {
   const lines = [
     "",
     "# simbot Sim Settings",
     `fight_style=${settings.fightStyle}`,
     `max_time=${settings.durationSeconds}`,
     `desired_targets=${settings.targets}`,
-    `target_error=${PRECISION_TARGET_ERROR[settings.precision]}`,
+    `target_error=${options.targetError ?? PRECISION_TARGET_ERROR[settings.precision]}`,
+    ...(options.extraLines ?? []),
   ];
   if (settings.rawOptions.trim() !== "") lines.push("# Raw options", settings.rawOptions);
   const head = addonString.endsWith("\n") ? addonString : `${addonString}\n`;

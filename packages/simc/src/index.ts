@@ -63,3 +63,23 @@ export {
   readQuickSimResult,
   stageArgs,
 } from "./quick-sim";
+export {
+  buildStageInput,
+  CULL_KEEP_TOP,
+  CULL_SIGMAS,
+  type CullEntry,
+  cull,
+  type ImportGear,
+  ITERATIONS_CEILING,
+  invalidProfileset,
+  PROFILESET_WORK_THREADS,
+  profilesetLines,
+  profilesetName,
+  readImportGear,
+  readStageReport,
+  SET_BONUS_GUARD,
+  STAGING_MIN_COMBINATIONS,
+  type StageInputPlan,
+  type StageReport,
+  stageLadder,
+} from "./smart-sim";
