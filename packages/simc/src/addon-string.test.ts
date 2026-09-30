@@ -114,6 +114,26 @@ describe("Addon String Parser", () => {
     expect(chest).toBeDefined();
   });
 
+  test("parses Great Vault and linked items under the real addon headers", () => {
+    const real = fixture.replace(
+      "### Gear from Bags",
+      "### Weekly Reward Choices\n#\n# Idol (730)\n# trinket1=,id=249343,bonus_id=1234\n### End of Weekly Reward Choices\n\n### Linked gear\n#\n# head=,id=111\n\n### Gear from Bags",
+    );
+    const result = parseAddonString(real);
+    const vault = result.candidateItems.filter((i) => i.source === "great_vault");
+    expect(vault.map((i) => i.slot)).toEqual(["trinket1"]);
+    const linked = result.candidateItems.filter((i) => i.source === "linked");
+    expect(linked.map((i) => i.slot)).toEqual(["head"]);
+  });
+
+  test("reports equipment lines from unrecognised sections", () => {
+    const odd = fixture.replace(
+      "### Gear from Bags",
+      "### Mystery Gear\n#\n# chest=,id=1\n\n### Gear from Bags",
+    );
+    expect(parseAddonString(odd).report.unknownFields).toContain("mystery gear: chest");
+  });
+
   test("parses talent loadouts", () => {
     const result = parseAddonString(fixture);
     expect(result.talentLoadouts.length).toBeGreaterThan(0);

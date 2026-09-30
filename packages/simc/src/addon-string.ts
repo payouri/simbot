@@ -218,12 +218,23 @@ export function parseAddonString(text: string): ParsedAddonString {
               rawLine: content,
               source: "bags",
             });
-          } else if (currentSection === "gear from great vault") {
+          } else if (
+            currentSection === "weekly reward choices" ||
+            currentSection === "gear from great vault"
+          ) {
             candidateItems.push({
               slot: slotName,
               rawLine: content,
               source: "great_vault",
             });
+          } else if (currentSection === "linked gear") {
+            candidateItems.push({
+              slot: slotName,
+              rawLine: content,
+              source: "linked",
+            });
+          } else if (!currentSection.startsWith("end of ")) {
+            unknownFields.add(`${currentSection}: ${key}`);
           }
         } else if (key === "talents") {
           // Talent loadouts can appear in any context
