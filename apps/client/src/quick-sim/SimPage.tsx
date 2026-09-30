@@ -101,9 +101,9 @@ export function SimPage() {
                     type="button"
                     disabled={end.isPending}
                     onClick={() => end.mutate(true)}
-                    className="rounded-lg border border-line px-3 py-1.5 text-[12.5px] font-semibold hover:border-fg disabled:opacity-50"
+                    className="rounded-md border border-line-strong px-3 py-1.5 text-[12.5px] font-medium hover:bg-raised disabled:text-faint disabled:hover:bg-transparent"
                   >
-                    Stop
+                    Stop and keep results
                   </button>
                 )}
                 <button
