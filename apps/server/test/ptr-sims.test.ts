@@ -185,15 +185,35 @@ describe("running a PTR Sim", () => {
   });
 
   test.each([
-    ["the PTR data is the same as Live", { ptrGameDataVersion: "12.1.0.69933" }],
-    ["the build has no PTR data", { ptrGameDataVersion: null }],
-  ])("fails clearly and never runs on Live when %s", async (_name, patch) => {
+    [
+      "the PTR data is the same as Live",
+      { ptrGameDataVersion: "12.1.0.69933" },
+      "its PTR game data is the same as Live",
+    ],
+    ["the build has no PTR data", { ptrGameDataVersion: null }, "no PTR version is recorded"],
+  ])("fails clearly and never runs on Live when %s", async (_name, patch, reason) => {
     await start();
     rewriteBuild(patch);
     const sim = await h.runQuickSim({ gameData: "ptr" });
     expect(sim.status).toBe("failed");
     expect(sim.error?.kind).toBe("ptr_unavailable");
     expect(sim.error?.message).toContain(`No PTR data in SimC Build ${BUILD_TAG}`);
+    expect(sim.error?.message).toContain(reason);
+    expect(launched()).toBeNull();
+  });
+
+  test("names a failed PTR Check Sim, not Live, and records no PTR version", async () => {
+    await start();
+    h.app.db.run(
+      "INSERT OR REPLACE INTO ptr_check_results (build_tag, error, created_at) VALUES (?, ?, ?)",
+      [BUILD_TAG, "SimC exited 1", new Date().toISOString()],
+    );
+    const sim = await h.runQuickSim({ gameData: "ptr" });
+    expect(sim.status).toBe("failed");
+    expect(sim.error?.kind).toBe("ptr_unavailable");
+    expect(sim.error?.message).toContain("PTR failed its Check Sim: SimC exited 1");
+    expect(sim.error?.message).not.toContain("same as Live");
+    expect(sim.gameDataVersion).toBeNull();
     expect(launched()).toBeNull();
   });
 

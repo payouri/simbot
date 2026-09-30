@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import {
   isTopGear,
-  ptrAvailable,
+  ptrUnavailableReason,
   type SimcBuild,
   type SimError,
   type SimLogLevel,
@@ -228,9 +228,12 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     const build = await deps.currentBuild();
     const isPtr = sim.settings.gameData === "ptr";
     // The version of the Sim's own game data, so a PTR result stays explainable once the PTR moves on.
+    const ptrReason = build && isPtr ? ptrUnavailableReason(build) : null;
     const gameDataVersion = build
       ? isPtr
-        ? build.ptrGameDataVersion
+        ? ptrReason === null
+          ? build.ptrGameDataVersion
+          : null
         : build.gameDataVersion
       : null;
     if (!startSim(db, job.id, sim.id, build?.tag ?? null, gameDataVersion)) {
@@ -244,10 +247,10 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
     }
 
     // Never a silent fallback to Live: a PTR Sim with no PTR to run on fails here.
-    if (isPtr && !ptrAvailable(build)) {
+    if (ptrReason !== null) {
       return fail({
         kind: "ptr_unavailable",
-        message: `No PTR data in SimC Build ${build.tag}: its PTR game data is the same as Live, so this PTR Sim was not run.`,
+        message: `No PTR data in SimC Build ${build.tag}: ${ptrReason}, so this PTR Sim was not run.`,
       });
     }
 

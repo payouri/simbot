@@ -40,6 +40,18 @@ export const ptrAvailable = (
 ) =>
   b.ptrGameDataVersion !== null && b.ptrGameDataVersion !== b.gameDataVersion && !b.ptrCheckError;
 
+/** Why a build has no PTR to sim on, or null when it has one. Same test as `ptrAvailable`. */
+export const ptrUnavailableReason = (
+  b: Pick<SimcBuildInfo, "gameDataVersion" | "ptrGameDataVersion"> & {
+    ptrCheckError?: string | null;
+  },
+): string | null => {
+  if (b.ptrCheckError) return `its PTR failed its Check Sim: ${b.ptrCheckError}`;
+  if (b.ptrGameDataVersion === null) return "no PTR version is recorded for it";
+  if (b.ptrGameDataVersion === b.gameDataVersion) return "its PTR game data is the same as Live";
+  return null;
+};
+
 /** Progress of the boot-time fetch of the latest nightly. */
 export const simcInstallStateSchema = z.object({
   state: z.enum(["idle", "installing", "failed"]),
