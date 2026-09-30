@@ -49,9 +49,10 @@ export type SimcUpdateTarget = z.infer<typeof simcUpdateTargetSchema>;
  * - `up_to_date`: nothing newer upstream and no newer build.
  * - `commits_ahead`: the branch moved on but no newer build exists yet.
  * - `installable`: a newer nightly or Seed SimC Build exists (only the newest is offered).
+ * - `error`: the check failed and there was no earlier result to keep; `error` says why.
  */
 export const simcUpdateStatusSchema = z.object({
-  state: z.enum(["up_to_date", "commits_ahead", "installable"]),
+  state: z.enum(["up_to_date", "commits_ahead", "installable", "error"]),
   /** ISO time the check ran (also set when it failed, so a failure is not retried at once). */
   checkedAt: z.string(),
   /** Set when the last check failed; the other fields then hold the previous result. */
@@ -137,5 +138,10 @@ export const simcStatusResponseSchema = z.object({
   job: simcJobSchema.nullable(),
   /** The Check Sim DPS of the Current SimC Build and, when both exist, of the build before it. */
   checkSim: simcCheckSimSchema.nullable(),
+  /**
+   * Why the Current SimC Build has no item-meta and item-icons, when building them failed; null
+   * when they exist or nothing has failed. Without them an Import's items show up unresolved.
+   */
+  itemMetaError: z.string().nullable(),
 });
 export type SimcStatusResponse = z.infer<typeof simcStatusResponseSchema>;

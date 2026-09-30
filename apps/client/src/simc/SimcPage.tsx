@@ -22,6 +22,7 @@ const SUMMARY: Record<SimcUpdateStatus["state"], (u: SimcUpdateStatus) => string
   up_to_date: () => "SimC is up to date.",
   commits_ahead: (u) =>
     `${u.aheadBy} ${u.aheadBy === 1 ? "commit" : "commits"} ahead of this build. No newer build yet, the next one is expected overnight.`,
+  error: () => "Could not check for updates.",
   installable: (u) =>
     u.target?.source === "seed"
       ? "A newer SimC Build ships with this app."
@@ -333,6 +334,18 @@ export function SimcPage() {
               </span>
             )}
             {status.install.state === "idle" && "No SimC Build installed."}
+          </p>
+        </section>
+      )}
+      {status?.itemMetaError && (
+        <section role="status" className="rounded-xl border border-loss/35 bg-loss-wash p-5">
+          <h2 className="text-[14px] font-semibold">Item data</h2>
+          <p className="mt-3">
+            Could not build item data for this SimC Build, so imported items show up unresolved:{" "}
+            {status.itemMetaError}
+          </p>
+          <p className="mt-2 text-[12.5px] text-muted">
+            It is retried the next time the app starts.
           </p>
         </section>
       )}

@@ -80,6 +80,7 @@ describe("boot with an empty data dir", () => {
       keep: 3,
       job: null,
       checkSim: null,
+      itemMetaError: null,
     });
     expect(LATEST_NIGHTLY).toBe("1210-2026-09-29-d08a1c3");
   });
@@ -282,10 +283,13 @@ describe("item-meta and item-icons", () => {
     expect(logs.join("\n")).toContain("could not build item-meta and item-icons");
     expect(existsSync(metaDirFor())).toBe(false);
     expect(readdirSafe(join(dataDir, "meta", ".partial"))).toEqual([]);
+    // The failure is reported, not only logged.
+    expect((await status()).body.itemMetaError).toContain("400");
 
     app?.close();
     const again = fakeRegistry();
     await boot(again).boot();
+    expect((await status()).body.itemMetaError).toBeNull();
     expect(again.calls.every((u) => /raw\.githubusercontent|wago\.tools/.test(u))).toBe(true);
     expect(existsSync(join(metaDirFor(), "item-meta.json"))).toBe(true);
   });

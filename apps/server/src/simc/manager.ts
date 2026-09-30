@@ -88,6 +88,8 @@ export function createSimcManager(deps: SimcManagerDeps) {
   const now = deps.now ?? (() => new Date());
   const registry = createRegistryClient(deps);
   let install: SimcInstallState = { state: "idle", error: null };
+  /** The last failed item-meta build, for the tag it was for; cleared when a build succeeds. */
+  let metaFailure: { tag: string; message: string } | null = null;
 
   const currentTag = () =>
     db
@@ -143,6 +145,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
     keep: keepCount(),
     job: latestOpenSimcJob(db),
     checkSim: build ? getCheckSim(db, build.tag) : null,
+    itemMetaError: build && metaFailure?.tag === build.tag ? metaFailure.message : null,
   });
 
   let inFlight: Promise<void> | null = null;
@@ -171,8 +174,9 @@ export function createSimcManager(deps: SimcManagerDeps) {
         const message = err instanceof Error ? err.message : String(err);
         log(`simc: update check failed: ${message}`);
         // Keep what we knew, but stamp the time: a failing check is not retried on every request.
+        // With nothing known yet the state is `error`, not a quiet `up_to_date`.
         result = {
-          state: "up_to_date",
+          state: "error",
           aheadBy: 0,
           commits: [],
           branch: null,
@@ -347,6 +351,7 @@ export function createSimcManager(deps: SimcManagerDeps) {
         metaBuiltHere = hadMeta;
       }
       await ensureBuildMeta({ dataDir, build, fetch: deps.fetch, sleep: deps.sleep });
+      if (metaFailure?.tag === tag) metaFailure = null;
       metaBuiltHere ||= !hadMeta;
 
       enter("commit");
@@ -535,10 +540,13 @@ export function createSimcManager(deps: SimcManagerDeps) {
       // Missing item data must not undo an install: sims still run, and the next boot retries.
       try {
         await ensureBuildMeta({ dataDir, build: current, fetch: deps.fetch, sleep: deps.sleep });
+        if (metaFailure?.tag === current.tag) metaFailure = null;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         log(`simc: could not build item-meta and item-icons for ${current.tag}: ${message}`);
+        metaFailure = { tag: current.tag, message };
       }
+      events.emit({ type: "simc.status_changed" });
     },
   };
 }

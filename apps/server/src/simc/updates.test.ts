@@ -344,6 +344,23 @@ describe("failures", () => {
   });
 });
 
+describe("a first check that fails", () => {
+  test("shows as an error state, not up_to_date, and a later success replaces it", async () => {
+    const fake = fakeWorld();
+    fake.world.github = "down";
+    const a = boot(fake);
+    const { settled } = await clientAsks(a);
+    expect(settled.update?.state).toBe("error");
+    expect(settled.update?.error).toContain("HTTP 500");
+
+    fake.world.github = "ok";
+    const forced = simcStatusResponseSchema.parse(
+      await (await req(a, "/api/simc/check", "POST")).json(),
+    );
+    expect(forced.update).toMatchObject({ state: "up_to_date", error: null });
+  });
+});
+
 describe("GET /api/events", () => {
   test("streams simc.status_changed when a check finishes", async () => {
     const a = boot(fakeWorld());
