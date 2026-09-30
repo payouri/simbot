@@ -2,7 +2,7 @@ import type { SimListItem, SimStatus } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { copySimToDraft, deleteSim, listSims } from "./api";
+import { copySimToDraft, deleteSim, listCharacters, listSims } from "./api";
 
 const STATUS_LABEL: Record<SimStatus, string> = {
   draft: "Draft",
@@ -15,9 +15,9 @@ const STATUS_LABEL: Record<SimStatus, string> = {
 
 const STATUS_COLOR: Record<SimStatus, string> = {
   draft: "text-muted",
-  queued: "text-warn",
-  running: "text-info",
-  succeeded: "text-win",
+  queued: "text-faint",
+  running: "text-action",
+  succeeded: "text-fg",
   failed: "text-loss",
   cancelled: "text-muted",
 };
@@ -28,7 +28,14 @@ export function HistoryPage() {
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<SimStatus | "all">("all");
 
-  const filters = selectedStatus !== "all" ? { status: selectedStatus as SimStatus } : {};
+  const [characterId, setCharacterId] = useState<number | null>(null);
+
+  const characters = useQuery({ queryKey: ["characters"], queryFn: listCharacters });
+
+  const filters = {
+    ...(selectedStatus !== "all" ? { status: selectedStatus as SimStatus } : {}),
+    ...(characterId !== null ? { characterId } : {}),
+  };
 
   const sims = useQuery({
     queryKey: ["sims", filters],
@@ -80,6 +87,24 @@ export function HistoryPage() {
         >
           New Sim
         </Link>
+      </div>
+
+      <div className="mb-4">
+        <label className="flex items-center gap-2 text-[12.5px] text-muted">
+          Character
+          <select
+            value={characterId ?? ""}
+            onChange={(e) => setCharacterId(e.target.value ? Number(e.target.value) : null)}
+            className="rounded-[5px] bg-raised px-3 py-2 text-fg ring-1 ring-line"
+          >
+            <option value="">All Characters</option>
+            {characters.data?.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <div className="mb-6 flex gap-2">
