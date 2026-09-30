@@ -215,19 +215,12 @@ export type StageReport = {
 export function readStageReport(text: string | null, expected: readonly number[]): StageReport {
   const { sim } = readJson2(text, stageJson2Schema);
   const baseline = baselineDps(sim).summary;
-  const confidence = sim.options.confidence_estimator;
   const byName = new Map((sim.profilesets?.results ?? []).map((r) => [r.name, r]));
   const profilesets = new Map<number, DpsSummary>();
   for (const id of expected) {
     const r = byName.get(profilesetName(id));
     if (!r) throw new Json2FormatError(`profileset "${id}" missing from the report`);
-    const meanError =
-      r.mean_error ??
-      (r.stddev !== undefined && r.iterations !== undefined
-        ? (confidence * r.stddev) / Math.sqrt(r.iterations)
-        : null);
-    if (meanError === null) throw new Json2FormatError(`profileset "${id}" has no error`);
-    profilesets.set(id, { mean: r.mean, meanError });
+    profilesets.set(id, { mean: r.mean, meanError: r.mean_error });
   }
   return { baseline, profilesets };
 }

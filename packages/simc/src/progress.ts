@@ -41,14 +41,14 @@ export type ProfilesetAggregate = {
 export type ProgressLine = IterationProgress | ProfilesetAggregate;
 export type ParsedLine = ProgressLine | { kind: "text"; text: string };
 
-/** `23s`, `1m, 4s`, `1h, 2m, 3s` to seconds; null when it is not a duration. */
+/** `23s`, `371.074ms`, `1m, 4s`, `1h, 2m, 3s` to seconds; null when it is not a duration. */
 export function parseDuration(text: string): number | null {
   const parts = text.split(",").map((p) => p.trim());
   let total = 0;
   for (const part of parts) {
-    const m = /^(\d+(?:\.\d+)?)([hms])$/.exec(part);
+    const m = /^(\d+(?:\.\d+)?)(ms|[hms])$/.exec(part);
     if (!m) return null;
-    total += Number(m[1]) * { h: 3600, m: 60, s: 1 }[m[2] as "h" | "m" | "s"];
+    total += Number(m[1]) * { h: 3600, m: 60, s: 1, ms: 0.001 }[m[2] as "h" | "m" | "s" | "ms"];
   }
   return parts.length > 0 ? total : null;
 }

@@ -82,8 +82,8 @@ export const checkSimJson2Schema = quickSimJson2Schema.extend({
 
 /**
  * The slice of a Smart Sim Stage report: the Quick Sim slice plus, when the Stage ran
- * profilesets, `profilesets.results[]`. Each result carries its error either as `mean_error`
- * (what SimC writes) or as `stddev` and `iterations`, from which it is derived.
+ * profilesets, `profilesets.results[]`. Each result carries its `mean_error` (recorded from
+ * SimC `1210-2026-09-29-d08a1c3`; see `fixtures/top-gear/`).
  */
 export const stageJson2Schema = quickSimJson2Schema.extend({
   sim: quickSimJson2Schema.shape.sim.extend({
@@ -93,9 +93,7 @@ export const stageJson2Schema = quickSimJson2Schema.extend({
           z.object({
             name: z.string(),
             mean: z.number(),
-            mean_error: z.number().nonnegative().optional(),
-            stddev: z.number().nonnegative().optional(),
-            iterations: z.number().positive().optional(),
+            mean_error: z.number().nonnegative(),
           }),
         ),
       })

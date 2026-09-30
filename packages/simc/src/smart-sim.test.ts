@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { gunzipSync } from "node:zlib";
 import { type CombinationDefinition, defaultSimSettings } from "@simbot/shared";
 import {
   buildStageInput,
@@ -12,6 +13,7 @@ import {
   profilesetLines,
   readImportGear,
   readStageReport,
+  SET_BONUS_GUARD,
   stageLadder,
 } from "./index";
 
@@ -218,13 +220,34 @@ describe("readStageReport", () => {
     const out = readStageReport(
       report([
         { name: "9", mean: 90, mean_error: 4 },
-        { name: "5", mean: 95, stddev: 20, iterations: 100 },
+        { name: "5", mean: 95, mean_error: 5 },
       ]),
       [5, 9],
     );
     expect(out.baseline).toEqual({ mean: 100, meanError: 6 });
     expect(out.profilesets.get(9)).toEqual({ mean: 90, meanError: 4 });
-    expect(out.profilesets.get(5)).toEqual({ mean: 95, meanError: 4 });
+    expect(out.profilesets.get(5)).toEqual({ mean: 95, meanError: 5 });
+  });
+
+  test("reads a report recorded from a real Top Gear Stage", () => {
+    const dir = join(import.meta.dir, "fixtures/top-gear");
+    const text = gunzipSync(readFileSync(join(dir, "json2.json.gz"))).toString("utf8");
+    const ids = Array.from({ length: 26 }, (_, n) => n + 2);
+    const out = readStageReport(text, ids);
+    expect(out.baseline.mean).toBeGreaterThan(100_000);
+    for (const id of ids) {
+      const dps = out.profilesets.get(id);
+      expect(dps?.mean).toBeGreaterThan(100_000);
+      expect(dps?.meanError).toBeGreaterThan(0);
+    }
+    // The recorded input asked for exactly these profilesets, each behind the set-bonus guard.
+    const input = readFileSync(join(dir, "stage.simc"), "utf8");
+    expect([...input.matchAll(/^profileset\."(\d+)"\+=/gm)].map((m) => Number(m[1]))).toEqual(
+      expect.arrayContaining(ids),
+    );
+    expect(input).toContain(`profileset."2"+=${SET_BONUS_GUARD}`);
+    // What SimC said on stderr is a note about unverified implementations, not an error.
+    expect(readFileSync(join(dir, "stderr.txt"), "utf8")).not.toMatch(/^Error/m);
   });
 
   test("a missing profileset, a missing file and garbage are format errors", () => {

@@ -86,14 +86,23 @@ describe("sequential profilesets", () => {
 });
 
 describe("parallel profilesets", () => {
-  test("\\r-terminated aggregate lines each become one update", () => {
+  test("recorded: each \\r-terminated aggregate line becomes one update, sub-second times included", () => {
     const lines = progressOnly(parseAll(transcript("parallel-profilesets.txt")));
-    expect(lines.map((l) => l.kind)).toEqual(["iterations", "aggregate", "aggregate", "aggregate"]);
-    expect(lines.slice(1)).toEqual([
-      { kind: "aggregate", workers: 2, threadsPerWorker: 2, done: 1, total: 5, secondsLeft: 0 },
-      { kind: "aggregate", workers: 2, threadsPerWorker: 2, done: 3, total: 5, secondsLeft: 3 },
-      { kind: "aggregate", workers: 2, threadsPerWorker: 2, done: 5, total: 5, secondsLeft: 0 },
-    ]);
+    expect(lines[0]).toMatchObject({ kind: "iterations", base: "Baseline", phaseCount: 2 });
+    const aggregates = lines.slice(1);
+    expect(aggregates).toHaveLength(27);
+    expect(aggregates[0]).toEqual({
+      kind: "aggregate",
+      workers: 8,
+      threadsPerWorker: 2,
+      done: 1,
+      total: 1,
+      secondsLeft: 0,
+    });
+    // `left=371.074ms` is 0.371074 s, not an unreadable time.
+    expect(aggregates.every((l) => l.kind === "aggregate" && l.secondsLeft !== null)).toBe(true);
+    expect(aggregates[24]).toMatchObject({ done: 18, total: 25, secondsLeft: 0.371074 });
+    expect(aggregates.at(-1)).toMatchObject({ done: 26, total: 26, secondsLeft: 0 });
   });
 });
 
@@ -135,6 +144,7 @@ describe("malformed lines", () => {
 
 test("parseDuration", () => {
   expect(parseDuration("23s")).toBe(23);
+  expect(parseDuration("371.074ms")).toBeCloseTo(0.371074, 9);
   expect(parseDuration("1m, 4s")).toBe(64);
   expect(parseDuration("1h, 2m, 3s")).toBe(3723);
   expect(parseDuration("soon")).toBeNull();
@@ -180,14 +190,14 @@ describe("toSimProgress", () => {
   });
 
   test("an aggregate line counts profilesets", () => {
-    const line = progressOnly(parseAll(transcript("parallel-profilesets.txt")))[2];
+    const line = progressOnly(parseAll(transcript("parallel-profilesets.txt")))[19];
     if (line?.kind !== "aggregate") throw new Error("expected an aggregate line");
     expect(toSimProgress(line, ctx)).toMatchObject({
       phase: "profilesets",
-      done: 3,
-      total: 5,
+      done: 12,
+      total: 19,
       errorPct: null,
-      etaSeconds: 3,
+      etaSeconds: 0.350101,
     });
   });
 });

@@ -21,6 +21,7 @@ describe.skipIf(!enabled)("Quick Sim against a real SimC Build", () => {
     const status = (await (await real.fetch(new Request("http://x/api/simc"))).json()) as {
       current: { tag: string } | null;
     };
+    await real.idle();
     real.close();
     if (!status.current) throw new Error("no SimC Build available; is the network up?");
     h = makeHarness({ withBuild: false });
