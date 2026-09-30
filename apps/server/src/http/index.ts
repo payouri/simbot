@@ -36,7 +36,7 @@ import {
   postSim,
   postStopSim,
 } from "./sims";
-import { apiError, json, readBody } from "./util";
+import { apiError, json, parseId, readBody } from "./util";
 
 export type HttpDeps = {
   db: Db;
@@ -68,6 +68,12 @@ export type HttpDeps = {
     setKeep: (keep: number) => Promise<void>;
   };
 };
+
+/** `root/...parts` normalised, or null when it does not stay strictly inside `root`. */
+export function resolveInside(root: string, ...parts: string[]): string | null {
+  const full = normalize(join(root, ...parts));
+  return full.startsWith(root + sep) ? full : null;
+}
 
 function serveClient(clientDir: string, pathname: string): Response {
   let rel = "";
@@ -286,33 +292,35 @@ export function createHttpHandler({
           ? postCopySimToDraft(db, id)
           : json({ error: "method_not_allowed" }, 405);
       }
-      if (action === "files" && fileName) {
+      if (action === "files") {
         if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
-        // Download file from sims folder
-        const filePath = join("sims", id, fileName);
-        const fullPath = join(dataDir, filePath);
-
-        // Validate path is within sims directory
-        const realPath = fullPath;
-        if (!realPath.startsWith(join(dataDir, "sims", id))) {
-          return apiError(403, "forbidden");
-        }
-
+        const simId = parseId(id);
+        if (simId === null) return apiError(404, "sim_not_found");
+        if (!fileName) return apiError(404, "not_found");
+        // Download file from the Sim's folder
+        const simDir = join(dataDir, "sims", String(simId));
+        const fullPath = resolveInside(simDir, fileName);
+        if (!fullPath) return apiError(403, "forbidden");
         try {
-          if (!existsSync(fullPath)) return apiError(404, "file_not_found");
-          const file = Bun.file(fullPath);
-          return new Response(file);
-        } catch {
+          if (!existsSync(fullPath) || !statSync(fullPath).isFile()) {
+            return apiError(404, "file_not_found");
+          }
+          return new Response(Bun.file(fullPath));
+        } catch (err) {
+          console.error("sim file download failed", err);
           return apiError(500, "internal_error");
         }
       }
-      if (req.method === "PATCH" && !action) return patchSim(db, items, req, id);
-      if (req.method === "DELETE") {
-        return deleteSim_Handler(db, id, dataDir);
+      if (!action) {
+        if (req.method === "PATCH") return patchSim(db, items, req, id);
+        if (req.method === "DELETE") return deleteSim_Handler(db, id, dataDir);
+        if (req.method === "GET") return getSimById(db, id);
+        return json({ error: "method_not_allowed" }, 405);
       }
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
       if (action === "results") return getResults(db, items, id);
-      return action === "ladder" ? getSimLadder(db, id) : getSimById(db, id);
+      if (action === "ladder") return getSimLadder(db, id);
+      return apiError(404, "not_found");
     }
     if (pathname === "/api" || pathname.startsWith("/api/")) {
       return apiError(404, "not_found");
