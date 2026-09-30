@@ -11,7 +11,7 @@ const SAVE_DELAY_MS = 400;
 /**
  * A Draft's editable input with autosave. Edits apply at once and are sent after a short pause,
  * one request at a time (the next carries whatever changed meanwhile). `flush` sends what is
- * pending now and resolves once the server has it; the page also flushes as it unmounts and,
+ * pending now and resolves once the server has it (it rejects if saving failed); the page also flushes as it unmounts and,
  * with `keepalive`, as it is hidden or closed, so a reload restores what was on screen.
  */
 export function useDraftAutosave(simId: number, initial: DraftInput) {
@@ -19,10 +19,10 @@ export function useDraftAutosave(simId: number, initial: DraftInput) {
   const [save, setSave] = useState<SaveState>({ kind: "saved" });
   const latest = useRef(initial);
   const dirty = useRef({ settings: false, selection: false });
-  const running = useRef<Promise<void> | null>(null);
+  const running = useRef<Promise<boolean> | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const send = useCallback(async () => {
+  const send = useCallback(async (): Promise<boolean> => {
     while (dirty.current.settings || dirty.current.selection) {
       const sending = { ...dirty.current };
       dirty.current = { settings: false, selection: false };
@@ -38,13 +38,14 @@ export function useDraftAutosave(simId: number, initial: DraftInput) {
           selection: dirty.current.selection || sending.selection,
         };
         setSave({ kind: "error", message: err instanceof Error ? err.message : "Saving failed." });
-        return;
+        return false;
       }
     }
     setSave({ kind: "saved" });
+    return true;
   }, [simId]);
 
-  const flush = useCallback((): Promise<void> => {
+  const flushQuietly = useCallback((): Promise<boolean> => {
     if (timer.current) {
       clearTimeout(timer.current);
       timer.current = null;
@@ -57,6 +58,13 @@ export function useDraftAutosave(simId: number, initial: DraftInput) {
     return running.current;
   }, [send]);
 
+  /** Resolves once the server has everything; rejects if a save failed so callers do not act on stale data. */
+  const flush = useCallback(async (): Promise<void> => {
+    if (!(await flushQuietly())) throw new Error("Saving failed; the setup was not saved.");
+  }, [flushQuietly]);
+
+  const retry = useCallback(() => void flushQuietly(), [flushQuietly]);
+
   const edit = useCallback(
     (change: { settings?: SimSettings; selection?: TopGearSelection }) => {
       latest.current = {
@@ -67,9 +75,9 @@ export function useDraftAutosave(simId: number, initial: DraftInput) {
       if (change.selection) dirty.current.selection = true;
       setInput(latest.current);
       if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => void flush(), SAVE_DELAY_MS);
+      timer.current = setTimeout(() => void flushQuietly(), SAVE_DELAY_MS);
     },
-    [flush],
+    [flushQuietly],
   );
 
   useEffect(() => {
@@ -92,9 +100,9 @@ export function useDraftAutosave(simId: number, initial: DraftInput) {
     return () => {
       window.removeEventListener("pagehide", onHide);
       document.removeEventListener("visibilitychange", onVisibility);
-      void flush();
+      void flushQuietly();
     };
-  }, [simId, flush]);
+  }, [simId, flushQuietly]);
 
-  return { input, edit, flush, save, retry: flush };
+  return { input, edit, flush, save, retry };
 }
