@@ -205,6 +205,11 @@ export type StageReport = {
   baseline: DpsSummary;
   /** By Combination id. */
   profilesets: Map<number, DpsSummary>;
+  /**
+   * Iterations summed over the profilesets, what the time estimate learns from. Null when the
+   * Stage ran none or one of them does not report its count.
+   */
+  iterations: number | null;
 };
 
 /**
@@ -217,12 +222,15 @@ export function readStageReport(text: string | null, expected: readonly number[]
   const baseline = baselineDps(sim).summary;
   const byName = new Map((sim.profilesets?.results ?? []).map((r) => [r.name, r]));
   const profilesets = new Map<number, DpsSummary>();
+  let iterations: number | null = expected.length > 0 ? 0 : null;
   for (const id of expected) {
     const r = byName.get(profilesetName(id));
     if (!r) throw new Json2FormatError(`profileset "${id}" missing from the report`);
     profilesets.set(id, { mean: r.mean, meanError: r.mean_error });
+    iterations =
+      iterations !== null && r.iterations !== undefined ? iterations + r.iterations : null;
   }
-  return { baseline, profilesets };
+  return { baseline, profilesets, iterations };
 }
 
 /** The Combination SimC refused in an exit-80 stderr (`Profileset '<id>'`), if it names one. */

@@ -53,8 +53,11 @@ export const combinationPreviewSchema = z.object({
   loadoutCount: z.number().int(),
   /** Estimated wall time of the whole Smart Sim; null when the count is refused. */
   estimateSeconds: z.number().nullable(),
-  /** `check_sim`: measured on the Current SimC Build's last Check Sim. `default`: a stand-in. */
-  estimateBasis: z.enum(["check_sim", "default"]),
+  /**
+   * `finished_sims`: learnt from the Current SimC Build's most recent finished Top Gear.
+   * `check_sim`: seeded from its last Check Sim. `default`: a stand-in.
+   */
+  estimateBasis: z.enum(["finished_sims", "check_sim", "default"]),
   /** The estimate is above about 30 minutes. */
   softWarning: z.boolean(),
   /** More than 50,000 Combinations after pruning: the Sim cannot be queued. */

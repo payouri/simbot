@@ -163,4 +163,22 @@ export const migrations: readonly Migration[] = [
         AND json_array_length(top_gear_selection, '$.included') > 0;
     `,
   },
+  {
+    id: 10,
+    name: "stage_costs",
+    sql: `
+      -- What each finished Smart Sim Stage cost: wall time of its SimC run, iterations summed
+      -- over its profilesets (null when SimC did not report them), how many profilesets ran and
+      -- the target_error they ran to. Refines the time estimate from finished Sims.
+      CREATE TABLE stage_costs (
+        sim_id       INTEGER NOT NULL REFERENCES sims (id) ON DELETE CASCADE,
+        stage        INTEGER NOT NULL,
+        duration_ms  INTEGER NOT NULL,
+        iterations   INTEGER,
+        profilesets  INTEGER NOT NULL,
+        target_error REAL NOT NULL,
+        PRIMARY KEY (sim_id, stage)
+      ) STRICT;
+    `,
+  },
 ];

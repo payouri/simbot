@@ -39,6 +39,50 @@ export function costModelFromCheckSim(run: {
   };
 }
 
+/** What one finished Smart Sim Stage cost: the numbers stored next to its results. */
+export type StageCost = {
+  /** Wall time of the Stage's SimC run. */
+  durationMs: number;
+  /** Iterations summed over the profilesets that ran in the Stage. */
+  iterations: number;
+  /** Profilesets that ran in the Stage (the baseline is not one). */
+  profilesets: number;
+  /** The Stage's `target_error`, percent of DPS. */
+  targetError: number;
+  /** Fight length of the Sim the Stage belongs to. */
+  fightSeconds: number;
+};
+
+/**
+ * Refines the cost model from a finished Top Gear's Stages. Each Stage ran its profilesets plus
+ * the baseline, every actor to the Stage's `target_error`; the profilesets' mean iteration count
+ * stands in for the baseline's. Stages with a number that is not positive are skipped; null when
+ * none is left to learn from.
+ */
+export function costModelFromStages(stages: readonly StageCost[]): CostModel | null {
+  let ms = 0;
+  let iterationsAt60 = 0;
+  let iterationsTimesErrorSq = 0;
+  let actors = 0;
+  for (const s of stages) {
+    const { durationMs, iterations, profilesets, targetError, fightSeconds } = s;
+    if ([durationMs, iterations, profilesets, targetError, fightSeconds].some((n) => !(n > 0))) {
+      continue;
+    }
+    const perActor = iterations / profilesets;
+    const n = profilesets + 1;
+    ms += durationMs;
+    iterationsAt60 += n * perActor * (fightSeconds / COST_MODEL_FIGHT_SECONDS);
+    iterationsTimesErrorSq += n * perActor * targetError ** 2;
+    actors += n;
+  }
+  if (actors === 0) return null;
+  return {
+    msPerIteration: ms / iterationsAt60,
+    iterationsTimesErrorSq: iterationsTimesErrorSq / actors,
+  };
+}
+
 /** Who a Cull is assumed to keep: `keepFraction` of the field, never fewer than `keepMin`. */
 export type CullShape = { keepFraction: number; keepMin: number };
 

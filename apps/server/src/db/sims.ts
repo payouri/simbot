@@ -21,7 +21,7 @@ import {
   type TopGearSelection,
   topGearSelectionSchema,
 } from "@simbot/shared";
-import { parseProfileHeader, stageLadder } from "@simbot/simc";
+import { parseProfileHeader, type StageCost, stageLadder } from "@simbot/simc";
 import type { Db } from ".";
 import { getCharacter } from "./characters";
 import { equippedLoadoutIndex, getImportText } from "./imports";
@@ -382,9 +382,42 @@ export function stageSurvivorIds(db: Db, simId: number, stage: number): number[]
 
 export type StageOutcome = { combinationId: number; dps: DpsSummary; survived: boolean };
 
-/** Stores a finished Stage: one Stage Result per Combination that ran it, all or nothing. */
-export function recordStage(db: Db, stage: number, outcomes: readonly StageOutcome[]) {
+/** What a finished Stage's SimC run cost, stored next to its results for the time estimate. */
+export type StageRunCost = {
+  simId: number;
+  durationMs: number;
+  /** Summed over the profilesets; null when SimC did not report it. */
+  iterations: number | null;
+  profilesets: number;
+  targetError: number;
+};
+
+/**
+ * Stores a finished Stage: one Stage Result per Combination that ran it and, when given, what
+ * the run cost; all or nothing.
+ */
+export function recordStage(
+  db: Db,
+  stage: number,
+  outcomes: readonly StageOutcome[],
+  cost?: StageRunCost,
+) {
   db.transaction(() => {
+    if (cost) {
+      db.run(
+        `INSERT OR REPLACE INTO stage_costs
+           (sim_id, stage, duration_ms, iterations, profilesets, target_error)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [
+          cost.simId,
+          stage,
+          Math.round(cost.durationMs),
+          cost.iterations === null ? null : Math.round(cost.iterations),
+          cost.profilesets,
+          cost.targetError,
+        ],
+      );
+    }
     const insert = db.prepare(
       `INSERT INTO stage_results (combination_id, stage, dps_mean, dps_mean_error, survived)
        VALUES (?, ?, ?, ?, ?)`,
@@ -402,6 +435,44 @@ export function recordStage(db: Db, stage: number, outcomes: readonly StageOutco
       );
     }
   })();
+}
+
+/**
+ * The Stage costs of the most recently finished Top Gear that ran on SimC Build `tag` and
+ * recorded any, with the fight length it ran. Empty when there is none.
+ */
+export function lastTopGearStageCosts(db: Db, tag: string): StageCost[] {
+  return db
+    .query<
+      {
+        duration_ms: number;
+        iterations: number;
+        profilesets: number;
+        target_error: number;
+        fight_seconds: number;
+      },
+      [string]
+    >(
+      `SELECT c.duration_ms, c.iterations, c.profilesets, c.target_error,
+              json_extract(s.settings, '$.durationSeconds') AS fight_seconds
+       FROM stage_costs c JOIN sims s ON s.id = c.sim_id
+       WHERE c.sim_id = (
+         SELECT s2.id FROM sims s2
+         WHERE s2.kind = 'top_gear' AND s2.status = 'succeeded' AND s2.simc_tag = ?1
+           AND EXISTS (SELECT 1 FROM stage_costs c2
+                       WHERE c2.sim_id = s2.id AND c2.iterations IS NOT NULL)
+         ORDER BY s2.finished_at DESC, s2.id DESC LIMIT 1)
+         AND c.iterations IS NOT NULL
+       ORDER BY c.stage`,
+    )
+    .all(tag)
+    .map((r) => ({
+      durationMs: r.duration_ms,
+      iterations: r.iterations,
+      profilesets: r.profilesets,
+      targetError: r.target_error,
+      fightSeconds: r.fight_seconds,
+    }));
 }
 
 /** SimC refused this Combination in `stage`: it takes no further part. */
@@ -488,6 +559,7 @@ function resetToDraft(db: Db, simId: number, from: "queued" | "running") {
   db.run("UPDATE sims SET frozen_simc_tag = NULL WHERE id = ?", [simId]);
   // Stage results go with their Combinations (ON DELETE CASCADE).
   db.run("DELETE FROM combinations WHERE sim_id = ?", [simId]);
+  db.run("DELETE FROM stage_costs WHERE sim_id = ?", [simId]);
   db.run("DELETE FROM jobs WHERE kind = 'sim' AND sim_id = ?", [simId]);
 }
 

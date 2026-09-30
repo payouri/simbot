@@ -310,7 +310,9 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
           );
         }
 
+        const started = performance.now();
         const run = await runSimc(buildDir, stage, inputPath, json2Path, targetError);
+        const durationMs = performance.now() - started;
         if (!run.ok) return fail(run.error);
         // A Discard wins even over a run that got to finish; a Stop only when there is nothing to keep.
         const stop = getStopMode(db, job.id);
@@ -382,6 +384,13 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
             dps: { mean: e.mean, meanError: e.error },
             survived: keptSet.has(e.id),
           })),
+          {
+            simId: sim.id,
+            durationMs,
+            iterations: report.iterations,
+            profilesets: survivors.length,
+            targetError,
+          },
         );
         field = kept;
         bus.emit({

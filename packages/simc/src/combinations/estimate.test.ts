@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
   costModelFromCheckSim,
+  costModelFromStages,
   DEFAULT_COST_MODEL,
   estimateSeconds,
   isSoftWarning,
@@ -71,6 +72,40 @@ describe("costModelFromCheckSim", () => {
     expect(costModelFromCheckSim({ durationMs: null, iterations: 5, errorPercent: 1 })).toBeNull();
     expect(costModelFromCheckSim({ durationMs: 10, iterations: null, errorPercent: 1 })).toBeNull();
     expect(costModelFromCheckSim({ durationMs: 10, iterations: 5, errorPercent: 0 })).toBeNull();
+  });
+});
+
+describe("costModelFromStages", () => {
+  test("derives per-iteration cost and iterations x error^2 over every actor of every Stage", () => {
+    // Stage 1: 9 profilesets + baseline, 100 iterations each, to 1%, 60 s fight, 3000 ms.
+    // Stage 2: 1 profileset + baseline, 400 iterations each, to 0.5%, 120 s fight, 1000 ms.
+    const m = costModelFromStages([
+      { durationMs: 3000, iterations: 900, profilesets: 9, targetError: 1, fightSeconds: 60 },
+      { durationMs: 1000, iterations: 400, profilesets: 1, targetError: 0.5, fightSeconds: 120 },
+    ]);
+    // 4000 ms over 10 * 100 + 2 * 400 * 2 = 2600 sixty-second iterations.
+    expect(m?.msPerIteration).toBeCloseTo(4000 / 2600);
+    // (10 * 100 * 1 + 2 * 400 * 0.25) / 12 actors.
+    expect(m?.iterationsTimesErrorSq).toBeCloseTo(1200 / 12);
+  });
+
+  test("skips Stages it cannot learn from, and gives nothing when none is left", () => {
+    const good = {
+      durationMs: 2000,
+      iterations: 100,
+      profilesets: 1,
+      targetError: 1,
+      fightSeconds: 60,
+    };
+    expect(costModelFromStages([])).toBeNull();
+    expect(costModelFromStages([{ ...good, profilesets: 0 }])).toBeNull();
+    expect(costModelFromStages([{ ...good, iterations: 0 }, good])).toEqual(
+      costModelFromStages([good]),
+    );
+    expect(costModelFromStages([good])).toEqual({
+      msPerIteration: 10,
+      iterationsTimesErrorSq: 100,
+    });
   });
 });
 

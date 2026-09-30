@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   type AppEvent,
+  combinationPreviewSchema,
   importItemsResponseSchema,
   rankResults,
   type Sim,
@@ -210,6 +211,41 @@ describe("a 3-Stage Smart Sim", () => {
     // The ladder is narrated in the streaming log.
     const logs = live.events.flatMap((e) => (e.type === "sim.log" ? [e.message] : []));
     expect(logs).toContain("Stage 1 done: 12 kept, 69 culled.");
+  });
+
+  test("stores what each Stage cost, and the next estimate learns from it", async () => {
+    start(bandReply);
+    const draft = await topGear([...HEADS, ...NECKS, ...SHOULDERS, ...CHESTS]);
+    await h.queue(draft.id);
+    await h.app.idle();
+    expect((await h.sim(draft.id)).status).toBe("succeeded");
+
+    const costs = h.app.db
+      .query<
+        {
+          stage: number;
+          duration_ms: number;
+          iterations: number | null;
+          profilesets: number;
+          target_error: number;
+        },
+        [number]
+      >(
+        "SELECT stage, duration_ms, iterations, profilesets, target_error FROM stage_costs WHERE sim_id = ? ORDER BY stage",
+      )
+      .all(draft.id);
+    // The fake reports 100 iterations per profileset.
+    expect(costs.map(({ duration_ms: _, ...c }) => c)).toEqual([
+      { stage: 1, iterations: 8000, profilesets: 80, target_error: 1 },
+      { stage: 2, iterations: 1100, profilesets: 11, target_error: 0.3 },
+      { stage: 3, iterations: 1100, profilesets: 11, target_error: 0.2 },
+    ]);
+    expect(costs.every((c) => c.duration_ms > 0)).toBe(true);
+
+    const next = await topGear(HEADS);
+    const res = await h.call("POST", `/api/sims/${next.id}/preview-combinations`, {});
+    expect(res.status).toBe(200);
+    expect(combinationPreviewSchema.parse(await res.json()).estimateBasis).toBe("finished_sims");
   });
 
   test("progress is tagged with the Stage it belongs to", async () => {

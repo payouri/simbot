@@ -14,7 +14,9 @@ import {
 } from "@simbot/shared";
 import {
   type Combination,
+  type CostModel,
   costModelFromCheckSim,
+  costModelFromStages,
   DEFAULT_COST_MODEL,
   estimateSeconds,
   type GearItem,
@@ -30,6 +32,7 @@ import {
 import type { Db } from "./db";
 import { equippedLoadoutIndex, getParsedImport } from "./db/imports";
 import { getCheckSimCost } from "./db/simc-jobs";
+import { lastTopGearStageCosts } from "./db/sims";
 
 /** What the service needs of the item indexer. */
 export type ItemsSource = {
@@ -217,14 +220,22 @@ export function createCombinationService(deps: CombinationServiceDeps) {
     return { refused, issues };
   }
 
-  async function costModel() {
+  /**
+   * The cost model of the Current SimC Build: learnt from its most recent finished Top Gear,
+   * else seeded from its last Check Sim, else the default.
+   */
+  async function costModel(): Promise<{
+    model: CostModel;
+    basis: CombinationPreview["estimateBasis"];
+  }> {
     const build = await deps.currentBuild();
-    const cost = build ? getCheckSimCost(db, build.tag) : null;
+    if (!build) return { model: DEFAULT_COST_MODEL, basis: "default" };
+    const learnt = costModelFromStages(lastTopGearStageCosts(db, build.tag));
+    if (learnt) return { model: learnt, basis: "finished_sims" };
+    const cost = getCheckSimCost(db, build.tag);
     const measured = cost ? costModelFromCheckSim(cost) : null;
-    return {
-      model: measured ?? DEFAULT_COST_MODEL,
-      basis: measured ? "check_sim" : "default",
-    } as const;
+    if (measured) return { model: measured, basis: "check_sim" };
+    return { model: DEFAULT_COST_MODEL, basis: "default" };
   }
 
   /** `POST /api/sims/:id/preview-combinations`: count, validation and the time estimate. */
