@@ -9,6 +9,9 @@ import {
   type SimResultsResponse,
   simSchema,
 } from "@simbot/shared";
+import { openDb } from "../src/db";
+import { type AppEvent, createEventBus } from "../src/events";
+import { recoverInterruptedRuns } from "../src/runner/recovery";
 import { addonString, FIXTURES, fakeLaunch, type Harness, isAlive, makeHarness } from "./harness";
 
 let h: Harness;
@@ -216,6 +219,51 @@ describe("DELETE /api/sims/:id", () => {
     expect(existsSync(join(h.dataDir, "sims", String(sim.id)))).toBe(false);
     expect((await h.call("GET", `/api/sims/${sim.id}`)).status).toBe(404);
     expect((await h.call("DELETE", `/api/sims/${sim.id}`)).status).toBe(404);
+  });
+});
+
+describe("boot recovery settles interrupted Sims like a live Stop or Discard", () => {
+  test("each outcome sends the events a client reacts to, and a Discard loses its folder", async () => {
+    start();
+    release();
+    // Three finished Sims, made to look as if the server died while each was running.
+    const kept = await h.runQuickSim();
+    const discarded = await h.runQuickSim();
+    const resumed = await h.runQuickSim();
+    const { app, dataDir } = h;
+    app.db.run("UPDATE sims SET status = 'running', finished_at = NULL");
+    app.db.run("UPDATE jobs SET status = 'running', finished_at = NULL WHERE kind = 'sim'");
+    app.db.run("UPDATE jobs SET stop_mode = 'keep' WHERE sim_id = ?", [kept.id]);
+    app.db.run("UPDATE jobs SET stop_mode = 'discard' WHERE sim_id = ?", [discarded.id]);
+    expect(existsSync(h.simFile(discarded.id, "stage-1.json.gz"))).toBe(true);
+    app.close();
+
+    const db = openDb(dataDir);
+    const bus = createEventBus();
+    const events: AppEvent[] = [];
+    bus.on((e) => void events.push(e));
+    try {
+      recoverInterruptedRuns({ db, dataDir, bus, isSimc: () => false });
+    } finally {
+      db.close();
+    }
+
+    const forSim = (id: number) =>
+      events.filter((e) => "simId" in e && e.simId === id).map((e) => ({ ...e }));
+    expect(forSim(kept.id)).toEqual([
+      { type: "sim.status", simId: kept.id, status: "cancelled" },
+      { type: "sim.finished", simId: kept.id, status: "cancelled" },
+    ]);
+    expect(forSim(discarded.id)).toEqual([
+      { type: "sim.status", simId: discarded.id, status: "draft" },
+      { type: "sim.discarded", simId: discarded.id },
+    ]);
+    expect(forSim(resumed.id)).toEqual([
+      { type: "sim.status", simId: resumed.id, status: "queued" },
+    ]);
+    expect(events.filter((e) => e.type === "queue.changed")).toHaveLength(3);
+    expect(existsSync(join(dataDir, "sims", String(discarded.id)))).toBe(false);
+    expect(existsSync(h.simFile(kept.id, "stage-1.json.gz"))).toBe(true);
   });
 });
 

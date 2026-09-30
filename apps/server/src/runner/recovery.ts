@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { Db } from "../db";
 import { recoverInterruptedSims } from "../db/sims";
 import type { EventBus } from "../events";
+import { settleSim } from "../settle";
 
 /** Whether `pid` is a live `simc`, by what `/proc` says it is running. */
 export type IsSimcProcess = (pid: number) => boolean;
@@ -53,11 +54,5 @@ export function recoverInterruptedRuns(deps: {
     if (pid !== null && isSimc(pid)) killGroup(pid, "SIGKILL");
   }
   rmSync(join(dataDir, "tmp"), { recursive: true, force: true });
-  for (const { simId, outcome } of recovered) {
-    if (outcome === "discarded") {
-      rmSync(join(dataDir, "sims", String(simId)), { recursive: true, force: true });
-    }
-    const status = outcome === "requeued" ? "queued" : outcome === "discarded" ? "draft" : outcome;
-    bus.emit({ type: "sim.status", simId, status });
-  }
+  for (const { simId, outcome } of recovered) settleSim({ dataDir, bus }, simId, outcome);
 }

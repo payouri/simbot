@@ -33,6 +33,7 @@ import {
   updateDraft,
 } from "../db/sims";
 import type { EventBus } from "../events";
+import { settleSim } from "../settle";
 import type { HttpDeps } from ".";
 import { apiError, json, parseId, readBody } from "./util";
 
@@ -241,10 +242,7 @@ export async function postStopSim(
         });
   }
   if (stopped.outcome === "discarded") {
-    rmSync(join(dataDir, "sims", String(id)), { recursive: true, force: true });
-    bus.emit({ type: "sim.status", simId: id, status: "draft" });
-    bus.emit({ type: "sim.discarded", simId: id });
-    bus.emit({ type: "queue.changed" });
+    settleSim({ dataDir, bus }, id, "discarded");
     return json(simSchema.parse(stopped.sim));
   }
   bus.emit({ type: "sim.stop_requested", simId: id });

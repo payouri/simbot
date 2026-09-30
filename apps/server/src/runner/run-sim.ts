@@ -45,6 +45,7 @@ import {
   succeedSim,
 } from "../db/sims";
 import type { EventBus } from "../events";
+import { settleSim } from "../settle";
 import type { Launch } from "../simc/check-sim";
 import { killGroup } from "./recovery";
 import { createThrottle } from "./throttle";
@@ -111,29 +112,17 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
   );
 
   /** A Sim reached a terminal state: tell clients, and that the Queue shrank. */
-  const finished = (status: "succeeded" | "failed") => {
-    bus.emit({ type: "sim.status", simId: job.simId, status });
-    bus.emit({ type: "sim.finished", simId: job.simId, status });
-    bus.emit({ type: "queue.changed" });
-  };
+  const finished = (status: "succeeded" | "failed") => settleSim(deps, job.simId, status);
   const fail = (error: SimError) => {
     failSim(db, job.id, job.simId, error);
     finished("failed");
   };
 
   /** Stop (`cancelled`, results kept) or Discard (back to Draft, results and folder gone). */
-  const settleStop = async (mode: "keep" | "discard") => {
-    if (mode === "discard") {
-      discardRunningSim(db, job.simId);
-      await rm(join(dataDir, "sims", String(job.simId)), { recursive: true, force: true });
-      bus.emit({ type: "sim.status", simId: job.simId, status: "draft" });
-      bus.emit({ type: "sim.discarded", simId: job.simId });
-    } else {
-      cancelSim(db, job.id, job.simId);
-      bus.emit({ type: "sim.status", simId: job.simId, status: "cancelled" });
-      bus.emit({ type: "sim.finished", simId: job.simId, status: "cancelled" });
-    }
-    bus.emit({ type: "queue.changed" });
+  const settleStop = (mode: "keep" | "discard") => {
+    if (mode === "discard") discardRunningSim(db, job.simId);
+    else cancelSim(db, job.id, job.simId);
+    settleSim(deps, job.simId, mode === "discard" ? "discarded" : "cancelled");
   };
 
   // SIGTERM to SimC's process group, then SIGKILL if it is still there after the grace period.
@@ -289,7 +278,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
       for (;;) {
         // A Stop or Discard asked for since the last check is honoured before SimC launches.
         const stopBefore = getStopMode(db, job.id);
-        if (stopBefore) return await settleStop(stopBefore);
+        if (stopBefore) return settleStop(stopBefore);
 
         const survivors = field
           .filter((id) => id !== baseline.id)
@@ -325,7 +314,7 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
         // A Discard wins even over a run that got to finish; a Stop only when there is nothing to keep.
         const stop = getStopMode(db, job.id);
         if (stop === "discard" || (stop === "keep" && run.exitCode !== 0)) {
-          return await settleStop(stop);
+          return settleStop(stop);
         }
         if (run.exitCode !== 0) {
           // Exit 80 naming one of our profilesets: drop that Combination and run the Stage again.
