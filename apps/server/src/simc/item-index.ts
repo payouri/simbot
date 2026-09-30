@@ -37,6 +37,17 @@ const STDERR_KEEP = 2000;
 /** How many times a pass drops the actor SimC blames and runs again. */
 const MAX_DROPS = 5;
 
+const NO_ITEM_DATA = "no item data for SimC Build";
+
+/**
+ * A stored index answers for the build only when it was actually computed: a failed pass or a
+ * missing item-meta is a passing state (a timeout, a download still running), not a result.
+ */
+const isSettled = (index: ItemIndex) =>
+  index.simcTag === null ||
+  (index.pass.status !== "failed" &&
+    !(index.pass.status === "skipped" && index.pass.reason?.startsWith(NO_ITEM_DATA)));
+
 export type ItemIndexerDeps = {
   db: Db;
   dataDir: string;
@@ -175,7 +186,7 @@ export function createItemIndexer(deps: ItemIndexerDeps) {
     });
     if (!build) return noPass("no SimC Build is installed");
     const data = await metaFor(build.tag);
-    if (!data) return noPass(`no item data for SimC Build ${build.tag}`);
+    if (!data) return noPass(`${NO_ITEM_DATA} ${build.tag}`);
 
     const { items, unknown } = classifyItems(raw, data.meta);
     const plan = planItemPass(text, items, data.meta);
@@ -224,7 +235,7 @@ export function createItemIndexer(deps: ItemIndexerDeps) {
       if (text === null) return null;
       const build = await deps.currentBuild();
       const stored = getItemIndex(db, importId);
-      if (stored && stored.simcTag === (build?.tag ?? null)) return stored;
+      if (stored && stored.simcTag === (build?.tag ?? null) && isSettled(stored)) return stored;
       try {
         const index = await compute(importId, text, build);
         saveItemIndex(db, importId, index);

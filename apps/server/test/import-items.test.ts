@@ -221,6 +221,25 @@ describe("the packed item pass at Import", () => {
     expect(unknown.items).toEqual([]);
   });
 
+  test("an Import read before the build's item data arrived is re-read once it has", async () => {
+    const { launches } = start(["success"], { meta: false });
+    const imp = await h.importText(importItemsAddonString());
+    expect((await itemsOf(imp.id)).pass.status).toBe("skipped");
+    installFixtureMeta(h.dataDir);
+    const view = await itemsOf(imp.id);
+    expect(view.pass.status).toBe("ok");
+    expect(view.items.some((i) => i.selectable)).toBe(true);
+    expect(launches()).toBe(1);
+  });
+
+  test("a failed pass is retried on the next read instead of cached for the build", async () => {
+    const { launches } = start(["init-error", "init-error", "success"]);
+    const imp = await h.importText(importItemsAddonString());
+    const before = launches();
+    expect((await itemsOf(imp.id)).pass.status).toBe("ok");
+    expect(launches()).toBeGreaterThan(before);
+  });
+
   test("without a SimC Build the Import succeeds and shows its items", async () => {
     reports = mkdtempSync(join(tmpdir(), "simbot-reports-"));
     h = makeHarness({ withBuild: false });
