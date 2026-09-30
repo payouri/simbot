@@ -7,7 +7,7 @@ import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { showsPtrClientNotice } from "../notice/showsPtrClientNotice";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { ResultsPage } from "../results/ResultsPage";
-import { GameDataBadge } from "../simc/GameData";
+import { GameDataBadge, LiveItemStatsNote } from "../simc/GameData";
 import { getResults, getSim, stopSim } from "./api";
 import { RunLog, StageLadder } from "./Ladder";
 
@@ -208,6 +208,7 @@ export function SimPage() {
             <dd>{sim.data.settings.precision}</dd>
           </dl>
 
+          <LiveItemStatsNote gameData={sim.data.settings.gameData} />
           <ImportItems importId={sim.data.importId} />
         </>
       )}
