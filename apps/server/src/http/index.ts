@@ -311,7 +311,7 @@ export function createHttpHandler({
         return deleteSim_Handler(db, id, dataDir);
       }
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
-      if (action === "results") return getResults(db, id);
+      if (action === "results") return getResults(db, items, id);
       return action === "ladder" ? getSimLadder(db, id) : getSimById(db, id);
     }
     if (pathname === "/api" || pathname.startsWith("/api/")) {

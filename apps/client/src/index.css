@@ -151,6 +151,22 @@
   letter-spacing: -0.01em;
 }
 
+/* The One Glow Rule: only an item that changed in the displayed Combination glows, in its own
+   quality colour, lit on mount over 250ms. --glow is set inline to that colour. */
+@keyframes glow-in {
+  from {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+.item-glow {
+  border-radius: 5px;
+  box-shadow:
+    0 0 0 1px var(--glow),
+    0 6px 18px -4px color-mix(in oklch, var(--glow) 70%, transparent),
+    0 0 28px -6px color-mix(in oklch, var(--glow) 55%, transparent);
+  animation: glow-in 250ms ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

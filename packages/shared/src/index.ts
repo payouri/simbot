@@ -4,5 +4,7 @@ export * from "./health";
 export * from "./items";
 export * from "./json2";
 export * from "./paperdoll";
+export * from "./ranking";
+export * from "./redress";
 export * from "./sim";
 export * from "./simc";

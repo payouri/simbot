@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { importItemSchema } from "./items";
 import { topGearSelectionSchema } from "./paperdoll";
 
 /**
@@ -238,11 +239,36 @@ export const stageResultSchema = z.object({
 });
 export type StageResult = z.infer<typeof stageResultSchema>;
 
-/** `GET /api/sims/:id/results`, only once the Sim has succeeded. */
+/** A frozen Combination as the results view needs it: what it wears and which Stage refused it. */
+export const resultCombinationSchema = z.object({
+  id: z.number().int(),
+  isBaseline: z.boolean(),
+  /** SimC slot -> `ImportItem.index` worn there, equipped slots included. */
+  gear: z.record(z.string(), z.number().int().min(0)),
+  /** Position in `talentLoadouts`; null: the talents the Addon String's profile has on. */
+  talentLoadout: z.number().int().min(0).nullable(),
+  /** The Stage in which SimC refused it, when it did. */
+  invalidStage: z.number().int().nullable(),
+});
+export type ResultCombination = z.infer<typeof resultCombinationSchema>;
+
+/**
+ * `GET /api/sims/:id/results`, once the Sim has succeeded or been stopped (a stopped Sim keeps
+ * what its Stages finished). Stage Results are joined with the Combinations and the Import's
+ * items, so a client can dress the Paperdoll without another request.
+ */
 export const simResultsResponseSchema = z.object({
   simId: z.number().int(),
   simcTag: z.string().nullable(),
+  status: z.enum(["succeeded", "cancelled"]),
+  /** How many Stages the ladder plans; a stopped Sim may have finished fewer. */
+  stageCount: z.number().int(),
   results: z.array(stageResultSchema),
+  combinations: z.array(resultCombinationSchema),
+  /** The Import's items (the item index joined with item-meta), empty when it has none. */
+  items: z.array(importItemSchema),
+  /** The Import's Talent Loadouts in the order `talentLoadout` counts them. */
+  talentLoadouts: z.array(z.object({ comment: z.string().nullable(), equipped: z.boolean() })),
 });
 export type SimResultsResponse = z.infer<typeof simResultsResponseSchema>;
 

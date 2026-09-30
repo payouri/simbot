@@ -4,6 +4,7 @@ import { Link, Navigate, useParams } from "react-router";
 import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
+import { ResultsPage } from "../results/ResultsPage";
 import { getResults, getSim, stopSim } from "./api";
 import { RunLog, StageLadder } from "./Ladder";
 
@@ -30,10 +31,13 @@ export function SimPage() {
     refetchInterval: (q) => (isFinished(q.state.data?.status) ? false : 1000),
   });
   const succeeded = sim.data?.status === "succeeded";
+  // A finished or stopped Top Gear has its own results view; it loads the results itself.
+  const topGearResults =
+    sim.data?.kind === "top_gear" && (succeeded || sim.data.status === "cancelled");
   const results = useQuery({
     queryKey: ["sim", id, "results"],
     queryFn: () => getResults(id),
-    enabled: succeeded,
+    enabled: succeeded && !topGearResults,
   });
   const live = useRunningSim(id);
   const queryClient = useQueryClient();
@@ -50,6 +54,8 @@ export function SimPage() {
 
   // A Draft is edited in the setup; Discard sends a Sim back here as a Draft.
   if (sim.data?.status === "draft") return <Navigate to={`/sims/${id}/setup`} replace />;
+
+  if (sim.data && topGearResults) return <ResultsPage sim={sim.data} />;
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-10 md:px-6">

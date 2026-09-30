@@ -68,7 +68,9 @@ describe("Stop and Discard a running Sim", () => {
     expect(isAlive(pid)).toBe(false);
     expect(existsSync(join(h.dataDir, "tmp", "1"))).toBe(false);
     expect(existsSync(h.simFile(sim.id, "stage-1.json.gz"))).toBe(false);
-    expect((await h.call("GET", `/api/sims/${sim.id}/results`)).status).toBe(409);
+    // A stopped Sim keeps what it finished: here nothing yet, so an empty result set.
+    const kept = await h.results(sim.id);
+    expect(kept).toMatchObject({ status: "cancelled", results: [] });
     expect(queueResponseSchema.parse(await (await h.call("GET", "/api/queue")).json())).toEqual({
       entries: [],
     });

@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { iconUrl } from "../items/api";
 import { qualityBorder, qualityText } from "../items/ImportItems";
 
-const SIZE = { md: 36, lg: 48 } as const;
+const SIZE = { sm: 20, md: 36, lg: 48 } as const;
 
 /**
  * An item's icon: square, bordered in its quality colour, with a mono ilvl badge. An Unknown
@@ -82,12 +82,13 @@ export function Tag({
   tone = "neutral",
 }: {
   children: React.ReactNode;
-  tone?: "neutral" | "action" | "loss";
+  tone?: "neutral" | "action" | "loss" | "noise";
 }) {
   const tones = {
     neutral: "border-line text-muted",
     action: "border-action/40 bg-action-wash text-action",
     loss: "border-loss/40 bg-loss-wash text-loss",
+    noise: "border-noise/40 bg-noise-wash text-muted",
   };
   return (
     <span

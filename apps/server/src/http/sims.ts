@@ -259,18 +259,36 @@ export function getSimById(db: Db, rawId: string): Response {
   return sim ? json(simSchema.parse(sim)) : apiError(404, "sim_not_found");
 }
 
-/** `GET /api/sims/:id/results`: 409 until the Sim has succeeded. */
-export function getResults(db: Db, rawId: string): Response {
+/**
+ * `GET /api/sims/:id/results`: the Combinations with their Stage Results, joined with the
+ * Import's items. Available once the Sim has succeeded, and for a stopped (cancelled) Sim, which
+ * keeps what its Stages finished; 409 otherwise.
+ */
+export async function getResults(
+  db: Db,
+  items: HttpDeps["items"],
+  rawId: string,
+): Promise<Response> {
   const id = parseId(rawId);
   const sim = id === null ? null : getSim(db, id);
   if (!sim || id === null) return apiError(404, "sim_not_found");
-  if (sim.status !== "succeeded") {
+  if (sim.status !== "succeeded" && sim.status !== "cancelled") {
     return apiError(409, "results_unavailable", {
-      message: `Sim is ${sim.status}; results exist only once it has succeeded.`,
+      message: `Sim is ${sim.status}; results exist only once it has succeeded or been stopped.`,
     });
   }
   const results = getSimResults(db, id);
-  return results ? json(simResultsResponseSchema.parse(results)) : apiError(404, "sim_not_found");
+  if (!results) return apiError(404, "sim_not_found");
+  const view = await items.view(sim.importId);
+  const loadouts = getParsedImport(db, sim.importId)?.talentLoadouts ?? [];
+  return json(
+    simResultsResponseSchema.parse({
+      ...results,
+      status: sim.status,
+      items: view?.items ?? [],
+      talentLoadouts: loadouts.map((l) => ({ comment: l.comment, equipped: l.equipped })),
+    }),
+  );
 }
 
 /** `GET /api/sims/:id/ladder`: the planned Stages and what each finished one did to the field. */

@@ -4,6 +4,7 @@ import { join } from "node:path";
 import {
   type AppEvent,
   importItemsResponseSchema,
+  rankResults,
   type Sim,
   simLadderResponseSchema,
   simSchema,
@@ -354,6 +355,59 @@ describe("an invalid profileset", () => {
     const sim = await h.sim(draft.id);
     expect(sim.status).toBe("failed");
     expect(sim.error?.kind).toBe("output_format_changed");
+  });
+});
+
+describe("GET /api/sims/:id/results", () => {
+  test("joins Stage Results with the Combinations and the Import's items", async () => {
+    start(bandReply);
+    const draft = await topGear([...HEADS, ...NECKS]);
+    await h.queue(draft.id);
+    await h.app.idle();
+
+    const out = await h.results(draft.id);
+    expect(out).toMatchObject({ simId: draft.id, status: "succeeded", stageCount: 3 });
+    expect(out.simcTag).not.toBeNull();
+    expect(out.combinations).toHaveLength(9);
+    const baseline = out.combinations.filter((c) => c.isBaseline);
+    expect(baseline).toHaveLength(1);
+    const byIndex = new Map(out.items.map((i) => [i.index, i]));
+    // Every worn item resolves against the Import's item index, with its name and quality.
+    for (const c of out.combinations) {
+      for (const index of Object.values(c.gear)) expect(byIndex.has(index)).toBe(true);
+    }
+    expect(out.items.some((i) => i.name !== null && i.quality !== null)).toBe(true);
+    expect(out.talentLoadouts.length).toBeGreaterThan(0);
+    // The client ranks straight from this payload.
+    const ranking = rankResults(out.results);
+    expect(ranking.baseline?.stage).toBe(3);
+    expect(ranking.rows.length).toBeGreaterThan(1);
+  });
+
+  test("a stopped Sim shows its partial results with the Stage each row reached", async () => {
+    let gate: string | undefined;
+    start((call) => ({ ...bandReply(call), gate: call.stage === 2 ? gate : undefined }));
+    gate = join(h.root, "gate");
+    const draft = await topGear([...HEADS, ...NECKS, ...SHOULDERS, ...CHESTS]);
+    await h.queue(draft.id);
+    await until(() => calls.length === 2, "Stage 2 to launch");
+    await h.stop(draft.id, true);
+    await h.app.idle();
+
+    const out = await h.results(draft.id);
+    expect(out.status).toBe("cancelled");
+    expect(out.stageCount).toBe(3);
+    expect(out.results).toHaveLength(81);
+    expect(new Set(out.results.map((r) => r.stage))).toEqual(new Set([1]));
+    const ranking = rankResults(out.results);
+    expect(ranking.rows).toHaveLength(81);
+    expect(ranking.rows.every((r) => r.stage === 1)).toBe(true);
+  });
+
+  test("409 while the Sim is still running or queued", async () => {
+    start(bandReply);
+    const draft = await topGear([...HEADS]);
+    expect((await h.call("GET", `/api/sims/${draft.id}/results`)).status).toBe(409);
   });
 });
 

@@ -571,7 +571,18 @@ export function recoverInterruptedSims(db: Db): {
   });
 }
 
-export function getSimResults(db: Db, simId: number): SimResultsResponse | null {
+/**
+ * A Sim's Stage Results with its Combinations and the number of planned Stages. `status` is the
+ * Sim's own; the caller decides which states have results to show. The Import's items and Talent
+ * Loadouts are joined in by the HTTP layer (they come from the item index, not this database).
+ */
+export function getSimResults(
+  db: Db,
+  simId: number,
+): Pick<
+  SimResultsResponse,
+  "simId" | "simcTag" | "stageCount" | "results" | "combinations"
+> | null {
   const sim = getSim(db, simId);
   if (!sim) return null;
   const rows = db
@@ -591,15 +602,24 @@ export function getSimResults(db: Db, simId: number): SimResultsResponse | null 
        WHERE c.sim_id = ? ORDER BY r.stage, c.id`,
     )
     .all(simId);
+  const combinations = getCombinationRows(db, simId);
   return {
     simId,
     simcTag: sim.simcTag,
+    stageCount: stageLadder(sim.settings.precision, combinations.length).length,
     results: rows.map((r) => ({
       combinationId: r.combination_id,
       isBaseline: r.is_baseline === 1,
       stage: r.stage,
       dps: { mean: r.dps_mean, meanError: r.dps_mean_error },
       survived: r.survived === 1,
+    })),
+    combinations: combinations.map((c) => ({
+      id: c.id,
+      isBaseline: c.isBaseline,
+      gear: c.definition.gear,
+      talentLoadout: c.definition.talentLoadout,
+      invalidStage: c.invalidStage,
     })),
   };
 }
