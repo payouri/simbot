@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { defaultSimSettings } from "@simbot/shared";
 import {
   AddonStringError,
+  buildCheckSimInput,
   buildInput,
   classifyExit,
   Json2FormatError,
@@ -121,6 +122,33 @@ describe("Quick Sim input and result", () => {
     expect(live).not.toMatch(/ptr/);
     expect(live).toContain("level=90");
     expect(buildInput(text, { ...settings, gameData: "ptr" }).match(/^ptr=1$/gm)).toHaveLength(1);
+  });
+
+  test("buildInput puts a PTR Sim's ptr=1 before the actor, where SimC reads it for the player", () => {
+    const text = 'warrior="A"\nlevel=90\n';
+    expect(buildInput(text, { ...settings, gameData: "ptr" }).startsWith(`ptr=1\n${text}`)).toBe(
+      true,
+    );
+  });
+
+  test("buildInput drops a ptr line of stored raw options, so a Live Sim stays on Live", () => {
+    const stored = { ...settings, gameData: "live", rawOptions: "iterations=10\nptr=1" } as const;
+    const live = buildInput('warrior="A"\n', stored);
+    expect(live).not.toMatch(/ptr/);
+    expect(live).toContain("iterations=10");
+    const ptr = buildInput('warrior="A"\n', { ...stored, gameData: "ptr" });
+    expect(ptr.match(/^ptr=1$/gm)).toHaveLength(1);
+    expect(ptr.startsWith("ptr=1\n")).toBe(true);
+  });
+
+  test("buildCheckSimInput drops the profile's ptr line; the PTR pass puts ptr=1 first", () => {
+    const text = 'warrior="A"\nptr=1\nlevel=90\n';
+    const live = buildCheckSimInput(text);
+    expect(live).not.toMatch(/ptr/);
+    expect(live).toContain("level=90");
+    const ptr = buildCheckSimInput(text, "ptr");
+    expect(ptr.match(/^ptr=1$/gm)).toHaveLength(1);
+    expect(ptr.startsWith('ptr=1\nwarrior="A"\n')).toBe(true);
   });
 
   test("buildInput drops file-writing options of the Addon String", () => {

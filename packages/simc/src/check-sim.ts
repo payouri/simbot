@@ -11,20 +11,21 @@ export const CHECK_SIM_TARGET_ERROR = 1;
 /**
  * The SimC input for a Check Sim: the Addon String (or a profile from the build) without its
  * file, network and `ptr` options, a short fixed fight, the 1% target error, and one profileset
- * override so the build's profileset path is exercised too.
+ * override so the build's profileset path is exercised too. The PTR pass puts its `ptr=1` before
+ * the profile, where SimC reads it before creating the player (see `buildInput`).
  */
 export function buildCheckSimInput(profile: string, gameData: "live" | "ptr" = "live"): string {
   const safe = stripPtrOption(stripUnsafeOptions(profile));
   const head = safe.endsWith("\n") ? safe : `${safe}\n`;
-  return `${head}${[
+  // Live is SimC's default and is never spelled out; only the PTR pass selects the PTR data.
+  const ptr = gameData === "ptr" ? "ptr=1\n" : "";
+  return `${ptr}${head}${[
     "",
     "# simbot Check Sim",
     "fight_style=Patchwerk",
     "max_time=60",
     "desired_targets=1",
     `target_error=${CHECK_SIM_TARGET_ERROR}`,
-    // Live is SimC's default and is never spelled out; only the PTR pass selects the PTR data.
-    ...(gameData === "ptr" ? ["ptr=1"] : []),
     `profileset."${CHECK_SIM_PROFILESET}"+=gear_haste_rating=1`,
   ].join("\n")}\n`;
 }

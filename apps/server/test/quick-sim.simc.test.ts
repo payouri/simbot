@@ -87,6 +87,10 @@ describe.skipIf(!enabled)("PTR Sim against a real SimC Build", () => {
     // SimC's own report says which game data the run used, and it is the version the Sim kept.
     const dbc = JSON.parse(ptr.readGz(ptr.simFile(sim.id, "stage-1.json.gz"))).sim.options.dbc;
     expect(dbc.version_used).toBe("PTR");
+    // The player carries its own game data, fixed when its actor line is read: a ptr=1 that
+    // came after the actor would leave this "Live" while the options above say PTR.
+    const report = JSON.parse(ptr.readGz(ptr.simFile(sim.id, "stage-1.json.gz")));
+    expect(report.sim.players[0].dbc.version_used).toBe("PTR");
     expect(sim.gameDataVersion).toBe(dbc.PTR.wow_version);
     expect(sim.gameDataVersion).not.toBe(dbc.Live.wow_version);
     expect((await ptr.results(sim.id)).results[0]?.dps.mean).toBeGreaterThan(10_000);

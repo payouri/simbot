@@ -6,7 +6,7 @@ import type {
   UnknownReport,
 } from "@simbot/shared";
 import { z } from "zod";
-import { isClassKey, isEquipmentSlot, isUnsafeOptionLine } from "./addon-string";
+import { isClassKey, isEquipmentSlot, isUnsafeOptionLine, stripPtrOption } from "./addon-string";
 import type { ItemMeta, MetaItem } from "./meta";
 
 /**
@@ -161,10 +161,13 @@ const OFF_HANDS = new Set(["off", "shield", "held"]);
 const TWO_HANDS = new Set(["2h", "ranged"]);
 export const BASE_ACTOR = "base";
 
-/** The profile lines of an Addon String: everything that is not a comment or an item. */
+/**
+ * The profile lines of an Addon String: everything that is not a comment or an item. A `ptr`
+ * line is dropped too: the Item Index is read on Live data.
+ */
 export function profileLines(addonString: string): string[] {
   const out: string[] = [];
-  for (const line of addonString.split(/\r\n|\n|\r/)) {
+  for (const line of stripPtrOption(addonString).split(/\r\n|\n|\r/)) {
     if (isUnsafeOptionLine(line)) continue;
     const eq = line.indexOf("=");
     if (!line.trim() || line.startsWith("#") || eq < 1) continue;

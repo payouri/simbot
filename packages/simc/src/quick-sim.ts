@@ -32,6 +32,10 @@ export const ANALYZE_ERROR_INTERVAL = 5;
  * The SimC input for a Quick Sim: the Addon String unchanged, then the frozen Sim Settings as
  * option lines, then the user's raw options (which may override the generated ones). A Smart
  * Sim Stage passes its own `targetError` and `extraLines`, which sit before the raw options.
+ * Game Data alone picks the data: `ptr` lines are dropped from the Addon String and the raw
+ * options, and a PTR Sim's `ptr=1` goes first. SimC gives each player the data selected when
+ * its actor line is read, so a `ptr=1` after the actor leaves that player on Live data while
+ * the report says PTR (measured: the player's json2 `dbc.version_used` stays "Live").
  */
 export function buildInput(
   addonString: string,
@@ -46,14 +50,16 @@ export function buildInput(
     `desired_targets=${settings.targets}`,
     `target_error=${options.targetError ?? PRECISION_TARGET_ERROR[settings.precision]}`,
     `analyze_error_interval=${ANALYZE_ERROR_INTERVAL}`,
-    // Live is SimC's default and is never spelled out; only a PTR Sim selects the PTR data.
-    ...(settings.gameData === "ptr" ? ["ptr=1"] : []),
     ...(options.extraLines ?? []),
   ];
-  if (settings.rawOptions.trim() !== "") lines.push("# Raw options", settings.rawOptions);
+  // A Sim stored before Game Data existed may still carry `ptr=1` in its raw options.
+  const raw = stripPtrOption(settings.rawOptions);
+  if (raw.trim() !== "") lines.push("# Raw options", raw);
   const safe = stripPtrOption(stripUnsafeOptions(addonString));
   const head = safe.endsWith("\n") ? safe : `${safe}\n`;
-  return `${head}${lines.join("\n")}\n`;
+  // Live is SimC's default and is never spelled out; only a PTR Sim selects the PTR data.
+  const ptr = settings.gameData === "ptr" ? "ptr=1\n" : "";
+  return `${ptr}${head}${lines.join("\n")}\n`;
 }
 
 /**

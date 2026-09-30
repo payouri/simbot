@@ -228,4 +228,8 @@ describe("profileLines", () => {
     ].join("\n");
     expect(profileLines(text)).toEqual(['mage="base"', "level=80"]);
   });
+
+  test("drops a ptr line of a PTR-client export: the Item Index is read on Live data", () => {
+    expect(profileLines('mage="A"\nptr=1\nlevel=80')).toEqual(['mage="base"', "level=80"]);
+  });
 });
