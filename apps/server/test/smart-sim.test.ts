@@ -93,6 +93,21 @@ const rowsOf = (simId: number) =>
 const ladderOf = async (simId: number) =>
   simLadderResponseSchema.parse(await (await h.call("GET", `/api/sims/${simId}/ladder`)).json());
 const stageRows = (simId: number, stage: number) => rowsOf(simId).filter((r) => r.stage === stage);
+const costsOf = (simId: number) =>
+  h.app.db
+    .query<
+      {
+        stage: number;
+        duration_ms: number;
+        iterations: number | null;
+        profilesets: number;
+        target_error: number;
+      },
+      [number]
+    >(
+      "SELECT stage, duration_ms, iterations, profilesets, target_error FROM stage_costs WHERE sim_id = ? ORDER BY stage",
+    )
+    .all(simId);
 
 /** Ids 1..12 sit in a tight band at the top, everything else is far behind. */
 const bandReply = (call: FakeStageCall): FakeStageReply => ({
@@ -220,20 +235,7 @@ describe("a 3-Stage Smart Sim", () => {
     await h.app.idle();
     expect((await h.sim(draft.id)).status).toBe("succeeded");
 
-    const costs = h.app.db
-      .query<
-        {
-          stage: number;
-          duration_ms: number;
-          iterations: number | null;
-          profilesets: number;
-          target_error: number;
-        },
-        [number]
-      >(
-        "SELECT stage, duration_ms, iterations, profilesets, target_error FROM stage_costs WHERE sim_id = ? ORDER BY stage",
-      )
-      .all(draft.id);
+    const costs = costsOf(draft.id);
     // The fake reports 100 iterations per profileset.
     expect(costs.map(({ duration_ms: _, ...c }) => c)).toEqual([
       { stage: 1, iterations: 8000, profilesets: 80, target_error: 1 },
@@ -415,6 +417,24 @@ describe("an invalid profileset", () => {
     const sim = await h.sim(draft.id);
     expect(sim.status).toBe("failed");
     expect(sim.error?.kind).toBe("output_format_changed");
+  });
+
+  test("a Stage that drops a missing profileset records its cost over the ones that came back", async () => {
+    start((call) => ({
+      profilesets: Object.fromEntries(
+        call.names
+          .filter((_, i) => call.call !== 1 || i !== 0)
+          .map((n) => [n, [99_000, 100] as [number, number]]),
+      ),
+    }));
+    const draft = await topGear([...HEADS, ...NECKS]);
+    await h.queue(draft.id);
+    await h.app.idle();
+    expect((await h.sim(draft.id)).status).toBe("succeeded");
+
+    // 3^2 = 9 Combinations: 8 profilesets went in, 7 came back. The fake reports 100 iterations each.
+    expect(calls[0]?.names).toHaveLength(8);
+    expect(costsOf(draft.id)[0]).toMatchObject({ stage: 1, iterations: 700, profilesets: 7 });
   });
 });
 

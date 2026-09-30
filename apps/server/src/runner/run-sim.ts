@@ -400,7 +400,8 @@ export async function runSimJob(deps: RunSimDeps, job: { id: number; simId: numb
             simId: sim.id,
             durationMs,
             iterations: report.iterations,
-            profilesets: survivors.length,
+            // Only the profilesets that came back: the iterations are summed over those.
+            profilesets: report.profilesets.size,
             targetError,
           },
         );
