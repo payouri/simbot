@@ -104,6 +104,10 @@ _Avoid_: bag item, alternative
 An item in an Import that the Current SimC Build doesn't recognise (unknown item or bonus id). The Import still succeeds: an equipped Unknown Item is simmed as SimC reads it, but as a Candidate Item it can't be selected. What was unknown is always recorded on the Import for anyone who wants to see it.
 _Avoid_: invalid item, broken item
 
+**Item Index**:
+What the app knows about every item in an Import: the item level and stats SimC reports for it, read by one packed SimC run at Import, and which items were Unknown Items. Stored on the Import and read again when the Current SimC Build changes; static fields (name, quality, icon) are joined from that build's item data on display.
+_Avoid_: item cache, item metadata
+
 **Talent Loadout**:
 A saved talent build carried in the Import; one of them is the equipped one.
 _Avoid_: talent set, build

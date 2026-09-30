@@ -2,10 +2,12 @@ import type { Config } from "./config";
 import { openDb } from "./db";
 import { createEventBus } from "./events";
 import { createHttpHandler } from "./http";
+import { createIconService } from "./icons";
 import { createLiveTracker } from "./live";
 import { startRunner } from "./runner";
 import { type IsSimcProcess, recoverInterruptedRuns } from "./runner/recovery";
 import type { Launch } from "./runner/run-sim";
+import { createItemIndexer } from "./simc/item-index";
 import { createSimcManager } from "./simc/manager";
 import type { Fetch } from "./simc/registry";
 
@@ -68,11 +70,21 @@ export function createApp(config: Pick<Config, "dataDir" | "clientDir">, deps: A
     killGraceMs: deps.killGraceMs,
     runSimcJob: simc.runJob,
   });
+  const items = createItemIndexer({
+    db,
+    dataDir: config.dataDir,
+    currentBuild: () => simc.current(),
+    launch: deps.launch,
+    log: deps.log,
+  });
+  const icons = createIconService({ dataDir: config.dataDir, fetch: deps.fetch ?? fetch });
   const handle = createHttpHandler({
     db,
     dataDir: config.dataDir,
     bus,
     live,
+    items,
+    icons,
     clientDir: config.clientDir,
     simc: {
       status: () => simc.status(),

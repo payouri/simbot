@@ -1,0 +1,250 @@
+{
+  "source": "https://nether.wowhead.com/tooltip/item/<id>?bonus=<bonus_id list>, the Item Level line of the tooltip, fetched 2026-09-30",
+  "items": [
+    {
+      "itemId": 249970,
+      "bonusIds": "40/6935/12676/12806/13335/13338/13575",
+      "ilvl": 289
+    },
+    {
+      "itemId": 268291,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 50234,
+      "bonusIds": "12806/13577",
+      "ilvl": 289
+    },
+    {
+      "itemId": 239656,
+      "bonusIds": "8791/8960/12066/12214/12384/13622/13667/9627",
+      "ilvl": 285
+    },
+    {
+      "itemId": 249973,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 237834,
+      "bonusIds": "8791/8960/12066/12384/13622/12497",
+      "ilvl": 285
+    },
+    {
+      "itemId": 249971,
+      "bonusIds": "40/12675/12806/13335/13337/13574",
+      "ilvl": 289
+    },
+    {
+      "itemId": 268289,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 249969,
+      "bonusIds": "40/12676/12806/13335/13339/13575",
+      "ilvl": 289
+    },
+    {
+      "itemId": 249381,
+      "bonusIds": "13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 193708,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 249919,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 249343,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 249344,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 249277,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 175302,
+      "bonusIds": "12806/13577",
+      "ilvl": 289
+    },
+    {
+      "itemId": 137410,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 118848,
+      "bonusIds": "13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 124391,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 113884,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 35031,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 124318,
+      "bonusIds": "12806/13577",
+      "ilvl": 289
+    },
+    {
+      "itemId": 237613,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 164809,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 125466,
+      "bonusIds": "12806/13577",
+      "ilvl": 289
+    },
+    {
+      "itemId": 47434,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 87165,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 86870,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 89648,
+      "bonusIds": "12806/13577",
+      "ilvl": 289
+    },
+    {
+      "itemId": 92814,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 150030,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 108188,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 169160,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 251934,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 124899,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 146068,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 218716,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 79331,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 230139,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 263760,
+      "bonusIds": "13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 193708,
+      "bonusIds": "6935/13355/13468/13469",
+      "ilvl": 289
+    },
+    {
+      "itemId": 249344,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 249970,
+      "bonusIds": "13786",
+      "ilvl": 298
+    },
+    {
+      "itemId": 127647,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 28429,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 61402,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 115646,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 78418,
+      "bonusIds": "13654",
+      "ilvl": 298
+    },
+    {
+      "itemId": 148780,
+      "bonusIds": "13786",
+      "ilvl": 298
+    }
+  ]
+}

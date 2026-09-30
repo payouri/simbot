@@ -1,6 +1,7 @@
 import type { SimStatus } from "@simbot/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useParams } from "react-router";
+import { ImportItems } from "../items/ImportItems";
 import { useRunningSim } from "../live/live";
 import { ProgressReadout, WarmingUp } from "../queue/Progress";
 import { getResults, getSim, stopSim } from "./api";
@@ -149,6 +150,8 @@ export function SimPage() {
             <dt className="text-faint">Precision</dt>
             <dd>{sim.data.settings.precision}</dd>
           </dl>
+
+          <ImportItems importId={sim.data.importId} />
         </>
       )}
     </main>

@@ -1,0 +1,89 @@
+# Rootbeer - Frost - 2026-09-29 22:41 - EU/Draenor
+# SimC Addon 12.1.0-01
+# Requires SimulationCraft 1210-01+
+
+# Always ensure you are using the latest SimulationCraft version before simming.
+
+deathknight="Rootbeer"
+level=90
+race=pandaren
+region=eu
+server=draenor
+role=attack
+professions=blacksmithing=100/mining=100
+talents=CsPAAAAAAAAAAAAAAAAAAAAAAMDwMjZMDY2mZmZmZZmZkZMmZYGGPgZGMzMzMDAAAAAAAAAjZbgBsAWGmQGLYmxMzAzAYYmBYmBD
+spec=frost
+
+# Saved Loadout: Raid
+# talents=CsPAAAAAAAAAAAAAAAAAAAAAAMDwMjZMDY2mZmZmZZmZkZMmZYGGPgZGMzMzMDAAAAAAAAAjZbgBsAWGmQGLYmxMzAzAYYmBYmBD
+
+head=relentless_riders_crown,id=249970,bonus_id=40/6935/12676/12806/13335/13338/13575,gem_id=240983
+neck=rotmires_sporeheart,id=268291,bonus_id=13786,gem_id=240908
+shoulders=shoulderplates_of_frozen_blood,id=50234,bonus_id=12806/13577
+back=adherents_silken_shroud,id=239656,bonus_id=8791/8960/12066/12214/12384/13622/13667/9627
+chest=relentless_riders_cuirass,id=249973,bonus_id=13786,enchant_id=7987
+wrists=spellbreakers_bracers,id=237834,bonus_id=8791/8960/12066/12384/13622/12497,gem_id=240908
+hands=relentless_riders_bonegrasps,id=249971,bonus_id=40/12675/12806/13335/13337/13574
+waist=girdle_of_devouring_rot,id=268289,bonus_id=13786,gem_id=240908
+legs=relentless_riders_legguards,id=249969,bonus_id=40/12676/12806/13335/13339/13575,enchant_id=8159
+feet=greaves_of_the_unformed,id=249381,bonus_id=13355/13468/13469
+finger1=platinum_star_band,id=193708,bonus_id=6935/13355/13468/13469,gem_id=240908,enchant=eyes_of_the_eagle_2
+finger2=sindorei_band_of_hope,id=249919,bonus_id=6935/13355/13468/13469,gem_id=240908,enchant=eyes_of_the_eagle_2
+trinket1=gaze_of_the_alnseer,id=249343,bonus_id=13654
+trinket2=light_company_guidon,id=249344,bonus_id=13654
+main_hand=bellamys_final_judgement,id=249277,bonus_id=13654,enchant_id=3368
+
+### Gear from Bags
+#
+# head=,id=175302,bonus_id=12806/13577
+# head=,id=137410,bonus_id=13786
+# neck=,id=118848,bonus_id=13355/13468/13469
+# neck=,id=124391,bonus_id=6935/13355/13468/13469
+# shoulders=,id=113884,bonus_id=13654
+# shoulders=,id=35031,bonus_id=13786
+# chest=,id=124318,bonus_id=12806/13577
+# chest=,id=237613,bonus_id=13786
+# waist=,id=164809,bonus_id=6935/13355/13468/13469
+# waist=,id=125466,bonus_id=12806/13577
+# legs=,id=115895,bonus_id=13786
+# legs=,id=47434,bonus_id=13654
+# feet=,id=87165,bonus_id=6935/13355/13468/13469
+# feet=,id=86870,bonus_id=13786
+# wrists=,id=89648,bonus_id=12806/13577
+# wrists=,id=92814,bonus_id=13786
+# hands=,id=150030,bonus_id=6935/13355/13468/13469
+# hands=,id=108188,bonus_id=13654
+# finger1=,id=169160,bonus_id=6935/13355/13468/13469
+# finger1=,id=251934,bonus_id=13786
+# finger1=,id=124899,bonus_id=6935/13355/13468/13469
+# trinket1=,id=146068,bonus_id=13654
+# trinket1=,id=218716,bonus_id=13786
+# trinket1=,id=79331,bonus_id=6935/13355/13468/13469
+# back=,id=230139,bonus_id=13654
+# back=,id=263760,bonus_id=13355/13468/13469
+# Spare Ring (same as equipped)
+# finger1=,id=193708,bonus_id=6935/13355/13468/13469
+# trinket1=,id=249344,bonus_id=13654
+# head=,id=249970,bonus_id=13786
+# main_hand=,id=127647,bonus_id=13654
+# main_hand=,id=28429,bonus_id=13654
+# main_hand=,id=61402,bonus_id=13654
+# main_hand=,id=115646,bonus_id=13654
+# A shield
+# off_hand=,id=118406,bonus_id=13654
+# A staff
+# main_hand=,id=78418,bonus_id=13654
+# Not yet in SimC
+# chest=,id=999999,bonus_id=13786
+# legs=,id=71982,bonus_id=13786/999998
+
+### Gear from Great Vault
+#
+# head=,id=148780,bonus_id=13786
+# main_hand=,id=258528,bonus_id=13654
+
+### Additional Character Info
+#
+# upgrade_currencies=c:3008:0/c:3028:100
+#
+# Checksum: 00000000

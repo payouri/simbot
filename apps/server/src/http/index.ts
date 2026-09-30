@@ -4,6 +4,7 @@ import {
   type AppEvent,
   appEventSchema,
   healthResponseSchema,
+  type ImportItemsResponse,
   queueResponseSchema,
   queueSimcJobRequestSchema,
   type SimcJob,
@@ -19,7 +20,7 @@ import { getQueue } from "../db/sims";
 import type { EventBus } from "../events";
 import type { LiveTracker } from "../live";
 import { getCharacters, patchCharacter, patchSim, postMergeCharacter } from "./characters";
-import { getImportParsed, postImport } from "./imports";
+import { getIcon, getImportItems, getImportParsed, postImport } from "./imports";
 import {
   deleteSim_Handler,
   getResults,
@@ -38,6 +39,14 @@ export type HttpDeps = {
   clientDir: string;
   bus: EventBus;
   live: LiveTracker;
+  /** Item index of Imports (the packed SimC pass) joined with item-meta. */
+  items: {
+    /** Runs the packed pass for the Import if it has no index for the Current SimC Build. */
+    ensure: (importId: number) => Promise<unknown>;
+    view: (importId: number) => Promise<ImportItemsResponse | null>;
+  };
+  /** `GET /api/icons/:name`: disk-cached icons with a quality-coloured placeholder. */
+  icons: { get: (name: string, quality: number) => Promise<Response> };
   simc: {
     status: () => Promise<SimcStatusResponse>;
     /** Forces a SimC Update check and resolves with the result. */
@@ -123,7 +132,16 @@ function eventStream(
 }
 
 /** Builds the request handler: `/api/*` REST routes, everything else is the built client. */
-export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: HttpDeps) {
+export function createHttpHandler({
+  db,
+  dataDir,
+  bus,
+  live,
+  clientDir,
+  simc,
+  items,
+  icons,
+}: HttpDeps) {
   const snapshot = (): SnapshotEvent => {
     const queue = getQueue(db);
     const running = queue.find((e) => e.status === "running");
@@ -187,13 +205,23 @@ export function createHttpHandler({ db, dataDir, bus, live, clientDir, simc }: H
     }
     if (pathname === "/api/imports") {
       if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-      return postImport(db, req);
+      return postImport(db, items, req);
     }
     const importParsedRoute = pathname.match(/^\/api\/imports\/([^/]+)\/parsed$/);
     if (importParsedRoute) {
       const [, id] = importParsedRoute;
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
       return getImportParsed(db, Number(id));
+    }
+    const importItemsRoute = pathname.match(/^\/api\/imports\/([^/]+)\/items$/);
+    if (importItemsRoute) {
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return getImportItems(items, importItemsRoute[1]);
+    }
+    const iconRoute = pathname.match(/^\/api\/icons\/([^/]+)$/);
+    if (iconRoute) {
+      if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);
+      return getIcon(icons, iconRoute[1], new URL(req.url).searchParams.get("q"));
     }
     if (pathname === "/api/characters") {
       if (req.method !== "GET") return json({ error: "method_not_allowed" }, 405);

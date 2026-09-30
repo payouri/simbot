@@ -5,6 +5,8 @@ export {
   adler32,
   type CandidateItem,
   type EquippedItem,
+  isClassKey,
+  isEquipmentSlot,
   type ParsedAddonString,
   type ProfileHeader,
   parseAddonString,
@@ -19,6 +21,24 @@ export {
   isPlayerProfile,
   readCheckSimResult,
 } from "./check-sim";
+export {
+  assembleIndex,
+  BASE_ACTOR,
+  type ClassifiedItem,
+  classifyItems,
+  type ItemNumbers,
+  ItemPassFormatError,
+  type ItemPassPlan,
+  initErrorActor,
+  itemPassArgs,
+  type ParsedItemLine,
+  type PassActor,
+  parseItemLine,
+  planItemPass,
+  type RawItem,
+  readItemPass,
+  renderItemPass,
+} from "./item-pass";
 export { type Json2BuildInfo, Json2FormatError, readBuildInfo } from "./json2";
 export * from "./meta";
 export { probeBuild } from "./probe";

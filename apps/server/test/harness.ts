@@ -16,6 +16,7 @@ import {
 } from "@simbot/shared";
 import { createApp } from "../src/app";
 import type { Launch } from "../src/runner/run-sim";
+import type { Fetch } from "../src/simc/registry";
 
 export const FIXTURES = join(import.meta.dir, "fixtures/quick-sim");
 export const FAKE_SIMC = join(import.meta.dir, "fake-simc/fake-simc.ts");
@@ -104,6 +105,20 @@ export function installFakeBuild(dataDir: string, app: ReturnType<typeof createA
   );
 }
 
+export const IMPORT_ITEMS = join(import.meta.dir, "fixtures/import-items");
+export const importItemsAddonString = () =>
+  readFileSync(join(IMPORT_ITEMS, "addon-string.txt"), "utf8");
+
+/** Installs the trimmed item-meta and item-icons of the import-items fixture for `tag`. */
+export function installFixtureMeta(dataDir: string, tag: string = BUILD_TAG) {
+  const dir = join(dataDir, "meta", tag);
+  mkdirSync(dir, { recursive: true });
+  for (const file of ["item-meta.json", "item-icons.json"]) {
+    const data = JSON.parse(readFileSync(join(IMPORT_ITEMS, file), "utf8"));
+    writeFileSync(join(dir, file), JSON.stringify({ ...data, tag }));
+  }
+}
+
 export type Harness = ReturnType<typeof makeHarness>;
 
 /** A temp data dir plus an app over it, with typed helpers for the Quick Sim REST calls. */
@@ -114,6 +129,7 @@ export function makeHarness(
     debugLogs?: boolean;
     progressIntervalMs?: number;
     killGraceMs?: number;
+    fetch?: Fetch;
   } = {},
 ) {
   const root = mkdtempSync(join(tmpdir(), "simbot-quick-"));
@@ -122,6 +138,7 @@ export function makeHarness(
     { dataDir, clientDir: join(root, "client") },
     {
       launch: opts.launch,
+      fetch: opts.fetch,
       log: () => {},
       debugLogs: opts.debugLogs,
       progressIntervalMs: opts.progressIntervalMs,

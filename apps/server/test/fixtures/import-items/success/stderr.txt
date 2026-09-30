@@ -1,0 +1,11 @@
+Implementation Not Yet Verified: Shield is assumed to apply immediately and will only burst when depleted by incoming damage. What types of triggers can proc the shield has not been verified.
+Trivial: Player 'c4' attempting to use Action 'frost_strike' (49143) with invalid main-hand weapon type 'Staff'.
+Trivial: Player 'c4' attempting to use Action 'obliterate' (49020) with invalid main-hand weapon type 'Staff'.
+Trivial: Player base has no Main-Hand Runeforge enchanted.
+Trivial: Player c0 has no Main-Hand Runeforge enchanted.
+Trivial: Player c1 has no Main-Hand Runeforge enchanted.
+Trivial: Player c2 has no Main-Hand Runeforge enchanted.
+Trivial: Player c3 has no Main-Hand Runeforge enchanted.
+Trivial: Player c4 has no Main-Hand Runeforge enchanted.
+Trivial: Player c5 has no Main-Hand Runeforge enchanted.
+Trivial: Player o0 has no Main-Hand Runeforge enchanted.

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "tag": "1210-2026-09-29-d08a1c3",
+  "gameDataVersion": "12.1.0.69933",
+  "items": {
+    "263760": "inv_leather_raiddruidt2_d_01_cape",
+    "249343": "inv_12_trinket_raid_dreamrift_gazeofthealnseer",
+    "249344": "inv_12_trinket_raid_voidspire_physdps1_armyoflightbanner",
+    "118406": "inv_shield_draenorchallenge_d_01",
+    "249277": "inv_mace_2h_raidmidnight_d_01",
+    "148780": "inv_helm_plate_raidpaladinmythic_s_01",
+    "127647": "inv_axe_83",
+    "249381": "inv_boot_plate_raidwarriormidnight_d_01",
+    "164809": "inv_belt_plate_warfrontsforsaken_d_01",
+    "92814": "inv_bracer_plate_dungeonplate_c_07",
+    "169160": "inv_jewelry_mech_ring_green",
+    "258528": "inv_mace_1h_uther_d_01",
+    "239656": "inv_cape_cloth_questbloodelf_b_01",
+    "124318": "inv_plate_raidpaladin_p_01chest",
+    "193708": "inv_10_dungeonjewelry_explorer_ring_1_color1",
+    "87165": "inv_boot_plate_raidpaladin_l_01",
+    "79331": "inv_inscription_trinket_dragon",
+    "113884": "inv_plate_raidwarrior_o_01shoulders",
+    "50234": "inv_shoulder_121",
+    "268291": "inv_12_jewelry_rutaani_necklace_blue",
+    "249970": "inv_plate_raiddeathknightmidnight_d_01_helm",
+    "150030": "inv_glove_plate_legiondungeon_c_03",
+    "108188": "inv_gauntlets_plate_panda_b_02yellow",
+    "137410": "inv_helm_plate_legiondungeon_c_01",
+    "146068": "spell_holy_championsbond",
+    "251934": "inv_misc_dungeonsignetearthen_color2",
+    "118848": "inv_misc_necklace_6_0_034",
+    "47434": "inv_pants_plate_30",
+    "175302": "inv_helm_plate_kultirasquest_b_01",
+    "115895": "inv_pant_plate_pvppaladingladiator_o_01",
+    "35031": "inv_shoulder_89",
+    "218716": "ability_pvp_gladiatormedallion",
+    "78418": "inv_stave_2h_deathwingraid_d_01",
+    "86870": "inv_boots_plate_raiddeathknight_l_01",
+    "249973": "inv_plate_raiddeathknightmidnight_d_01_chest",
+    "125466": "inv_belt_plate_draenorhonors2_c_01_paladin",
+    "28429": "inv_sword_2h_blacksmithing_02",
+    "230139": "inv_plate_outdoorundermine_c_01_cape",
+    "115646": "inv_sword_1h_pvpdraenors1_d_02",
+    "237613": "inv_chest_plate_raidwarriorethereal_d_01",
+    "71982": "inv_pants_plate_raidpaladin_k_01",
+    "124391": "inv_6_2raid_necklace_4d",
+    "124899": "inv_60pvp_ring4b",
+    "237834": "inv_plate_questbloodelf_b_01_bracer",
+    "249919": "inv_12_jewelry_silvermoonelf_ring_red1",
+    "61402": "inv_axe_1h_cataclysm_b_02",
+    "249971": "inv_plate_raiddeathknightmidnight_d_01_glove",
+    "268289": "inv_belt_plate_raidpaladinmidnight_d_01",
+    "89648": "inv_bracer_plate_reputation_c_01",
+    "249969": "inv_plate_raiddeathknightmidnight_d_01_pant"
+  },
+  "appearanceMods": {
+    "113884": {
+      "0": "inv_plate_raidwarrior_o_01shoulders",
+      "1": "inv_plate_raidwarrior_o_01shoulders",
+      "3": "inv_plate_raidwarriormythic_o_01shoulders"
+    },
+    "124318": {
+      "0": "inv_plate_raidpaladin_p_01chest",
+      "1": "inv_plate_raidpaladin_p_01chest",
+      "3": "inv_raidpaladinmythic_p_01chest"
+    },
+    "164809": {
+      "0": "inv_belt_plate_warfrontsforsaken_d_01",
+      "3": "inv_belt_plate_warfrontsforsakenmythic_d_01"
+    }
+  }
+}

@@ -123,6 +123,8 @@ describe("first start on the Seed SimC Build", () => {
     expect(body.installed.map((b) => b.tag).sort()).toEqual([SEED, LATEST_NIGHTLY].sort());
     expect(updateJobs()).toBe(1);
 
+    // `status()` may have started a background update check; let it finish before closing the DB.
+    await app.idle();
     app.close();
     const again = fakeRegistry();
     boot(again.fetch);

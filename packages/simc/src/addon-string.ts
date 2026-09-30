@@ -39,6 +39,12 @@ const EQUIPMENT_SLOTS = new Set([
   "two_hand",
 ]);
 
+/** Whether `key` is an equipment slot key of a SimC profile (`head`, `finger1`, `main_hand`...). */
+export const isEquipmentSlot = (key: string) => EQUIPMENT_SLOTS.has(key);
+
+/** Whether `key` is the class line that opens a character (`mage="Name"`). */
+export const isClassKey = (key: string) => CLASS_KEYS.has(key);
+
 export type ProfileHeader = {
   region: string;
   realm: string;

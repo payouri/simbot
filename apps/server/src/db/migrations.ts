@@ -114,4 +114,13 @@ export const migrations: readonly Migration[] = [
       ALTER TABLE jobs ADD COLUMN interruptions INTEGER NOT NULL DEFAULT 0;
     `,
   },
+  {
+    id: 5,
+    name: "import_item_index",
+    sql: `
+      -- The packed pass's result for an Import (ilvl, stats, Unknown Items), as JSON, valid for
+      -- the SimC Build it names. Derived data: recomputed when the Current SimC Build changes.
+      ALTER TABLE imports ADD COLUMN item_index TEXT;
+    `,
+  },
 ];

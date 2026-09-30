@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Import } from "@simbot/shared";
+import { type Import, type ItemIndex, itemIndexSchema } from "@simbot/shared";
 import { parseAddonString, parseProfileHeader } from "@simbot/simc";
 import type { Db } from ".";
 
@@ -99,4 +99,22 @@ export function getParsedImport(db: Db, id: number) {
     checksumVerification: parsed.checksumVerification,
     report: parsed.report,
   };
+}
+
+/** The stored item index of an Import, or null when none was stored (or it no longer parses). */
+export function getItemIndex(db: Db, id: number): ItemIndex | null {
+  const raw = db
+    .query<{ item_index: string | null }, [number]>("SELECT item_index FROM imports WHERE id = ?")
+    .get(id)?.item_index;
+  if (!raw) return null;
+  try {
+    const parsed = itemIndexSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveItemIndex(db: Db, id: number, index: ItemIndex): void {
+  db.run("UPDATE imports SET item_index = ? WHERE id = ?", [JSON.stringify(index), id]);
 }
