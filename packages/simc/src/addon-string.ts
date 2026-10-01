@@ -25,6 +25,7 @@ const EQUIPMENT_SLOTS = new Set([
   "shoulders",
   "back",
   "chest",
+  "wrist",
   "wrists",
   "hands",
   "waist",

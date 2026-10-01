@@ -90,6 +90,16 @@ describe("Addon String Parser", () => {
     });
   });
 
+  test("parses the addon's singular wrist slot", () => {
+    const result = parseAddonString(realExport);
+    expect(result.equippedItems).toHaveLength(16);
+    expect(result.equippedItems.find((item) => item.slot === "wrist")).toEqual({
+      slot: "wrist",
+      rawLine: "wrist=,id=272262,bonus_id=12841/6652/13696/13662,content_tuning=6015",
+      source: "equipped",
+    });
+  });
+
   test("normalizes finger and trinket slots to finger1/finger2, trinket1/trinket2", () => {
     const result = parseAddonString(fixture);
     const fingers = result.equippedItems.filter((item) =>
