@@ -204,9 +204,12 @@ export function parseAddonString(text: string): ParsedAddonString {
   let missingChecksum = true;
   let currentSection: string | null = null;
   let lastCommentLine: string | null = null;
+  let lineEnd = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
+    const lineStart = text.indexOf(line, lineEnd);
+    lineEnd = lineStart + line.length;
 
     // Handle checksum line first
     if (line.includes("Checksum:")) {
@@ -214,9 +217,9 @@ export function parseAddonString(text: string): ParsedAddonString {
       const match = line.match(/Checksum:\s*([0-9a-f]+)/i);
       if (match) {
         const expectedChecksum = match[1].toLowerCase();
-        // Remove checksum line and recalculate
-        const textWithoutChecksum = text.slice(0, text.indexOf("# Checksum"));
-        const computedChecksum = adler32(textWithoutChecksum.trimEnd());
+        // The addon hashes everything before the checksum line as is, the blank line before
+        // it included, so trimming here would fail every real export.
+        const computedChecksum = adler32(text.slice(0, lineStart));
         checksumVerification = {
           expected: expectedChecksum,
           matches: computedChecksum === expectedChecksum,

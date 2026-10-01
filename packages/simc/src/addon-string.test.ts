@@ -10,6 +10,13 @@ import {
   stripPtrOption,
 } from "./addon-string";
 
+// Real and unedited, see fixtures/addon-string/README.md.
+const realExport = readFileSync(
+  join(import.meta.dir, "fixtures/addon-string/gulthrak-fury.txt"),
+  "utf8",
+);
+
+// Hand-written, not an export: its checksum was computed by the parser's rule, not the addon.
 const fixture = `# Rootbeer - Frost - 2026-09-29 22:41 - EU/Draenor
 # SimC Addon 12.1.0-01
 # Requires SimulationCraft 1210-01+
@@ -54,7 +61,7 @@ main_hand=bellamys_final_judgement,id=249277,bonus_id=13654,enchant_id=3368
 #
 # upgrade_currencies=c:3008:0/c:3028:100
 #
-# Checksum: d87d732e
+# Checksum: 4bc47338
 `;
 
 describe("Addon String Parser", () => {
@@ -160,12 +167,32 @@ describe("Addon String Parser", () => {
   test("verifies Adler-32 checksum", () => {
     const result = parseAddonString(fixture);
     expect(result.checksumVerification).toBeDefined();
-    expect(result.checksumVerification?.expected).toBe("d87d732e");
+    expect(result.checksumVerification?.expected).toBe("4bc47338");
     expect(result.checksumVerification?.matches).toBe(true);
   });
 
+  test("verifies the checksum of a real, unedited export", () => {
+    expect(parseAddonString(realExport).checksumVerification).toEqual({
+      expected: "b6775177",
+      matches: true,
+    });
+  });
+
+  test("hashes up to the checksum line it read, however that line is written", () => {
+    const at = realExport.indexOf("# Checksum");
+    const spaced = `${realExport.slice(0, at)}#Checksum: B6775177\n`;
+    expect(parseAddonString(spaced).checksumVerification?.matches).toBe(true);
+    // An earlier comment naming the checksum doesn't cut the hashed text short.
+    const noted = realExport.replace("# bonus_roll_currencies", "# Checksum below\n#");
+    const restamped = noted.replace(
+      "b6775177",
+      adler32(noted.slice(0, noted.lastIndexOf("# Checksum"))),
+    );
+    expect(parseAddonString(restamped).checksumVerification?.matches).toBe(true);
+  });
+
   test("reports checksum mismatch without blocking", () => {
-    const modifiedFixture = fixture.replace("Checksum: d87d732e", "Checksum: deadbeef");
+    const modifiedFixture = fixture.replace("Checksum: 4bc47338", "Checksum: deadbeef");
     const result = parseAddonString(modifiedFixture);
     expect(result.checksumVerification?.expected).toBe("deadbeef");
     expect(result.checksumVerification?.matches).toBe(false);
@@ -211,6 +238,7 @@ describe("WoW version header", () => {
     expect(parseWowVersionHeader(wowFixture("wow-header-live.txt"))).toBe("12.1.0.69933");
     expect(parseWowVersionHeader(wowFixture("wow-header-ptr.txt"))).toBe("12.1.5.69952");
     expect(parseWowVersionHeader('#WoW 12.1.0.1, Toc: 120100\r\nmage="A"')).toBe("12.1.0.1");
+    expect(parseWowVersionHeader(realExport)).toBe("12.1.0.69933");
   });
 
   test("is null without the header, or when it is not a four-part version", () => {
