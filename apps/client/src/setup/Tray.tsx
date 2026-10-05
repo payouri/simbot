@@ -7,9 +7,10 @@ import {
 import clsx from "clsx";
 import { Check, Lock, LockOpen, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { statLabel, statLine } from "../items/ImportItems";
+import { statLabel, statLine } from "../items/format";
+import { Item } from "../items/Item";
 import { LiveItemStatsNote } from "../simc/GameData";
-import { ItemName, ItemTile, Tag } from "./ItemTile";
+import { Tag } from "../ui/Tag";
 import { includedCount, type SlotItems } from "./model";
 
 type RowState = "equipped" | "on" | "off" | "placeholder" | "unusable";
@@ -65,30 +66,36 @@ function TrayRow({
         {state === "on" && <Check size={11} strokeWidth={3} />}
         {state === "equipped" && <Lock size={11} />}
       </span>
-      <ItemTile item={item} size="md" dim={state === "unusable" || disabled} />
-      <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <ItemName
-          item={item}
-          className={clsx("truncate text-[13px]", state === "unusable" && "opacity-50")}
-        />
-        <span className="truncate text-[11.5px] text-faint">
-          {state === "placeholder"
-            ? "Unknown to this SimC Build"
-            : state === "unusable"
-              ? "SimC could not read this item"
-              : stats}
-        </span>
-        <span className="flex flex-wrap gap-1 pt-0.5">
-          {state === "equipped" ? (
-            <Tag>Equipped</Tag>
-          ) : item.source === "great_vault" ? (
-            <Tag tone="action">Great Vault</Tag>
-          ) : (
-            <Tag>{SOURCE_LABEL[item.source] ?? item.source}</Tag>
-          )}
-          {state === "placeholder" && <Tag tone="loss">Not selectable</Tag>}
-        </span>
-      </span>
+      <Item
+        item={item}
+        size="md"
+        dim={state === "unusable" || disabled}
+        className={clsx(
+          "flex-1 items-start gap-2.5",
+          state === "unusable" && "[&_[data-part=name]]:opacity-50",
+        )}
+        meta={
+          <span className="flex flex-col gap-0.5 pt-0.5">
+            <span className="truncate text-[11.5px] text-faint">
+              {state === "placeholder"
+                ? "Unknown to this SimC Build"
+                : state === "unusable"
+                  ? "SimC could not read this item"
+                  : stats}
+            </span>
+            <span className="flex flex-wrap gap-1 pt-0.5">
+              {state === "equipped" ? (
+                <Tag>Equipped</Tag>
+              ) : item.source === "great_vault" ? (
+                <Tag tone="action">Great Vault</Tag>
+              ) : (
+                <Tag>{SOURCE_LABEL[item.source] ?? item.source}</Tag>
+              )}
+              {state === "placeholder" && <Tag tone="loss">Not selectable</Tag>}
+            </span>
+          </span>
+        }
+      />
       {(state === "on" || state === "off") && delta !== null && (
         <span
           className={clsx(

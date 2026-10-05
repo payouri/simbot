@@ -1,10 +1,15 @@
 import { Link, Outlet } from "react-router";
+import { useWowheadScript } from "../items/wowhead";
 import { useQueueQuery } from "../queue/api";
 import { SimcChip } from "../simc/SimcChip";
 
-/** The app frame: a sticky top bar with the product name and the SimC status chip. */
+/**
+ * The app frame: a sticky top bar with the product name and the SimC status chip. It also loads
+ * the Wowhead tooltip script every item on screen relies on.
+ */
 export function AppShell() {
   const waiting = useQueueQuery().data?.entries.length ?? 0;
+  useWowheadScript();
   return (
     <>
       <header className="sticky top-0 z-20 flex h-[56px] items-center justify-between gap-4 border-b border-line bg-bg/95 px-4 md:px-6">

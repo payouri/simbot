@@ -6,7 +6,6 @@ import {
   type RankedRow,
   type Sim,
   type SimResultsResponse,
-  type SlotDress,
   type VerdictKind,
   verdictFor,
 } from "@simbot/shared";
@@ -17,12 +16,12 @@ import { Equal, Hourglass, ShieldCheck, TrendingUp } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { Link, useNavigate } from "react-router";
-import { qualityBorder } from "../items/ImportItems";
+import { Item } from "../items/Item";
 import { PtrClientNotice } from "../notice/PtrClientNotice";
 import { copySimToDraft } from "../quick-sim/api";
-import { ItemName, ItemTile, Tag } from "../setup/ItemTile";
 import { Sheet, type Side, useIsPhone } from "../setup/Sheet";
 import { CopyToPtrDraft, GameDataBadge, LiveItemStatsNote } from "../simc/GameData";
+import { Tag } from "../ui/Tag";
 import { useSimResults } from "./api";
 import { DeltaBar, fmtDps, fmtPct, fmtSigned } from "./DeltaBar";
 import { layoutStorage, RESULTS_LAYOUT_ID } from "./layout";
@@ -227,17 +226,6 @@ function Verdict({
   );
 }
 
-/** An item that changed in the displayed Combination: lit in its own quality colour. */
-function GlowTile({ item, token }: { item: SlotDress["items"][number]; token: number }) {
-  return (
-    <span key={token} className="item-glow inline-flex" style={glowVar(item.quality)}>
-      <ItemTile item={item} size="lg" />
-    </span>
-  );
-}
-const glowVar = (quality: number | null) =>
-  ({ "--glow": qualityBorder(quality) }) as React.CSSProperties;
-
 function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; phone: boolean }) {
   const dress = model.dress(row.combinationId);
   const changed = dress ? changedSlots(dress) : [];
@@ -259,13 +247,19 @@ function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; p
       >
         <span className={clsx("flex shrink-0 gap-1", mirrored && "flex-row-reverse")}>
           {d && d.items.length > 0 ? (
-            d.items.map((it) =>
-              d.fresh.some((f) => f.index === it.index) ? (
-                <GlowTile key={it.index} item={it} token={row.combinationId} />
-              ) : (
-                <ItemTile key={it.index} item={it} size={phone ? "md" : "lg"} />
-              ),
-            )
+            d.items.map((it) => {
+              // An item that changed in the displayed Combination glows in its quality colour.
+              const fresh = d.fresh.some((f) => f.index === it.index);
+              return (
+                <Item
+                  key={it.index}
+                  item={it}
+                  parts={{ icon: true }}
+                  size={fresh || !phone ? "lg" : "md"}
+                  glow={fresh ? row.combinationId : undefined}
+                />
+              );
+            })
           ) : (
             <span className="size-12 rounded-[5px] border border-dashed border-line-strong" />
           )}
@@ -279,9 +273,10 @@ function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; p
           <span className="text-[11.5px] text-faint">{PAPERDOLL_LABEL[slot]}</span>
           {d?.items.length ? (
             d.items.map((it) => (
-              <ItemName
+              <Item
                 key={it.index}
                 item={it}
+                parts={{ name: true }}
                 className={clsx(
                   "block max-w-full truncate",
                   d.items.length === 1 ? "text-[13px]" : "text-[12.5px]",
@@ -301,7 +296,7 @@ function Dressed({ model, row, phone }: { model: ResultsModel; row: RankedRow; p
               <span className="text-faint">was</span>
               {d.gone.map((g) => (
                 <span key={g.index} className="inline-flex items-center gap-1">
-                  <ItemTile item={g} size="sm" dim showIlvl={false} />
+                  <Item item={g} parts={{ icon: true }} size="sm" dim ilvl={false} />
                   <span className="num text-faint">{g.ilvl ?? ""}</span>
                 </span>
               ))}
@@ -643,7 +638,9 @@ function RankRow({
           ) : (
             icons
               .slice(0, maxIcons)
-              .map((it) => <ItemTile key={it.index} item={it} size="sm" showIlvl={false} />)
+              .map((it) => (
+                <Item key={it.index} item={it} parts={{ icon: true }} size="sm" ilvl={false} />
+              ))
           )}
           {icons.length > maxIcons && !row.isBaseline && (
             <span className="num text-[11px] text-faint">+{icons.length - maxIcons}</span>

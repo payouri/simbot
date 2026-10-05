@@ -1,66 +1,8 @@
-import type { ImportItem, ImportItemsResponse, ItemStats, UnknownReport } from "@simbot/shared";
+import type { ImportItem, ImportItemsResponse, UnknownReport } from "@simbot/shared";
 import { Link } from "react-router";
 import { useSimcStatus } from "../simc/api";
-import { iconUrl, useImportItems } from "./api";
-import { useWowheadTooltips } from "./wowhead";
-
-const QUALITY_VAR = [
-  "--q-poor",
-  "--q-common",
-  "--q-uncommon",
-  "--q-rare-text",
-  "--q-epic-text",
-  "--q-legendary",
-  "--q-legendary",
-  "--q-legendary",
-];
-const QUALITY_BORDER_VAR = [
-  "--q-poor",
-  "--q-common",
-  "--q-uncommon",
-  "--q-rare",
-  "--q-epic",
-  "--q-legendary",
-  "--q-legendary",
-  "--q-legendary",
-];
-export const qualityText = (q: number | null) => `var(${QUALITY_VAR[q ?? 1] ?? "--fg-muted"})`;
-export const qualityBorder = (q: number | null) =>
-  `var(${QUALITY_BORDER_VAR[q ?? 1] ?? "--line-strong"})`;
-
-const STAT_LABEL: Record<string, string> = {
-  strint: "Str/Int",
-  stragi: "Str/Agi",
-  stragiint: "Primary",
-  strength: "Str",
-  agility: "Agi",
-  intellect: "Int",
-  stamina: "Sta",
-  crit_rating: "Crit",
-  haste_rating: "Haste",
-  mastery_rating: "Mastery",
-  versatility_rating: "Vers",
-  avoidance_rating: "Avoid",
-  leech_rating: "Leech",
-  speed_rating: "Speed",
-  parry_rating: "Parry",
-  dodge_rating: "Dodge",
-  armor: "Armor",
-};
-/** Stat lines of an item: secondaries and primaries, stamina last. */
-const STAT_ORDER = ["strint", "stragi", "stragiint", "strength", "agility", "intellect"];
-export const statLabel = (key: string) =>
-  STAT_LABEL[key] ?? key.replace(/_rating$/, "").replaceAll("_", " ");
-
-export function statLine(stats: ItemStats): { key: string; value: number }[] {
-  return Object.entries(stats)
-    .filter(([, v]) => v > 0)
-    .map(([key, value]) => ({ key, value }))
-    .sort((a, b) => {
-      const rank = (k: string) => (STAT_ORDER.includes(k) ? 0 : k === "stamina" ? 2 : 1);
-      return rank(a.key) - rank(b.key) || b.value - a.value;
-    });
-}
+import { useImportItems } from "./api";
+import { Item } from "./Item";
 
 const SLOT_LABEL: Record<string, string> = {
   head: "Head",
@@ -86,36 +28,9 @@ const slotRank = (slot: string) => {
   return at < 0 ? SLOT_ORDER.length : at;
 };
 
-export function wowheadData(item: ImportItem): string | undefined {
-  if (item.itemId === null || item.status === "unknown") return undefined;
-  const bonus = item.bonusIds.length ? `&bonus=${item.bonusIds.join(":")}` : "";
-  return `item=${item.itemId}${bonus}${item.ilvl ? `&ilvl=${item.ilvl}` : ""}`;
-}
-
-function ItemIcon({ item }: { item: ImportItem }) {
-  const border = qualityBorder(item.quality);
-  return (
-    <span
-      className="grid size-9 shrink-0 place-items-center overflow-hidden rounded-[6px] border bg-sunk"
-      style={{ borderColor: border }}
-    >
-      {item.icon ? (
-        <img src={iconUrl(item.icon, item.quality)} alt="" width={36} height={36} loading="lazy" />
-      ) : (
-        <span aria-hidden="true" className="text-[15px] font-semibold text-faint">
-          ?
-        </span>
-      )}
-    </span>
-  );
-}
-
 function ItemRow({ item }: { item: ImportItem }) {
   const unknown = item.status === "unknown";
   const candidate = item.source !== "equipped";
-  const name = item.name ?? (item.itemId === null ? "Unknown item" : `Item ${item.itemId}`);
-  const wowhead = wowheadData(item);
-  const stats = item.stats ? statLine(item.stats) : [];
   return (
     <li
       className={`flex items-center gap-3 rounded-md px-2 py-1.5 ${unknown ? "bg-loss-wash" : ""} ${
@@ -124,37 +39,16 @@ function ItemRow({ item }: { item: ImportItem }) {
       data-status={item.status}
       data-selectable={candidate ? item.selectable : undefined}
     >
-      <ItemIcon item={item} />
-      <div className="min-w-0 flex-1">
-        <p className="flex items-baseline gap-2 text-[13px]">
-          {wowhead && item.itemId !== null ? (
-            <a
-              href={`https://www.wowhead.com/item=${item.itemId}`}
-              data-wowhead={wowhead}
-              target="_blank"
-              rel="noreferrer"
-              className="truncate font-medium hover:underline"
-              style={{ color: qualityText(item.quality) }}
-            >
-              {name}
-            </a>
-          ) : (
-            <span className="truncate font-medium" style={{ color: qualityText(item.quality) }}>
-              {name}
-            </span>
-          )}
+      <Item
+        item={item}
+        ilvl={false}
+        className="flex-1 items-center gap-3"
+        aside={
           <span className="shrink-0 text-[11.5px] text-faint">
             {SLOT_LABEL[item.slot] ?? item.slot}
           </span>
-        </p>
-        <p className="num truncate text-[11.5px] text-muted">
-          {unknown
-            ? "Unknown to this SimC Build"
-            : item.status === "unresolved"
-              ? "No numbers: SimC did not read this item"
-              : stats.map((s) => `${s.value} ${statLabel(s.key)}`).join("  ")}
-        </p>
-      </div>
+        }
+      />
       <span className="num shrink-0 text-[13px]" title="Item level">
         {item.ilvl ?? "-"}
       </span>
@@ -273,7 +167,6 @@ export function PassNote({ pass }: { pass: ImportItemsResponse["pass"] }) {
 /** Every item of an Import with icon, name, ilvl, stats and quality, and its Unknown Items. */
 export function ImportItems({ importId }: { importId: number }) {
   const query = useImportItems(importId);
-  useWowheadTooltips(query.data);
   if (query.isPending) return <p className="mt-6 text-[12.5px] text-muted">Loading gear…</p>;
   if (query.isError) return <p className="mt-6 text-[12.5px] text-loss">Could not load gear.</p>;
   const { items, unknown, pass } = query.data;

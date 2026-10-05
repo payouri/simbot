@@ -8,7 +8,7 @@ import {
 import clsx from "clsx";
 import { Lock } from "lucide-react";
 import { forwardRef, type KeyboardEvent, type ReactNode, useSyncExternalStore } from "react";
-import { ItemName, ItemTile } from "./ItemTile";
+import { Item } from "../items/Item";
 
 export type Side = "left" | "right" | "center";
 
@@ -86,7 +86,9 @@ export const SlotTile = forwardRef<
     >
       <span className={clsx("flex shrink-0 gap-1", mirrored && "flex-row-reverse")}>
         {equipped.length > 0 ? (
-          equipped.map((it) => <ItemTile key={it.index} item={it} size={compact ? "md" : "lg"} />)
+          equipped.map((it) => (
+            <Item key={it.index} item={it} parts={{ icon: true }} size={compact ? "md" : "lg"} />
+          ))
         ) : (
           <span
             className={clsx(
@@ -115,9 +117,10 @@ export const SlotTile = forwardRef<
           <span className="text-[13px] text-faint">Nothing equipped</span>
         ) : (
           equipped.map((it) => (
-            <ItemName
+            <Item
               key={it.index}
               item={it}
+              parts={{ name: true }}
               className={clsx(
                 "block max-w-full truncate",
                 equipped.length === 1 ? "text-[13px]" : "text-[12px] leading-[1.3]",

@@ -3,7 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import clsx from "clsx";
 import { useNavigate } from "react-router";
 import { copySimToPtrDraft } from "../quick-sim/api";
-import { Tag } from "../setup/ItemTile";
+import { Tag } from "../ui/Tag";
 import { useSimcStatus } from "./api";
 
 const LABEL: Record<GameData, string> = { live: "Live", ptr: "PTR" };
